@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+
+<title>Dentix Waiting Screen</title>
+
+
+
+<link rel="stylesheet" href="css/waiting.css">
+
+</head>
+
+<body>
+
+<div class="background-glow"></div>
+
+<div class="screen">
+
+    <!-- Header -->
+
+    <header class="header">
+
+        <div class="clinic-info">
+
+           <div class="logo">
+
+    <img
+        id="clinicLogo"
+        class="clinic-logo"
+        style="display:none;"
+    >
+
+    <span id="defaultLogo">
+        🦷
+    </span>
+
+</div>
+
+            <div>
+
+                <div class="clinic-header">
+    <h1 id="clinicNameHeader">Dentix Clinic System</h1>
+</div>
+                <span>Patient Waiting Screen</span>
+
+            </div>
+
+            <button class="back-btn" onclick="goDashboard()">
+    <i class="fa-solid fa-arrow-left"></i>
+Back
+</button>
+
+        </div>
+
+       <div class="clock-wrapper">
+
+    <!-- الساعة الرقمية -->
+    <div id="clock">00:00:00 PM</div>
+
+    <!-- الساعة العقارب -->
+    <div class="analog-clock">
+
+        <div class="hand hour" id="hourHand"></div>
+        <div class="hand minute" id="minuteHand"></div>
+        <div class="hand second" id="secondHand"></div>
+
+        <div class="center-dot"></div>
+
+    </div>
+
+</div>
+
+    </header>
+
+
+    <!-- Main -->
+
+    <main class="main-layout">
+
+        <!-- Current Patient -->
+
+        <section class="current-section">
+
+            <div class="section-title">
+                المريض الحالي
+            </div>
+
+            <div id="currentPatient">
+
+                لا يوجد
+
+            </div>
+
+        </section>
+
+
+        <!-- Queue -->
+
+        <section class="queue-section">
+
+            <div class="section-title">
+
+                المرضى القادمون
+
+            </div>
+
+            <div id="waitingList"></div>
+
+        </section>
+
+    </main>
+
+
+    <!-- Footer -->
+
+    <footer class="current-section">
+
+        <div>
+
+           <div class="welcome-banner">
+
+    <i class="fa-solid fa-tooth"></i>
+
+    <span>مرحباً بكم في <strong id="clinicNameText">Dentix Clinic</strong></span>
+    
+
+    <span class="dot"></span>
+
+    <i class="fa-solid fa-heart-pulse"></i>
+
+    <span>نتمنى لكم دوام الصحة والعافية</span>
+
+    <span class="dot"></span>
+
+    <i class="fa-solid fa-bell"></i>
+
+    <span>يرجى الانتظار حتى يتم استدعاء اسمكم</span>
+
+</div>
+
+        </div>
+
+    </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/visit-number.js"></script>
+<script src="js/waiting.js"></script>
+
+</body>
+</html>

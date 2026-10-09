@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dentix Clinic</title>
+
+<link rel="stylesheet" href="css/landing.css">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+    <button
+    id="backSearchBtn"
+    class="back-search-btn"
+    onclick="location.href='index.html'"
+>
+    <i class="fa-solid fa-arrow-right"></i>
+      Back 
+</button>
+
+<div class="hero">
+
+    <div class="overlay"></div>
+
+    <div class="hero-content">
+
+        <img
+            id="clinicLogo"
+            class="clinic-logo"
+            src=""
+            alt="Clinic Logo"
+        >
+
+        <h1 id="clinicName">
+            Dentix Clinic
+        </h1>
+
+        <p id="clinicDescription">
+            أفضل خدمات طب الأسنان بأحدث التقنيات
+        </p>
+
+        <button
+            class="book-btn"
+            onclick="openBookingModal()"
+        >
+            <i class="fa-solid fa-calendar-plus"></i>
+            احجز موعد الآن
+        </button>
+
+    </div>
+
+</div>
+
+<section
+    id="gallerySection"
+    style="display:none;"
+>
+
+    <h2>
+        صور العيادة
+    </h2>
+
+    <div
+        id="galleryContainer"
+        class="gallery-grid"
+    ></div>
+
+</section>
+
+<section class="contact-section">
+
+    <h2>
+        معلومات التواصل
+    </h2>
+
+    <div class="contact-grid">
+
+        <!-- PHONE -->
+
+<div id="phoneCard" class="contact-card">
+
+    <i class="fa-solid fa-phone"></i>
+
+    <span id="clinicPhone">
+        01000000000
+    </span>
+
+</div>
+
+
+<div id="whatsappCard" class="contact-card">
+
+    <i class="fa-brands fa-whatsapp"></i>
+
+    <span id="clinicWhatsapp">
+        01000000000
+    </span>
+
+</div>
+
+
+<div id="addressCard" class="contact-card">
+
+    <i class="fa-solid fa-location-dot"></i>
+
+    <span id="clinicAddress">
+        عنوان العيادة
+    </span>
+
+</div>
+
+        <div class="contact-card working-hours-card">
+
+    <i class="fa-solid fa-clock"></i>
+
+    <div class="working-hours-content">
+
+        <div class="panel-header">
+
+            <span> مواعيد عمل العيادة </span>
+
+        </div>
+
+        <div id="clinicWorkingHours">
+
+            ساعات العمل
+
+        </div>
+
+    </div>
+
+</div>
+
+    </div>
+
+    <div class="social-links">
+
+        <a
+            id="facebookLink"
+            href="#"
+            target="_blank"
+            style="display:none"
+        >
+            <i class="fa-brands fa-facebook-f"></i>
+        </a>
+
+        <a
+            id="instagramLink"
+            href="#"
+            target="_blank"
+            style="display:none"
+        >
+            <i class="fa-brands fa-instagram"></i>
+        </a>
+
+        <a
+            id="websiteLink"
+            href="#"
+            target="_blank"
+            style="display:none"
+        >
+            <i class="fa-solid fa-globe"></i>
+        </a>
+
+    </div>
+
+</section>
+
+<div
+    id="bookingModal"
+    class="booking-modal"
+>
+
+    <div class="booking-box">
+
+        <button
+            class="close-btn"
+            onclick="closeBookingModal()"
+        >
+            ×
+        </button>
+
+        <h2>
+            طلب حجز موعد
+        </h2>
+
+        <input
+            type="text"
+            id="patientName"
+            placeholder="الاسم بالكامل"
+        >
+
+        <input
+            type="text"
+            id="patientPhone"
+            placeholder="رقم الهاتف او البريد الالكتروني"
+        >
+
+        <div class="appointment-picker">
+
+    <label>اختر اليوم </label>
+
+    <input
+        type="date"
+        id="appointmentDate"
+        onchange="updateSelectedDayName();generateAvailableTimes()"
+    >
+     
+    <label> اختر الموعد  </label>
+
+    <select id="appointmentTime">
+
+        <option value="">
+            اختر الوقت
+        </option>
+
+    </select>
+
+    <div
+        id="selectedDayName"
+        class="selected-day-name"
+    ></div>
+
+</div>
+
+        <button
+            class="send-btn"
+            onclick="submitAppointmentRequest()"
+        >
+            إرسال الطلب
+        </button>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/landing.js"></script>
+
+</body>
+
+</html>

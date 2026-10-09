@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="lab_file_title">Lab File</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/lab_file.css">
+<link rel="stylesheet" href="css/notification.css">
+
+
+</head>
+<body>
+
+<!-- ======= FLOATING ICONS ======= -->
+<i class="fa-solid fa-tooth floating-icon icon1"></i>
+<i class="fa-solid fa-heart-pulse floating-icon icon2"></i>
+<i class="fa-solid fa-stethoscope floating-icon icon3"></i>
+
+<!-- ======= PAGE TITLE ======= -->
+<h2 class="page-title">
+    <i class="fa-solid fa-tooth"></i>
+    <span data-i18n="lab_file">Lab File</span>
+</h2>
+
+<!-- ======= LAB INFO BAR ======= -->
+<div id="labViewMode" class="lab-mini-bar">
+    <div class="lab-brand">
+        <div class="lab-icon">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+        </div>
+        <div>
+            <div class="lab-name" id="labName">-</div>
+            <div class="lab-caption" data-i18n="dental_laboratory">Dental Laboratory</div>
+        </div>
+    </div>
+    <div class="lab-meta">
+        <div class="lab-meta-item">
+            <span data-i18n="specialization_label">التخصص</span>
+            <strong id="labSpec">-</strong>
+        </div>
+        <div class="lab-meta-item">
+            <span data-i18n="address_label">العنوان</span>
+            <strong id="labAddress">-</strong>
+        </div>
+        <div class="lab-meta-item">
+            <span data-i18n="phone_label">الهاتف</span>
+            <strong id="labPhone">-</strong>
+        </div>
+    </div>
+    <button class="lab-edit-mini" onclick="enableEditLab()">
+        <i class="fa-solid fa-pen"></i>
+        <span data-i18n="edit">تعديل</span>
+    </button>
+</div>
+
+<!-- ======= LAB EDIT MODE ======= -->
+<div id="labEditMode" class="card glass-card" style="display:none;">
+    <h3 class="card-title" data-i18n="edit_lab_info">✏️ Edit Lab Info</h3>
+    <input id="edit_labName" data-i18n-placeholder="lab_name_placeholder" placeholder="Lab Name">
+    <input id="edit_labSpec" data-i18n-placeholder="specialization_placeholder" placeholder="Specialization">
+    <input id="edit_labAddress" data-i18n-placeholder="address_placeholder" placeholder="Address">
+    <input id="edit_labPhone" data-i18n-placeholder="phone_placeholder" placeholder="Phone">
+    <div class="edit-actions">
+        <button class="green" onclick="saveLabEdit()" data-i18n="save">Save</button>
+        <button class="red" onclick="cancelEditLab()" data-i18n="cancel">Cancel</button>
+    </div>
+</div>
+
+<!-- ======= DIVIDER ======= -->
+<div class="dashboard-divider"></div>
+
+<!-- ======= ADD NEW PROSTHESIS ======= -->
+<details class="modern-details" id="addProsthesisDetails">
+    <summary class="modern-summary">
+        <div class="summary-icon">
+            <i class="fa-solid fa-plus"></i>
+        </div>
+        <div class="summary-content">
+            <strong data-i18n="add_new_prosthesis">Add New Prosthesis</strong>
+            <span data-i18n="add_new_prosthesis_ar">إضافة تركيبة جديدة</span>
+        </div>
+        <i class="fa-solid fa-chevron-down summary-arrow"></i>
+    </summary>
+
+    <div class="prosthesis-form">
+        <!-- Form Header -->
+        <div class="form-header">
+            <div class="form-header-icon">
+                <i class="fa-solid fa-tooth"></i>
+            </div>
+            <div>
+                <h3 data-i18n="new_prosthesis">New Prosthesis</h3>
+                <span data-i18n="new_prosthesis_desc">أدخل بيانات التركيبة الجديدة</span>
+            </div>
+        </div>
+
+        <!-- Patient Info Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fa-solid fa-user"></i>
+                <span data-i18n="case_info">بيانات الحالة</span>
+            </div>
+            <div class="form-grid modern-form-grid">
+                <!-- Doctor -->
+                <div class="modern-field">
+                    <label>
+                        <i class="fa-solid fa-user-doctor"></i>
+                        <span data-i18n="doctor_label">Doctor</span>
+                        <span class="optional-label" data-i18n="optional">(اختياري)</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user-doctor"></i>
+                        <select id="doctorName">
+                            <option value="" data-i18n="select_doctor">اختر الطبيب (اختياري)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Patient -->
+                <div class="modern-field">
+                    <label>
+                        <i class="fa-solid fa-user"></i>
+                        <span data-i18n="patient_label">Patient</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user"></i>
+                        <input id="patientName" type="text" data-i18n-placeholder="patient_name_placeholder" placeholder="Patient Name" autocomplete="off">
+                    </div>
+                    <input type="hidden" id="selectedPatientId">
+                    <div id="patientSuggestions" class="patient-suggestions"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prosthesis Info + Financial Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fa-solid fa-tooth"></i>
+                <span data-i18n="prosthesis_info">بيانات التركيبة</span>
+            </div>
+            <div class="form-grid modern-form-grid">
+                <!-- Work Name -->
+                <div class="modern-field">
+                    <label data-i18n="work_name_label">اسم التركيبة</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-tooth"></i>
+                        <select id="workName" onchange="loadWorkTypes()">
+                            <option value="" data-i18n="select_work">اختر التركيبة</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Work Type -->
+                <div class="modern-field">
+                    <label data-i18n="work_type_label">نوع التركيبة</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <select id="workType" onchange="fillWorkPrices()">
+                            <option value="" data-i18n="select_type">اختر النوع</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Sub-Section -->
+            <div class="section-title financial-subtitle">
+                <i class="fa-solid fa-coins"></i>
+                <span data-i18n="financial_info">البيانات المالية</span>
+            </div>
+            <div class="form-grid modern-form-grid financial-grid">
+                <!-- Lab Cost -->
+                <div class="modern-field">
+                    <label data-i18n="lab_cost_label">حساب المعمل</label>
+                    <div class="input-wrapper money-input">
+                        <i class="fa-solid fa-building"></i>
+                        <input id="labCost" type="number" step="0.01" placeholder="0.00" oninput="calculateWorkTotal()">
+                        <span data-i18n="egp">ج.م</span>
+                    </div>
+                </div>
+
+                <!-- Patient Amount -->
+                <div class="modern-field">
+                    <label data-i18n="patient_cost_label">التكلفة على المريض</label>
+                    <div class="input-wrapper money-input">
+                        <i class="fa-solid fa-money-bill-wave"></i>
+                        <input id="patientAmount" type="number" step="0.01" placeholder="0.00" oninput="calculateWorkTotal()">
+                        <span data-i18n="egp">ج.م</span>
+                    </div>
+                </div>
+
+                <!-- Quantity + Apply Button -->
+                <div class="modern-field">
+                    <label for="workQuantity">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span data-i18n="quantity_label">عدد الوحدات</span>
+                    </label>
+                    <div class="quantity-apply-row">
+                        <div class="quantity-control">
+                            <button type="button" class="quantity-btn" onclick="changeWorkQuantity(-1)">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <input type="number" id="workQuantity" value="1" min="1" step="1" oninput="calculateWorkTotal()">
+                            <button type="button" class="quantity-btn" onclick="changeWorkQuantity(1)">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <button type="button" class="apply-price-btn" onclick="applyTotalPrice()" title="تطبيق السعر الإجمالي">
+                            <i class="fa-solid fa-calculator"></i>
+                            <span data-i18n="apply_price">تطبيق السعر</span>
+                        </button>
+                    </div>
+                    <small class="quantity-help" data-i18n="quantity_help">اضغط "تطبيق السعر" لنقل الإجمالي إلى حقول الأسعار</small>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- Total Summary -->
+        <div class="work-total-summary">
+            <div class="work-total-item">
+                <span data-i18n="lab_cost_total">تكلفة المعمل الإجمالية</span>
+                <strong><span id="labCostTotal">0.00</span></strong>
+            </div>
+            <div class="work-total-item patient-total">
+                <span data-i18n="patient_amount_total">إجمالي المريض</span>
+                <strong><span id="patientAmountTotal">0.00</span></strong>
+            </div>
+        </div>
+
+        <!-- Teeth Selection Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fa-solid fa-tooth"></i>
+                <span data-i18n="related_teeth">الأسنان المرتبطة</span>
+            </div>
+            <div class="modern-field">
+                <label class="tooth-select-label">
+                    <i class="fa-solid fa-tooth"></i>
+                    <span data-i18n="select_tooth">اختر السن</span>
+                    <span class="optional-label" data-i18n="optional">(اختياري)</span>
+                </label>
+
+                <div class="tooth-selector-container">
+                    <!-- Selector Button -->
+                    <button type="button" id="openToothChartBtn" class="tooth-selector-btn" onclick="toggleToothChart()">
+                        <span class="tooth-selector-btn-icon">
+                            <i class="fa-solid fa-tooth"></i>
+                        </span>
+                        <span class="tooth-selector-btn-content">
+                            <strong id="toothSelectorText" data-i18n="select_teeth">اختيار الأسنان</strong>
+                            <small data-i18n="click_tooth_chart">اضغط لعرض مخطط الأسنان</small>
+                        </span>
+                        <i id="toothSelectorArrow" class="fa-solid fa-chevron-down tooth-selector-arrow"></i>
+                    </button>
+
+                    <!-- Selected Tooth Badge -->
+                    <div id="selectedToothBadge" class="selected-tooth-badge" style="display:none;">
+                        <div class="selected-tooth-icon">
+                            <i class="fa-solid fa-tooth"></i>
+                        </div>
+                        <div class="selected-tooth-info">
+                            <span data-i18n="selected_tooth">السن المحدد</span>
+                            <strong id="selectedToothDisplay">-</strong>
+                        </div>
+                        <button type="button" class="remove-tooth-btn" onclick="clearToothSelection()" title="إزالة السن">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <!-- Tooth Chart Panel -->
+                    <div id="toothChartPanel" class="tooth-chart-panel">
+                        <div class="tooth-chart-header">
+                            <div>
+                                <strong data-i18n="tooth_chart">مخطط الأسنان</strong>
+                                <span data-i18n="can_select_multiple">يمكنك اختيار أكثر من سن</span>
+                            </div>
+                            <button type="button" class="close-tooth-chart" onclick="closeToothChart()" title="إغلاق">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="tooth-chart">
+                            <!-- Upper Jaw -->
+                            <div class="jaw upper-jaw">
+                                <div class="quadrant q1">
+                                    <div class="quadrant-label" data-i18n="q1">الربع الأول</div>
+                                    <div class="teeth-row">
+                                        <div class="tooth" data-tooth="1.8" title="1.8 - ضرس العقل العلوي الأيمن">18</div>
+                                        <div class="tooth" data-tooth="1.7" title="1.7 - الضرس الثاني العلوي الأيمن">17</div>
+                                        <div class="tooth" data-tooth="1.6" title="1.6 - الضرس الأول العلوي الأيمن">16</div>
+                                        <div class="tooth" data-tooth="1.5" title="1.5 - الضاحك الثاني العلوي الأيمن">15</div>
+                                        <div class="tooth" data-tooth="1.4" title="1.4 - الضاحك الأول العلوي الأيمن">14</div>
+                                        <div class="tooth" data-tooth="1.3" title="1.3 - الناب العلوي الأيمن">13</div>
+                                        <div class="tooth" data-tooth="1.2" title="1.2 - القاطع الجانبي العلوي الأيمن">12</div>
+                                        <div class="tooth" data-tooth="1.1" title="1.1 - القاطع المركزي العلوي الأيمن">11</div>
+                                    </div>
+                                </div>
+                                <div class="quadrant q2">
+                                    <div class="quadrant-label" data-i18n="q2">الربع الثاني</div>
+                                    <div class="teeth-row">
+                                        <div class="tooth" data-tooth="2.1" title="2.1 - القاطع المركزي العلوي الأيسر">21</div>
+                                        <div class="tooth" data-tooth="2.2" title="2.2 - القاطع الجانبي العلوي الأيسر">22</div>
+                                        <div class="tooth" data-tooth="2.3" title="2.3 - الناب العلوي الأيسر">23</div>
+                                        <div class="tooth" data-tooth="2.4" title="2.4 - الضاحك الأول العلوي الأيسر">24</div>
+                                        <div class="tooth" data-tooth="2.5" title="2.5 - الضاحك الثاني العلوي الأيسر">25</div>
+                                        <div class="tooth" data-tooth="2.6" title="2.6 - الضرس الأول العلوي الأيسر">26</div>
+                                        <div class="tooth" data-tooth="2.7" title="2.7 - الضرس الثاني العلوي الأيسر">27</div>
+                                        <div class="tooth" data-tooth="2.8" title="2.8 - ضرس العقل العلوي الأيسر">28</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Midline -->
+                            <div class="midline"><span data-i18n="midline">خط الوسط</span></div>
+
+                            <!-- Lower Jaw -->
+                            <div class="jaw lower-jaw">
+                                 <div class="quadrant q4">
+                                    <div class="quadrant-label" data-i18n="q4">الربع الرابع</div>
+                                    <div class="teeth-row">
+                                        <div class="tooth" data-tooth="4.1" title="4.1 - القاطع المركزي السفلي الأيمن">41</div>
+                                        <div class="tooth" data-tooth="4.2" title="4.2 - القاطع الجانبي السفلي الأيمن">42</div>
+                                        <div class="tooth" data-tooth="4.3" title="4.3 - الناب السفلي الأيمن">43</div>
+                                        <div class="tooth" data-tooth="4.4" title="4.4 - الضاحك الأول السفلي الأيمن">44</div>
+                                        <div class="tooth" data-tooth="4.5" title="4.5 - الضاحك الثاني السفلي الأيمن">45</div>
+                                        <div class="tooth" data-tooth="4.6" title="4.6 - الضرس الأول السفلي الأيمن">46</div>
+                                        <div class="tooth" data-tooth="4.7" title="4.7 - الضرس الثاني السفلي الأيمن">47</div>
+                                        <div class="tooth" data-tooth="4.8" title="4.8 - ضرس العقل السفلي الأيمن">48</div>
+                                    </div>
+                                </div>
+                                <div class="quadrant q3">
+                                    <div class="quadrant-label" data-i18n="q3">الربع الثالث</div>
+                                    <div class="teeth-row">
+                                        <div class="tooth" data-tooth="3.8" title="3.8 - ضرس العقل السفلي الأيسر">38</div>
+                                        <div class="tooth" data-tooth="3.7" title="3.7 - الضرس الثاني السفلي الأيسر">37</div>
+                                        <div class="tooth" data-tooth="3.6" title="3.6 - الضرس الأول السفلي الأيسر">36</div>
+                                        <div class="tooth" data-tooth="3.5" title="3.5 - الضاحك الثاني السفلي الأيسر">35</div>
+                                        <div class="tooth" data-tooth="3.4" title="3.4 - الضاحك الأول السفلي الأيسر">34</div>
+                                        <div class="tooth" data-tooth="3.3" title="3.3 - الناب السفلي الأيسر">33</div>
+                                        <div class="tooth" data-tooth="3.2" title="3.2 - القاطع الجانبي السفلي الأيسر">32</div>
+                                        <div class="tooth" data-tooth="3.1" title="3.1 - القاطع المركزي السفلي الأيسر">31</div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Teeth Chips -->
+                    <div id="selectedTeethContainer" class="selected-teeth-container"></div>
+                </div>
+
+                <small class="tooth-help-text">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span data-i18n="can_save_without_tooth">يمكنك حفظ التركيبة بدون تحديد سن</span>
+                </small>
+
+                <input type="hidden" id="toothNumber" value="">
+            </div>
+        </div>
+ <!-- Delivery Date -->
+                <div class="modern-field">
+                    <label data-i18n="delivery_date">موعد التسليم</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <input id="deliveryDate" type="date">
+                    </div>
+                </div>
+        <!-- Notes Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fa-solid fa-note-sticky"></i>
+                <span data-i18n="notes_label">ملاحظات</span>
+            </div>
+            <div class="modern-field">
+                <div class="input-wrapper textarea-wrapper">
+                    <i class="fa-solid fa-pen"></i>
+                    <textarea id="notes" data-i18n-placeholder="notes_placeholder" placeholder="Shade, occlusion, special instructions..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Footer -->
+        <div class="form-footer">
+            <button type="button" class="save-prosthesis-btn" onclick="saveWork()">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span data-i18n="save_prosthesis">Save Prosthesis</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+</details>
+<!-- ======= DIVIDER ======= -->
+<div class="dashboard-divider"></div>
+
+<!-- ======= DASHBOARD ======= -->
+<div class="analytics-section">
+    <div class="dashboard-date-filter">
+        <div class="date-filter-title">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span data-i18n="report_filter">فلترة التقرير</span>
+        </div>
+        <div class="date-filter-fields">
+            <div class="date-field">
+                <label data-i18n="from_date_label">من تاريخ</label>
+                <input type="date" id="dashboardStartDate">
+            </div>
+            <div class="date-field">
+                <label data-i18n="to_date_label">إلى تاريخ</label>
+                <input type="date" id="dashboardEndDate">
+            </div>
+            <button type="button" onclick="loadDashboard()" class="date-filter-btn">
+                <i class="fa-solid fa-filter"></i>
+                <span data-i18n="31">تطبيق</span>
+            </button>
+            <button type="button" onclick="resetDashboardFilter()" class="date-reset-btn">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span data-i18n="all">الكل</span>
+            </button>
+        </div>
+            <div class="section-heading">
+        <div>
+            <span class="section-kicker" data-i18n="lab_overview">LAB OVERVIEW</span>
+            <h3><i class="fa-solid fa-chart-simple"></i> <span data-i18n="lab_statistics">إحصائيات المعمل</span></h3>
+        </div>
+        <span class="analytics-live">
+            <i class="fa-solid fa-circle"></i>
+            <span data-i18n="live">Live</span>
+        </span>
+    </div>
+
+    <div id="dash" class="analytics-grid"></div>
+    </div>
+</div>
+
+<!-- ======= DIVIDER ======= -->
+<div class="dashboard-divider"></div>
+
+<!-- ======= WORKS HISTORY ======= -->
+<div class="works-section">
+    <div class="works-header">
+        <div>
+            <span class="section-kicker" data-i18n="work_history">WORK HISTORY</span>
+            <h3><i class="fa-solid fa-layer-group"></i> <span data-i18n="works_history">سجل التركيبات</span></h3>
+        </div>
+        <span id="worksCount" class="works-count">-</span>
+    </div>
+
+    <div class="search-modern">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="workSearch" data-i18n-placeholder="search_works_placeholder" placeholder="ابحث عن مريض أو تركيبة..." oninput="loadWorks()">
+    </div>
+
+    <div id="worksContainer"></div>
+</div>
+
+
+<!-- =====================================================
+     DENTIX PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">الرئيسية</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">الزيارات</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">إضافة مريض</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">ملفات المرضى</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">المزيد</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    المزيد
+                </h3>
+
+                <p data-i18n="103">
+                    أدوات وإدارة النظام
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        الفواتير
+                    </strong>
+
+                    <span data-i18n="105">
+                        إدارة الفواتير
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        المخزون
+                    </strong>
+
+                    <span data-i18n="107">
+                        المخزون والمشتريات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        المعامل
+                    </strong>
+
+                    <span data-i18n="109">
+                        أعمال المعمل
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        الأطباء
+                    </strong>
+
+                    <span data-i18n="111">
+                        إدارة الأطباء
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        المطبوعات
+                    </strong>
+
+                    <span data-i18n="113">
+                        الوصفات والمطبوعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        إدارة الأدوية والجرعات
+                    </strong>
+
+                    <span data-i18n="115">
+                        إدارة الأدوية وحساب الجرعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        التقارير
+                    </strong>
+
+                    <span data-i18n="117">
+                        الإحصاءات والأرباح
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        التسعير
+                    </strong>
+
+                    <span data-i18n="119">
+                        إدارة أسعار الخدمات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ======= SCRIPTS ======= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/confirm-modal.js"></script>
+<script src="js/lab_file.js"></script>
+
+</body>
+</html>

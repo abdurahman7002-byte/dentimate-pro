@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dentix Clinics</title>
+
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#0f172a">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet" href="css/index.css">
+
+</head>
+
+<body>
+
+<div class="wrapper">
+
+    <div class="hero-card">
+
+        <div class="logo">
+            🦷
+        </div>
+
+        <h1>Dentix</h1>
+
+        <div class="subtitle">
+            ابحث عن عيادتك أو قم بإدارة عيادتك بسهولة
+        </div>
+
+    </div>
+
+    <div class="search-card">
+
+        <button
+            class="nearby-btn"
+            onclick="findNearbyClinics()"
+        >
+            <i class="fa-solid fa-location-crosshairs"></i>
+            اقرب العيادات لك (قم بتفعيل موقعك)  
+        </button>
+
+        <div class="section-title">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            البحث عن عيادة
+        </div>
+
+        <div class="search-box">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="ابحث باسم العيادة أو العنوان..."
+            >
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+        </div>
+
+        <div
+            id="resultsContainer"
+            class="results"
+        ></div>
+
+    </div>
+
+    <div class="login-card">
+
+        <span>
+            لديك عيادة؟
+        </span>
+
+        <button
+            class="login-btn"
+            onclick="location.href='login.html'"
+        >
+            <i class="fa-solid fa-right-to-bracket"></i>
+            تسجيل الدخول
+        </button>
+
+    </div>
+
+</div>
+
+<footer>
+
+    <div class="footer-section" id="aboutme">
+
+        <h3>Dentix</h3>
+
+        <p>
+            منصة لإدارة العيادات الطبية وعرض صفحات العيادات
+            وحجز المواعيد بسهولة.
+        </p>
+
+    </div>
+
+    <div class="footer-section" id="contact-me">
+
+        <h3>تواصل معنا</h3>
+
+        <p>
+            <a href="mailto:abdurahman7002@gmail.com">
+                📧 abdurahman7002@gmail.com
+            </a>
+        </p>
+
+        <p>
+            <a href="tel:+201107076164">
+                📞 +20 110 707 6164
+            </a>
+        </p>
+
+        <a
+            href="https://wa.me/201107076164"
+            target="_blank"
+            class="whatsapp-contact"
+        >
+            <img
+                src="https://cdn-icons-png.flaticon.com/512/733/733585.png"
+                alt="WhatsApp"
+            >
+
+            <span>WhatsApp</span>
+
+        </a>
+
+    </div>
+
+    <div class="footer-bottom">
+
+        © 2026 Dentix - جميع الحقوق محفوظة
+
+    </div>
+
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/index.js"></script>
+
+</body>
+</html>

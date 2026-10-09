@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Clinic Login</title>
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+        <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+
+<link rel="stylesheet" href="css/login.css">
+
+</head>
+
+<body>
+<!-- HEADER -->
+
+<div class="hero-header">
+
+    <div class="hero-logo">
+
+        <i class="fa-solid fa-tooth"></i>
+
+    </div>
+
+    <h1>Dentimate Pro</h1>
+
+    <p>
+        منصة إدارة العيادات الطبية الحديثة
+    </p>
+
+</div>
+
+<!-- FLOATING ICONS -->
+
+<i class="fa-solid fa-tooth floating-icon icon1"></i>
+<i class="fa-solid fa-stethoscope floating-icon icon2"></i>
+<i class="fa-solid fa-user-doctor floating-icon icon3"></i>
+
+<!-- LOGIN CARD -->
+
+<div class="login-card">
+
+    
+
+    <h2>تسجيل الدخول</h2>
+
+    <p class="subtitle">
+        قم بتسجيل الدخول لإدارة بيانات العيادة والحجوزات
+    </p>
+
+    <!-- EMAIL -->
+
+    <div class="input-group">
+
+        <i class="fa-solid fa-envelope"></i>
+
+        <input 
+            id="email" 
+            type="email"
+            placeholder="Enter your email"
+        >
+
+    </div>
+
+    <!-- PASSWORD -->
+
+    <div class="input-group">
+
+        <i class="fa-solid fa-lock"></i>
+
+        <input 
+            id="password" 
+            type="password" 
+            placeholder="Enter your password"
+        >
+
+    </div>
+
+    <!-- BUTTON -->
+
+    <button onclick="login()">
+
+        <i class="fa-solid fa-right-to-bracket"></i>
+        Login
+
+    </button>
+    
+
+</div>
+
+<button
+    type="button"
+    class="back-home-btn"
+    onclick="location.href='index.html'"
+>
+    <i class="fa-solid fa-magnifying-glass"></i>
+   Back
+</button>
+
+
+<footer>
+
+    <div class="footer-section" id="aboutme">
+
+        <h3>Dentimate PRO</h3>
+
+        <p>
+            منصة لإدارة العيادات الطبية وعرض صفحات العيادات
+            وحجز المواعيد بسهولة.
+        </p>
+
+    </div>
+
+    <div class="footer-section" id="contact-me">
+
+        <h3>تواصل معنا</h3>
+
+        <p>
+            <a href="mailto:abdurahman7002@gmail.com">
+                📧 abdurahman7002@gmail.com
+            </a>
+        </p>
+
+        <p>
+            <a href="tel:+201107076164">
+                📞 +20 110 707 6164
+            </a>
+        </p>
+
+        <a
+            href="https://wa.me/201107076164"
+            target="_blank"
+            class="whatsapp-contact"
+        >
+            <img
+                src="https://cdn-icons-png.flaticon.com/512/733/733585.png"
+                alt="WhatsApp"
+            >
+
+            <span>WhatsApp</span>
+
+        </a>
+
+    </div>
+
+    <div class="footer-bottom">
+
+        © 2026 Dentimate - جميع الحقوق محفوظة
+
+    </div>
+
+</footer>
+
+<!-- SUPABASE -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/supabase.js"></script>
+
+<script>
+
+async function login(){
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if(!email || !password){
+        alert("Please enter email and password");
+        return;
+    }
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if(error){
+        alert(error.message);
+        return;
+    }
+
+    showToast("Logged in successfully");
+
+    // 🔥 تأكد أن session اتسجل فعلاً قبل التحويل
+    const { data: sessionData } =
+        await supabaseClient.auth.getSession();
+
+    if(sessionData?.session){
+
+        // slight delay to ensure storage sync (important for Redmi/low-end devices)
+        setTimeout(() => {
+            window.location.replace("dashboard.html");
+        }, 500);
+
+    } else {
+
+        // fallback safety
+        setTimeout(() => {
+            window.location.replace("dashboard.html");
+        }, 1200);
+    }
+}
+// toast 
+function showToast(message){
+    const toast = document.getElementById("toast");
+
+    toast.innerText = message;
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+<!-- toast  -->
+<div id="toast" class="toast"></div>
+
+</body>
+</html>

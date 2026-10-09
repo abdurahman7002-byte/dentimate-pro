@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title data-i18n="328">Doctor File</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet" href="css/doctor_file.css">
+<link rel="stylesheet" href="css/notification.css">
+
+</head>
+
+<body>
+  <!-- FLOATING ICONS -->
+    <i class="fa-solid fa-tooth floating-icon icon1"></i>
+    <i class="fa-solid fa-heart-pulse floating-icon icon2"></i>
+    <i class="fa-solid fa-stethoscope floating-icon icon3"></i>
+
+<div class="container">
+
+<!-- =========================
+     TITLE
+========================= -->
+
+<div
+    class="page-title"
+    style="
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:12px;
+        font-size:32px;
+        font-weight:900;
+        color:white;
+        margin:20px 0;
+    "
+>
+
+    <i
+        class="fa-solid fa-user-doctor"
+        style="
+            color:#38bdf8;
+            font-size:28px;
+        "
+    ></i>
+
+    <span data-i18n="328">DOCTOR FILE</span>
+
+</div>
+
+
+
+
+<!-- =====================================================
+     DOCTOR PROFILE
+===================================================== -->
+
+<div class="doctor-profile-card">
+
+    <!-- TOP -->
+    <div class="doctor-profile-top">
+
+        <div class="doctor-avatar">
+            <i class="fa-solid fa-user-doctor"></i>
+        </div>
+
+        <div class="doctor-main-info">
+
+            <div class="doctor-name-row">
+
+                <h1 id="doctorTitle" data-i18n="329">
+                    Doctor Name
+                </h1>
+
+                <span class="doctor-status">
+                    <i class="fa-solid fa-circle"></i>
+                    <span data-i18n="331">Active</span>
+                </span>
+
+            </div>
+
+            <p id="doctorSpecialization" data-i18n="330">
+                Specialization
+            </p>
+
+        </div>
+
+        <button
+            class="doctor-edit-btn"
+            onclick="openDoctorEditModal()"
+        >
+            <i class="fa-solid fa-pen"></i>
+            <span data-i18n="332">Edit Profile</span>
+        </button>
+
+    </div>
+
+
+    <!-- DIVIDER -->
+    <div class="doctor-divider"></div>
+
+
+    <!-- INFORMATION -->
+    <div class="doctor-details-grid">
+
+        <!-- PHONE -->
+        <div class="doctor-detail-item">
+
+            <div class="doctor-detail-icon">
+                <i class="fa-solid fa-phone"></i>
+            </div>
+
+            <div>
+                <span class="doctor-detail-label" data-i18n="333">
+                    Phone
+                </span>
+
+                <strong id="doctorPhone">
+                    -
+                </strong>
+            </div>
+
+        </div>
+
+
+        <!-- AGE -->
+        <div class="doctor-detail-item">
+
+            <div class="doctor-detail-icon">
+                <i class="fa-solid fa-cake-candles"></i>
+            </div>
+
+            <div>
+                <span class="doctor-detail-label" data-i18n="334">
+                    Age
+                </span>
+
+                <strong id="doctorAge">
+                    -
+                </strong>
+            </div>
+
+        </div>
+
+
+        <!-- ADDRESS -->
+        <div class="doctor-detail-item doctor-detail-wide">
+
+            <div class="doctor-detail-icon">
+                <i class="fa-solid fa-location-dot"></i>
+            </div>
+
+            <div>
+                <span class="doctor-detail-label" data-i18n="335">
+                    Address
+                </span>
+
+                <strong id="doctorAddress">
+                    -
+                </strong>
+            </div>
+
+        </div>
+
+
+        <!-- REGISTERED -->
+        <div class="doctor-detail-item">
+
+            <div class="doctor-detail-icon">
+                <i class="fa-solid fa-calendar-plus"></i>
+            </div>
+
+            <div>
+                <span class="doctor-detail-label" data-i18n="336">
+                    Registered At
+                </span>
+
+                <strong id="doctorCreatedAt">
+                    -
+                </strong>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- DANGER ZONE -->
+    <div class="doctor-danger-zone">
+
+        <div>
+
+            <strong data-i18n="337">
+                Doctor Account
+            </strong>
+
+            <span data-i18n="338">
+                Permanently remove this doctor from the clinic.
+            </span>
+
+        </div>
+
+        <button
+            class="doctor-danger-btn"
+            onclick="deleteDoctor()"
+        >
+            <i class="fa-solid fa-trash"></i>
+            <span data-i18n="339">Delete Doctor</span>
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     EDIT DOCTOR MODAL
+===================================================== -->
+
+<div
+    id="doctorEditModal"
+    class="doctor-modal-overlay"
+>
+
+    <div class="doctor-modal">
+
+        <!-- =================================================
+             MODAL HEADER
+        ================================================= -->
+
+        <div class="doctor-modal-header">
+
+            <div>
+
+                <span class="doctor-modal-kicker" data-i18n="340">
+                    DOCTOR PROFILE
+                </span>
+
+                <h2 data-i18n="341">
+                    Edit Doctor Information
+                </h2>
+
+                <p data-i18n="342">
+                    Update the doctor's personal and professional information.
+                </p>
+
+            </div>
+
+
+            <button
+                class="doctor-modal-close"
+                onclick="closeDoctorEditModal()"
+                type="button"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             FORM
+        ================================================= -->
+
+        <div class="doctor-form-grid">
+
+
+            <!-- =================================================
+                 NAME
+            ================================================= -->
+
+            <div class="doctor-field doctor-field-full">
+
+                <label for="doctor_name" data-i18n="343">
+                    Doctor Name
+                </label>
+
+
+                <div class="doctor-input-wrapper">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                    <input
+                        id="doctor_name"
+                        type="text"
+                        data-i18n-placeholder="344"
+                        placeholder="Enter doctor name"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 SPECIALIZATION
+            ================================================= -->
+
+            <div class="doctor-field doctor-field-full">
+
+                <label for="specialization" data-i18n="345">
+                    Specialization
+                </label>
+
+
+                <div class="doctor-input-wrapper">
+
+                    <i class="fa-solid fa-stethoscope"></i>
+
+                    <input
+                        id="specialization"
+                        type="text"
+                        data-i18n-placeholder="346"
+                        placeholder="Enter specialization"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 DATE OF BIRTH
+            ================================================= -->
+
+            <div class="doctor-field">
+
+                <label for="doctorBirthDate" data-i18n="347">
+                    Date of Birth
+                </label>
+
+
+                <div class="doctor-input-wrapper">
+
+                    <i class="fa-solid fa-cake-candles"></i>
+
+                    <input
+                        id="doctorBirthDate"
+                        type="date"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 PHONE
+            ================================================= -->
+
+            <div class="doctor-field">
+
+                <label for="phone" data-i18n="333">
+                    Phone
+                </label>
+
+
+                <div class="doctor-input-wrapper">
+
+                    <i class="fa-solid fa-phone"></i>
+
+                    <input
+                        id="phone"
+                        type="text"
+                        data-i18n-placeholder="349"
+                        placeholder="Phone number"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 ADDRESS
+            ================================================= -->
+
+            <div class="doctor-field doctor-field-full">
+
+                <label for="address" data-i18n="335">
+                    Address
+                </label>
+
+
+                <div
+                    class="doctor-input-wrapper doctor-input-textarea"
+                >
+
+                    <i class="fa-solid fa-location-dot"></i>
+
+                    <textarea
+                        id="address"
+                        data-i18n-placeholder="351"
+                        placeholder="Enter address"
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             ACTIONS
+        ================================================= -->
+
+        <div class="doctor-modal-actions">
+
+            <button
+                class="doctor-cancel-btn"
+                onclick="closeDoctorEditModal()"
+                type="button"
+                data-i18n="352"
+            >
+
+                Cancel
+
+            </button>
+
+
+            <button
+                class="doctor-save-btn"
+                onclick="saveDoctorEdit()"
+                type="button"
+            >
+
+                <i class="fa-solid fa-check"></i>
+
+                <span data-i18n="353">Save Changes</span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================
+DOCTOR DASHBOARD
+========================= -->
+
+<div class="card">
+
+<h2>
+<i class="fa-solid fa-chart-line"></i>
+<span data-i18n="354">Doctor Dashboard</span>
+</h2>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+
+    <div class="dash-card">
+       <div data-i18n="355">Services</div>
+<h3 id="totalWorks">0</h3>
+    </div>
+
+    <div class="dash-card">
+<div data-i18n="356">Service Amount</div>
+<h3 id="totalCost">0 EGP</h3>
+    </div>
+
+    <div class="dash-card">
+        <div data-i18n="357">Doctor Profit</div>
+        <h3 id="totalProfit">0 EGP</h3>
+    </div>
+
+</div>
+
+</div>
+
+<!-- =========================
+     DOCTOR SERVICES
+========================= -->
+
+<div class="card">
+
+    <h2>
+        <i class="fa-solid fa-clipboard-list"></i>
+        <span data-i18n="358">Doctor Services</span>
+    </h2>
+
+    <p style="
+        color:#94a3b8;
+        font-size:13px;
+        margin-bottom:15px;
+    " data-i18n="359">
+        All services provided to patients and assigned to this doctor appear here automatically.
+    </p>
+
+    <div id="worksContainer"></div>
+
+</div>
+
+<!-- =====================================================
+     DOCTOR PAYMENTS
+===================================================== -->
+
+<div class="card doctor-payments-card">
+
+    <div class="doctor-section-header">
+
+        <div>
+
+            <h2>
+
+                <i class="fa-solid fa-money-bill-transfer"></i>
+
+                <span data-i18n="360">Doctor Payments</span>
+
+            </h2>
+
+            <p data-i18n="361">
+                Record and track amounts paid to the doctor
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="primary-btn doctor-payment-btn"
+            onclick="openDoctorPaymentModal()"
+        >
+
+            <i class="fa-solid fa-plus"></i>
+
+            <span data-i18n="362">Add Payment</span>
+
+        </button>
+
+    </div>
+
+
+    <!-- =================================================
+         PAYMENT SUMMARY
+    ================================================== -->
+
+    <div class="doctor-payment-summary">
+
+        <div class="payment-summary-item">
+
+            <span data-i18n="363">
+                Total Doctor Due
+            </span>
+
+            <strong id="doctorTotalDue">
+                0.00 EGP
+            </strong>
+
+        </div>
+
+
+        <div class="payment-summary-item">
+
+            <span data-i18n="364">
+                Total Paid to Doctor
+            </span>
+
+            <strong id="doctorTotalPaid">
+                0.00 EGP
+            </strong>
+
+        </div>
+
+
+        <div class="payment-summary-item">
+
+            <span data-i18n="365">
+                Remaining for Doctor
+            </span>
+
+            <strong id="doctorTotalRemaining">
+                0.00 EGP
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         PAYMENTS TABLE
+    ================================================== -->
+
+    <div
+        id="doctorPaymentsContainer"
+        class="doctor-payments-container"
+    >
+
+        <div class="doctor-loading">
+
+            <i class="fa-solid fa-spinner fa-spin"></i>
+
+            <span data-i18n="366">Loading payments...</span>
+
+        </div>
+
+    </div>
+
+</div>
+<button type="button" class="print-doctor-report-btn" onclick="printDoctorReport()">
+    <i class="fa-solid fa-print"></i>
+    <span data-i18n="367">Print Doctor Report</span>
+</button>
+
+
+<!-- =====================================================
+     DENTIX PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">Home</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">Visits</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">Add Patient</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">Patient Files</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">More</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    More
+                </h3>
+
+                <p data-i18n="103">
+                    Manage System
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        Invoices
+                    </strong>
+
+                    <span data-i18n="105">
+                        Manage Clinic Invoices
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        Storage
+                    </strong>
+
+                    <span data-i18n="107">
+                        Clinic Storage and Purchases
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        Labs
+                    </strong>
+
+                    <span data-i18n="109">
+                        Manage Labs and Prosthesis
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        Doctors
+                    </strong>
+
+                    <span data-i18n="111">
+                        Manage Doctors
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        Prints
+                    </strong>
+
+                    <span data-i18n="113">
+                        Print prescriptions, consents and instructions
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        Drugs and Doses
+                    </strong>
+
+                    <span data-i18n="115">
+                        Manage drugs and calculate doses
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        Reports
+                    </strong>
+
+                    <span data-i18n="117">
+                        Detailed Clinic Reports
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        Prices and Departments
+                    </strong>
+
+                    <span data-i18n="119">
+                        Price clinic services, prosthesis and add departments
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     SCRIPTS
+========================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/confirm-modal.js"></script>
+<script src="js/doctor_file.js"></script>
+
+
+<!-- =====================================================
+     DOCTOR PAYMENT MODAL
+===================================================== -->
+
+<div
+    id="doctorPaymentModal"
+    class="doctor-payment-modal"
+    style="display:none;"
+>
+
+    <div class="doctor-payment-modal-content">
+
+        <div class="doctor-payment-modal-header">
+
+            <div>
+
+                <h3>
+
+                    <i class="fa-solid fa-money-bill-wave"></i>
+
+                    <span data-i18n="368">Add Doctor Payment</span>
+
+                </h3>
+
+                <p data-i18n="369">
+                    Record a new payment
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="doctor-payment-close"
+                onclick="closeDoctorPaymentModal()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <div class="doctor-payment-form">
+
+            <div class="service-field">
+
+                <label data-i18n="370">
+                    Amount
+                </label>
+
+                <div class="service-input-wrapper">
+
+                    <input
+                        type="number"
+                        id="doctorPaymentAmount"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                    >
+
+                    <span>
+                        EGP
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="service-field">
+
+                <label data-i18n="371">
+                    Payment Date
+                </label>
+
+                <input
+                    type="datetime-local"
+                    id="doctorPaymentDate"
+                >
+
+            </div>
+
+
+            <div class="service-field">
+
+                <label data-i18n="271">
+                    Notes
+                </label>
+
+                <textarea
+                    id="doctorPaymentNote"
+                    rows="3"
+                    data-i18n-placeholder="373"
+                    placeholder="Payment notes..."
+                ></textarea>
+
+            </div>
+
+
+            <div class="doctor-payment-form-actions">
+
+<button
+    type="button"
+    id="saveDoctorPaymentBtn"
+    onclick="saveDoctorPayment(event)"
+>
+    <i class="fa-solid fa-check"></i>
+    <span data-i18n="374">Save Payment</span>
+</button>
+
+                <button
+                    type="button"
+                    class="secondary-btn"
+                    onclick="closeDoctorPaymentModal()"
+                    data-i18n="352"
+                >
+
+                    Cancel
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+</body>
+
+</html>

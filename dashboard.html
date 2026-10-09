@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="225">Clinic Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/notification.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/duration-slider.css">
+
+
+
+</head>
+
+<body>
+  <!-- FLOATING ICONS -->
+    <i class="fa-solid fa-tooth floating-icon icon1"></i>
+    <i class="fa-solid fa-heart-pulse floating-icon icon2"></i>
+    <i class="fa-solid fa-stethoscope floating-icon icon3"></i>
+
+<div class="container">
+
+   <div class="dashboard-header">
+
+    <div class="header-glow header-glow-1"></div>
+    <div class="header-glow header-glow-2"></div>
+
+    <div class="header-content">
+
+        <!-- =========================
+             LEFT
+        ========================= -->
+
+
+<div class="header-left">
+
+    <div class="clinic-welcome-badge">
+        <span class="welcome-icon">
+            <i class="fa-solid fa-tooth"></i>
+        </span>
+        <span>DENTIMATE PRO</span>
+        <span class="welcome-dot"></span>
+        <span class="welcome-label" data-i18n="dashboard.title">Clinic Management</span>
+    </div>
+
+    <div class="clinic-welcome-text">
+
+        <span data-i18n="welcome" class="welcome-small">
+            welcome to
+        </span>
+
+        <h1 data-i18n="your.clinic" id="dashboardClinicName">
+            your clinic
+        </h1>
+
+        <div class="welcome-description">
+            <i class="fa-solid fa-sparkles"></i>
+            <span data-i18n="dashboard.subtitle">
+                Manage your clinic, patients, appointments and digital services from one place.
+            </span>
+        </div>
+
+        <!-- مؤشر حالة النظام (جديد) -->
+        <div class="clinic-status">
+            <span class="status-pulse"></span>
+            <span data-i18n="1">System works efficiently</span>
+        </div>
+
+    </div>
+
+</div>
+
+        <!-- =========================
+             RIGHT ACTIONS
+        ========================= -->
+
+        <div class="header-actions">
+
+
+            <!-- NOTIFICATIONS -->
+
+            <div class="notification-wrapper">
+
+                <button
+                    type="button"
+                    class="notification-bell"
+                    onclick="toggleNotifications()"
+                    aria-label="Notifications"
+                >
+
+                    <i class="fa-solid fa-bell"></i>
+
+                    <span
+                        id="notificationCount"
+                        class="notification-count"
+                        style="display:none;"
+                    >
+                        0
+                    </span>
+
+                </button>
+
+
+                <div
+                    id="notificationsPanel"
+                    class="notifications-panel"
+                >
+
+                    <div class="notifications-header">
+
+                        <div class="notifications-title">
+
+                            <span class="notifications-title-icon">
+                                <i class="fa-solid fa-bell"></i>
+                            </span>
+
+                            <span data-i18n="2">
+                                Notifications
+                            </span>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            onclick="markAllNotificationsRead()"
+                            class="mark-all-btn"
+                            data-i18n="3"
+                        >
+                            Mark all as read
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="notificationsContainer"
+                        class="notifications-container"
+                    >
+
+                        <div class="no-notifications">
+
+                            <i class="fa-regular fa-bell-slash"></i>
+
+                            <span data-i18n="4">
+                                No notifications
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CLINIC PAGE -->
+
+            <button
+                type="button"
+                class="clinic-page-btn"
+                onclick="openClinicPage()"
+            >
+
+                <span class="action-icon">
+                    <i class="fa-solid fa-globe"></i>
+                </span>
+
+                <span data-i18n="5">
+                    Clinic Page
+                </span>
+
+            </button>
+
+
+            <!-- LOGOUT -->
+
+            <button
+                type="button"
+                onclick="logout()"
+                class="logout-btn"
+            >
+
+                <span class="action-icon">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </span>
+
+                <span data-i18n="6">
+                    Log Out
+                </span>
+
+            </button>
+
+        </div>
+<div class="system-preferences">
+
+    <button
+        type="button"
+        id="languageToggle"
+        class="preference-btn"
+        onclick="toggleLanguage()"
+    >
+        <i class="fa-solid fa-language"></i>
+
+        <span id="languageToggleText" data-i18n="239">
+            Arabic
+        </span>
+    </button>
+
+
+    <button
+        type="button"
+        id="themeToggle"
+        class="preference-btn"
+        onclick="toggleTheme()"
+    >
+
+        <i
+            id="themeToggleIcon"
+            class="fa-solid fa-moon"
+        ></i>
+
+        <span id="themeToggleText" data-i18n="240">
+            Dark Mode
+        </span>
+
+    </button>
+
+</div>
+    </div>
+
+</div>
+
+<!-- فاصل  -->
+<div class="dashboard-divider"></div>
+
+    <div class="card" class="appointment-requests-section">
+
+    <div class="section-header">
+
+        <h2 class="section-title">
+            <i class="fa-solid fa-calendar-check"></i>
+            <span data-i18n="7">Appointment Requests</span>
+        </h2>
+
+    </div>
+
+    <div
+    id="appointmentRequestsContainer"
+    class="appointment-requests-scroll">
+</div>
+
+</div>
+
+<!-- فاصل  -->
+<div class="dashboard-divider"></div>
+
+
+
+<div class="dashboard-card">
+    <h2 class="section-title" style="margin-bottom:20px; color:#114dcfe7;">
+        <i class="fa-solid fa-screwdriver-wrench"></i>
+        <span data-i18n="8">Upcoming Lab Deliveries</span>
+    </h2>
+
+    <div class="card"> 
+
+    <div id="deliveryReminders" class="delivery-reminders-scroll"></div>
+
+    </div>
+
+
+    <!-- فاصل  -->
+<div class="dashboard-divider"></div>
+
+
+
+    <!-- APPOINTMENTS -->
+
+    <div class="card" id="appointmentssContainer">
+
+
+
+
+
+
+        <h2 class="section-title" style="margin-bottom:20px; color:#1e72d3;">
+            <i class="fa-solid fa-calendar-check"></i>
+            <span data-i18n="9">Upcoming Appointments</span>
+        </h2>
+
+
+<!-- =========================================================
+     APPOINTMENTS CONTROLS
+========================================================= -->
+
+
+
+
+<!-- =========================================================
+     DATE & DEPARTMENT FILTER
+========================================================= -->
+
+<div class="appointments-filter">
+
+
+    <!-- YESTERDAY -->
+
+    <button data-i18n="10"
+        onclick="loadAppointments('yesterday', this)"
+    >
+
+        Yesterday
+
+    </button>
+
+
+
+    <!-- TODAY -->
+
+    <button data-i18n="11"
+        onclick="loadAppointments('today', this)"
+        class="active"
+    >
+
+        Today
+
+    </button>
+
+
+
+    <!-- TOMORROW -->
+
+    <button data-i18n="12"
+        onclick="loadAppointments('tomorrow', this)"
+    >
+
+        Tomorrow
+
+    </button>
+
+
+
+    <!-- 3 DAYS -->
+
+    <button data-i18n="13"
+        onclick="loadAppointments('3days', this)"
+    >
+
+        Within 3 Days
+
+    </button>
+
+
+
+    <!-- WEEK -->
+
+    <button data-i18n="14"
+        onclick="loadAppointments('week', this)"
+    >
+
+        Within a Week
+
+    </button>
+
+
+
+    <!-- UPCOMING -->
+
+    <button data-i18n="15"
+        onclick="loadAppointments('upcoming', this)"
+    >
+
+        All Upcoming
+
+    </button>
+
+
+
+    <!-- DEPARTMENT -->
+
+    <div class="department-filter-wrapper">
+
+        <select
+            id="departmentFilter"
+            class="department-filter"
+        >
+
+            <option data-i18n="16" value="all">
+
+                All Departments
+
+            </option>
+
+        </select>
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =========================================================
+     VISIT STATUS FILTER
+========================================================= -->
+
+<div class="badge-filter-card">
+
+
+    <!-- HEADER -->
+
+    <div class="badge-filter-header">
+
+        <div class="badge-filter-title">
+
+            <i class="fa-solid fa-filter"></i>
+
+            <span data-i18n="17">Filter by Visit Status</span>
+
+        </div>
+
+
+        <span data-i18n="18" class="badge-filter-subtitle">
+
+            Filter appointments by badge
+
+        </span>
+
+    </div>
+
+
+
+    <!-- STATUS BUTTONS -->
+
+    <div class="badge-filter-buttons">
+
+
+        <!-- ALL -->
+
+        <button
+            class="badge-filter-btn active"
+            data-badge-filter="all"
+            onclick="setBadgeFilter('all', this)"
+        >
+
+            <i class="fa-solid fa-layer-group"></i>
+
+            <span data-i18n="19">All Visits</span>
+
+        </button>
+
+
+
+        <!-- UPCOMING -->
+
+        <button
+            class="badge-filter-btn"
+            data-badge-filter="upcoming"
+            onclick="setBadgeFilter('upcoming', this)"
+        >
+
+            <i class="fa-solid fa-calendar-plus"></i>
+
+            <span data-i18n="234">Upcoming Visit</span>
+
+        </button>
+
+
+
+        <!-- PENDING -->
+
+        <button
+            class="badge-filter-btn"
+            data-badge-filter="pending"
+            onclick="setBadgeFilter('pending', this)"
+        >
+
+            <i class="fa-solid fa-clock"></i>
+
+            <span data-i18n="235">Pending Confirmation</span>
+
+        </button>
+
+
+
+        <!-- NOW -->
+
+        <button
+            class="badge-filter-btn"
+            data-badge-filter="now"
+            onclick="setBadgeFilter('now', this)"
+        >
+
+            <i class="fa-solid fa-circle-play"></i>
+
+            <span data-i18n="236">Now Visit</span>
+
+        </button>
+
+
+
+        <!-- FINISHED -->
+
+        <button
+            class="badge-filter-btn"
+            data-badge-filter="finished"
+            onclick="setBadgeFilter('finished', this)"
+        >
+
+            <i class="fa-solid fa-check-circle"></i>
+
+            <span data-i18n="237">Finished Visit</span>
+
+        </button>
+
+
+
+        <!-- MISSED -->
+
+        <button
+            class="badge-filter-btn"
+            data-badge-filter="missed"
+            onclick="setBadgeFilter('missed', this)"
+        >
+
+            <i class="fa-solid fa-clock-rotate-left"></i>
+
+            <span data-i18n="238">Missed Visit</span>
+
+        </button>
+
+
+    </div>
+
+
+</div>
+        <div class="appointments-scroll">
+    <div id="appointmentsContainer"></div>
+</div>
+<div class="appointments-primary-action">
+
+    <button
+        type="button"
+        onclick="openAddVisitModal()"
+        class="add-visit-btn"
+    >
+
+        <i class="fa-solid fa-calendar-plus"></i>
+
+        <span data-i18n="20">Book New Visit</span>
+
+    </button>
+
+</div>
+
+<!-- قسم الإجراءات السريعة -->
+<div class="quick-actions-bar">
+
+    <button type="button" class="quick-action-btn action-day" onclick="openSingleDayAppointments()">
+        <div class="quick-action-icon">
+            <i class="fa-solid fa-calendar-day"></i>
+        </div>
+        <div class="quick-action-text">
+            <strong data-i18n="21">Search Day Visits</strong>
+            <span data-i18n="22">View a Single Day's Visits</span>
+        </div>
+    </button>
+
+    <button type="button" class="quick-action-btn action-screen" onclick="window.location.href='waiting.html'">
+        <div class="quick-action-icon">
+            <i class="fa-solid fa-display"></i>
+        </div>
+        <div class="quick-action-text">
+            <strong data-i18n="23">Waiting Screen</strong>
+            <span data-i18n="24">View the waiting screen for patients</span>
+        </div>
+    </button>
+
+    <button
+    type="button"
+    class="quick-action-btn action-screen"
+    onclick="openWaitingListModal()"
+>
+
+ <div class="quick-action-icon">
+        <i class="fa-solid fa-user-clock"></i>
+
+        </div>
+   <div class="quick-action-text">
+            <strong data-i18n="25">Waiting List</strong>
+               <span data-i18n="26">Patients in the waiting list</span>
+        </div>
+
+    <strong
+        id="waitingListBadge"
+        data-waiting-count
+    >
+        0
+    </strong>
+
+</button>
+    <button type="button" class="quick-action-btn action-calendar" onclick="openWeeklyCalendarModal()">
+        <div class="quick-action-icon">
+            <i class="fa-solid fa-calendar-week"></i>
+        </div>
+        <div class="quick-action-text">
+            <strong data-i18n="27">Week Calendar</strong>
+            <span data-i18n="28">View weekly visits in columns</span>
+        </div>
+    </button>
+
+</div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     DENTIMATE PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">Home</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">Visits</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">Add Patient</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">Patient Files</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">More</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    More
+                </h3>
+
+                <p data-i18n="103">
+                    Manage System
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        Invoices
+                    </strong>
+
+                    <span data-i18n="105">
+                        Manage Clinic Invoices
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        Storage
+                    </strong>
+
+                    <span data-i18n="107">
+                        Clinic Storage and Purchases
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        Labs
+                    </strong>
+
+                    <span data-i18n="109">
+                        Manage Labs and Prosthesis
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        Doctors
+                    </strong>
+
+                    <span data-i18n="111">
+                        Manage Doctors
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        Prints
+                    </strong>
+
+                    <span data-i18n="113">
+                        Print prescriptions, consents and instructions
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        Drugs and Doses
+                    </strong>
+
+                    <span data-i18n="115">
+                        Manage drugs and calculate doses
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        Reports
+                    </strong>
+
+                    <span data-i18n="117">
+                        Detailed Clinic Reports
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        Prices and Departments
+                    </strong>
+
+                    <span data-i18n="119">
+                        Price clinic services, prosthesis and add departments
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- SCRIPTS -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/supabase.js"></script>
+
+<script src="js/whatsapp-reminder.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/visit-number.js"></script>
+<script src="js/confirm-modal.js"></script>
+<script src="js/waiting-list.js"></script>
+<script src="js/dashboard.js"></script>
+
+<!-- toast  -->
+ <div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<!-- =========================================================
+     SINGLE DAY APPOINTMENTS MODAL — Modern Dark UI
+========================================================= -->
+
+<div
+    id="singleDayAppointmentsModal"
+    class="sd-modal"
+    style="display:none;"
+>
+
+    <div
+        class="sd-modal-backdrop"
+        onclick="if(event.target === this) closeSingleDayAppointments()"
+    >
+
+        <div class="sd-modal-panel">
+
+            <!-- HEADER -->
+            <div class="sd-modal-header">
+                <div class="sd-header-brand">
+                    <div class="sd-header-icon">
+                        <i class="fa-solid fa-calendar-day"></i>
+                    </div>
+                    <div class="sd-header-text">
+                        <h3 data-i18n="29">Specific Day Visits</h3>
+                        <p data-i18n="30">View and manage visits for a specific day</p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    class="sd-header-close"
+                    onclick="closeSingleDayAppointments()"
+                    aria-label="Close"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- DATE PICKER BAR -->
+            <div class="sd-date-bar">
+                <div class="sd-date-input-wrap">
+                    <i class="fa-regular fa-calendar"></i>
+                    <input
+                        type="date"
+                        id="singleDayDate"
+                        class="sd-date-input"
+                    >
+                </div>
+                <button
+                    type="button"
+                    class="sd-search-btn"
+                    onclick="loadSingleDayAppointments()"
+                >
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span data-i18n="31">Apply</span>
+                </button>
+            </div>
+
+            <!-- DATE CHIP -->
+            <div
+                id="singleDaySelectedDate"
+                class="sd-date-chip"
+                style="display:none;"
+            ></div>
+
+            <!-- RESULTS -->
+            <div
+                id="singleDayAppointmentsContainer"
+                class="sd-results"
+            >
+                <div class="sd-empty">
+                    <div class="sd-empty-icon">
+                        <i class="fa-regular fa-calendar-check"></i>
+                    </div>
+                    <h4 data-i18n="32">Select Date</h4>
+                    <p data-i18n="33">Select a day from the calendar to view recorded visits</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div
+    id="addVisitModal"
+    class="visit-modal-overlay"
+    onclick="handleVisitModalOutsideClick(event)"
+>
+
+    <div
+        class="visit-modal"
+        onclick="event.stopPropagation()"
+    >
+
+        <!-- ==============================
+             HEADER
+        =============================== -->
+
+        <div class="visit-modal-header">
+
+            <div class="visit-modal-title-wrapper">
+
+                <div class="visit-modal-icon">
+
+                    <i class="fa-solid fa-calendar-plus"></i>
+
+                </div>
+
+                <div>
+
+                    <h2 data-i18n="34">
+                        Book New Visit
+                    </h2>
+
+                    <p data-i18n="35">
+                        Add a new visit for a patient
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="visit-modal-close"
+                onclick="closeAddVisitModal()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- ==============================
+             BODY
+        =============================== -->
+
+        <div class="visit-modal-body">
+
+
+            <!-- ==========================
+                 PATIENT INFORMATION
+            =========================== -->
+
+            <div class="visit-section-title">
+
+                <div class="visit-section-icon patient-icon">
+
+                    <i class="fa-solid fa-user"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="36">
+                        Patient Information
+                    </strong>
+
+                    <span data-i18n="37">
+                        Basic booking information
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- ==========================
+                 PATIENT FIELDS
+            =========================== -->
+
+            <div class="visit-form-grid">
+
+
+                <!-- =========================
+                     NAME
+                ========================== -->
+<div class="visit-form-group patient-autocomplete-group">
+
+    <label for="appointmentPatientName">
+        <span data-i18n="38">Patient Name</span>
+        <span>*</span>
+    </label>
+
+    <div class="visit-input-wrapper patient-search-wrapper">
+
+        <i class="fa-solid fa-user"></i>
+
+        <input
+            type="text"
+            id="appointmentPatientName"
+            data-i18n-placeholder="226"
+            placeholder="Search for a patient or add a new patient"
+            autocomplete="off"
+        >
+
+        <input
+            type="hidden"
+            id="appointmentPatientId"
+        >
+
+    </div>
+
+    <!-- PATIENT SUGGESTIONS -->
+    <div
+        id="patientNameSuggestions"
+        class="patient-name-suggestions"
+    ></div>
+
+</div>
+
+                <!-- =========================
+                     PHONE
+                ========================== -->
+
+                <div class="visit-form-group">
+
+                    <label for="appointmentPatientPhone">
+                        <span data-i18n="39">Phone</span>
+                    </label>
+
+
+                    <div class="visit-input-wrapper">
+
+                        <i class="fa-solid fa-phone"></i>
+
+                        <input
+                            type="tel"
+                            id="appointmentPatientPhone"
+                            data-i18n-placeholder="227"
+                            placeholder="Example: 01012345678"
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================
+                     AGE
+                ========================== -->
+
+                <div class="visit-form-group">
+
+                    <label for="appointmentPatientAge">
+                        <span data-i18n="40">Age</span>
+                    </label>
+
+
+                    <div class="visit-input-wrapper">
+
+                        <i class="fa-solid fa-cake-candles"></i>
+
+                        <input
+                            type="number"
+                            id="appointmentPatientAge"
+                            data-i18n-placeholder="228"
+                            placeholder="Example: 25"
+                            min="0"
+                            max="120"
+                            step="1"
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ==========================
+                 APPOINTMENT INFORMATION
+            =========================== -->
+
+            <div class="visit-section-title visit-section-space">
+
+                <div class="visit-section-icon appointment-icon">
+
+                    <i class="fa-solid fa-calendar-check"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="41">
+                        Visit Date
+                    </strong>
+
+                    <span data-i18n="42">
+                        Select department and visit date
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- ==========================
+                 DEPARTMENT
+            =========================== -->
+
+            <div class="visit-form-group full-width">
+
+                <label for="departmentSelect">
+                    <span data-i18n="43">Department</span>
+                    <span>*</span>
+                </label>
+
+
+                <div class="visit-input-wrapper">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                    <select
+                        id="departmentSelect"
+                    >
+
+                        <option data-i18n="44" value="">
+                            Loading departments .....
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+                      <!-- DATE / TIME -->
+            <div class="visit-form-grid visit-time-grid">
+                <div class="visit-form-group">
+                    <label for="appointmentStart">
+                        <span data-i18n="45">Visit Starts At</span>
+                        <span>*</span>
+                    </label>
+                    <div class="visit-input-wrapper">
+                        <i class="fa-solid fa-clock"></i>
+                        <input type="datetime-local" id="appointmentStart">
+                    </div>
+                </div>
+                <div class="visit-form-group">
+                    <label for="appointmentEnd">
+                        <span data-i18n="46">Visit Ends At</span>
+                        <span>*</span>
+                    </label>
+                    <div class="visit-input-wrapper">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <input type="datetime-local" id="appointmentEnd" readonly class="visit-end-readonly">
+                    </div>
+                </div>
+            </div>
+
+            <!-- DURATION SLIDER -->
+            <div class="visit-duration-slider-wrap" style="margin-top:10px;">
+                <label>
+                    <span data-i18n="47">Visit Duration</span>
+                    <span data-i18n="48" id="addVisitDurationLabel">30 min</span>
+                </label>
+                <input type="range" id="addVisitDurationSlider">
+                <div class="visit-duration-ticks">
+                    <span data-i18n="49">15 min</span>
+                    <span data-i18n="50">1 hour</span>
+                    <span data-i18n="51">2 hours</span>
+                    <span data-i18n="52">3 hours</span>
+                    <span data-i18n="53">4 hours</span>
+                </div>
+            </div>
+            <!-- ==========================
+                 INFO
+            =========================== -->
+
+            <div class="visit-modal-info">
+
+                <i class="fa-solid fa-circle-info"></i>
+
+                <span data-i18n="54">
+                    A visit can be booked for patients without a file, and a Create File option will appear in the visits dashboard.
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- ==============================
+             FOOTER
+        =============================== -->
+
+        <div class="visit-modal-footer">
+
+
+            <!-- CANCEL -->
+
+            <button
+                type="button"
+                class="visit-cancel-btn"
+                onclick="closeAddVisitModal()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+                <span data-i18n="55">Cancel</span>
+
+            </button>
+
+
+            <!-- SAVE -->
+
+            <button
+                type="button"
+                class="visit-save-btn"
+                onclick="saveVisit()"
+            >
+
+                <i class="fa-solid fa-calendar-plus"></i>
+
+                <span data-i18n="56">Book Visit</span>
+
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+</div>
+
+<!-- مودل زيارات الاسبوع -->
+
+<!-- مودال التقويم الأسبوعي -->
+<div id="weeklyCalendarModal" class="weekly-cal-modal">
+    <div class="weekly-cal-content">
+
+        <!-- رأس المودال -->
+        <div class="weekly-cal-header">
+            <div class="weekly-cal-title">
+                <i class="fa-solid fa-calendar-days"></i>
+                <div>
+                    <h2 data-i18n="57">Week Calendar</h2>
+                    <span data-i18n="58" class="weekly-cal-subtitle">Clinic Appointments - Weekly</span>
+                </div>
+            </div>
+            <button 
+                type="button" 
+                onclick="closeWeeklyCalendarModal()" 
+                class="weekly-cal-close"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- شريط التحكم -->
+        <div class="weekly-cal-toolbar">
+            <button type="button" onclick="changeWeek(-1)" class="cal-nav-btn">
+                <i class="fa-solid fa-chevron-right"></i>
+                <span data-i18n="59">Previous</span>
+            </button>
+
+            <div class="cal-week-info">
+                <div class="cal-week-range" id="calWeekRange"></div>
+                <div class="cal-week-status" id="calWeekStatus"></div>
+            </div>
+
+            <button type="button" onclick="changeWeek(1)" class="cal-nav-btn">
+                <span data-i18n="60">Next</span>
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+        </div>
+
+        <!-- شبكة التقويم -->
+        <div class="weekly-cal-grid" id="weeklyCalGrid">
+            <!-- يتم بناؤها ديناميكياً -->
+        </div>
+
+        <!-- ملخص سريع -->
+        <div class="weekly-cal-footer" id="calFooter">
+            <!-- يتم بناؤه ديناميكياً -->
+        </div>
+
+    </div>
+</div>
+<!-- =====================================================
+     WAITING LIST MODAL
+===================================================== -->
+
+<div
+    id="waitingListModal"
+    class="waiting-modal"
+>
+
+    <div
+        class="waiting-modal-content"
+    >
+
+        <!-- HEADER -->
+
+        <div
+            class="waiting-modal-header"
+        >
+
+            <div
+                class="waiting-modal-title"
+            >
+
+                <div
+                    class="waiting-modal-title-icon"
+                >
+
+                    <i
+                        class="fa-solid fa-user-clock"
+                    ></i>
+
+                </div>
+
+
+                <div>
+
+                    <h2 data-i18n="61">
+                        Waiting List
+                    </h2>
+
+                    <p data-i18n="62">
+                        Patients who are waiting for a visit
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="waiting-modal-close"
+                onclick="closeWaitingListModal()"
+            >
+
+                <i
+                    class="fa-solid fa-xmark"
+                ></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- TOOLBAR -->
+
+        <div
+            class="waiting-modal-toolbar"
+        >
+
+            <div
+                class="waiting-list-counter"
+            >
+
+                <i
+                    class="fa-solid fa-users"
+                ></i>
+
+                <span data-i18n="63">
+                    Waiting Patients
+                </span>
+
+                <strong
+                    id="waitingListCount"
+                >
+                    0
+                </strong>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="waiting-add-btn"
+                onclick="openAddWaitingPatientModal()"
+            >
+
+                <i
+                    class="fa-solid fa-user-plus"
+                ></i>
+
+                <span data-i18n="64">Add Patient to Waiting List</span>
+
+            </button>
+
+        </div>
+
+
+        <!-- LIST -->
+
+        <div
+            id="waitingListContainer"
+            class="waiting-list-container"
+        >
+
+            <div class="waiting-list-loading">
+
+                <i
+                    class="fa-solid fa-spinner fa-spin"
+                ></i>
+
+                <span data-i18n="65">Loading waiting list .....</span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- =====================================================
+     ADD PATIENT TO WAITING LIST MODAL
+===================================================== -->
+
+<div
+    id="addWaitingPatientModal"
+    class="waiting-modal"
+>
+
+    <div
+        class="waiting-add-modal-content"
+    >
+
+        <!-- HEADER -->
+
+        <div
+            class="waiting-modal-header"
+        >
+
+            <div
+                class="waiting-modal-title"
+            >
+
+                <div
+                    class="waiting-modal-title-icon"
+                >
+
+                    <i
+                        class="fa-solid fa-user-plus"
+                    ></i>
+
+                </div>
+
+
+                <div>
+
+                    <h2 data-i18n="66">
+                        Add Patient to Waiting List
+                    </h2>
+
+                    <p data-i18n="67">
+                        Search for a patient or add a new patient
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="waiting-modal-close"
+                onclick="closeAddWaitingPatientModal()"
+            >
+
+                <i
+                    class="fa-solid fa-xmark"
+                ></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- FORM -->
+
+        <form
+            id="waitingPatientForm"
+            onsubmit="addPatientToWaitingList(event)"
+        >
+
+            <!-- HIDDEN PATIENT ID -->
+
+            <input
+                type="hidden"
+                id="waitingSelectedPatientId"
+                value=""
+            >
+
+
+            <!-- NAME -->
+
+            <div
+                class="waiting-form-group"
+            >
+
+                <label for="waitingPatientName">
+                    <i
+                        class="fa-solid fa-user"
+                    ></i>
+                    <span data-i18n="68">Patient Name</span>
+                </label>
+
+
+                <div
+                    class="waiting-autocomplete-wrapper"
+                >
+
+                    <input
+                        type="text"
+                        id="waitingPatientName"
+                        class="waiting-form-input"
+                        data-i18n-placeholder="229"
+                        placeholder="Type patient name..."
+                        autocomplete="off"
+                        oninput="searchWaitingPatients(this.value)"
+                    >
+
+
+                    <div
+                        id="waitingPatientSuggestions"
+                        class="waiting-patient-suggestions"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            <div
+                id="waitingPatientStatus"
+                class="waiting-patient-status"
+            >
+
+                <i
+                    class="fa-solid fa-circle-info"
+                ></i>
+
+                <span data-i18n="69">
+                    You can select an existing patient or add a new one
+                </span>
+
+            </div>
+
+
+            <!-- AGE -->
+
+            <div
+                class="waiting-form-group"
+            >
+
+                <label for="waitingPatientAge">
+                    <i
+                        class="fa-solid fa-cake-candles"
+                    ></i>
+                    <span data-i18n="70">Age</span>
+                </label>
+
+
+                <input
+                    type="number"
+                    id="waitingPatientAge"
+                    class="waiting-form-input"
+                    min="0"
+                    max="150"
+                    data-i18n-placeholder="230"
+                    placeholder="Age"
+                >
+
+            </div>
+
+
+            <!-- PHONE -->
+
+            <div
+                class="waiting-form-group"
+            >
+
+                <label for="waitingPatientPhone">
+                    <i
+                        class="fa-solid fa-phone"
+                    ></i>
+                    <span data-i18n="71">Phone</span>
+                </label>
+
+
+                <input
+                    type="tel"
+                    id="waitingPatientPhone"
+                    class="waiting-form-input"
+                    data-i18n-placeholder="231"
+                    placeholder="Phone number"
+                    dir="ltr"
+                >
+
+            </div>
+
+<!-- EMERGENCY STATUS -->
+<div class="waiting-form-group">
+
+    <label>
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span data-i18n="72">Waiting Status</span>
+    </label>
+
+    <div class="waiting-emergency-options">
+
+        <label class="waiting-emergency-option normal">
+            <input
+                type="radio"
+                name="waitingEmergency"
+                value="false"
+                checked
+            >
+
+            <span class="waiting-emergency-radio">
+                <i class="fa-solid fa-user-clock"></i>
+            </span>
+
+            <span class="waiting-emergency-text">
+                <strong data-i18n="73">Calm</strong>
+                <small data-i18n="74">Not Emergent</small>
+            </span>
+        </label>
+
+
+        <label class="waiting-emergency-option emergency">
+            <input
+                type="radio"
+                name="waitingEmergency"
+                value="true"
+            >
+
+            <span class="waiting-emergency-radio">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </span>
+
+            <span class="waiting-emergency-text">
+                <strong data-i18n="75">Emergent</strong>
+                <small data-i18n="76">Case Needs Priority</small>
+            </span>
+        </label>
+
+    </div>
+
+</div>
+            <!-- ACTIONS -->
+
+            <div
+                class="waiting-form-actions"
+            >
+
+                <button
+                    type="button"
+                    class="waiting-cancel-btn"
+                    onclick="closeAddWaitingPatientModal()"
+                >
+
+                    <i
+                        class="fa-solid fa-xmark"
+                    ></i>
+
+                    <span data-i18n="77">Cancel</span>
+
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="waiting-save-btn"
+                >
+
+                    <i
+                        class="fa-solid fa-user-clock"
+                    ></i>
+
+                    <span data-i18n="78">Add to Waiting List</span>
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+<!-- =========================================================
+     FLOATING ADD VISIT BUTTON
+========================================================= -->
+<button
+    type="button"
+    class="floating-add-visit"
+    onclick="openAddVisitModal()"
+    aria-label="New Visit"
+    title="New Visit"
+>
+    <i class="fa-solid fa-plus"></i>
+</button>
+</body>
+</html>

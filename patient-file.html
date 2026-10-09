@@ -1,0 +1,2833 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    <title>Patient File</title>
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet" href="css/patient-file.css">
+<link rel="stylesheet" href="css/notification.css">
+<link rel="stylesheet" href="css/duration-slider.css">
+</head>
+
+<body>
+
+<!-- FLOATING ICONS -->
+
+<i class="fa-solid fa-tooth floating-icon icon1"></i>
+<i class="fa-solid fa-heart-pulse floating-icon icon2"></i>
+<i class="fa-solid fa-user-doctor floating-icon icon3"></i>
+
+<!-- HEADER -->
+
+<div class="page-header">
+
+    <h1>
+        <i class="fa-solid fa-folder-open"></i>
+        Patient File
+    </h1>
+
+
+
+</div>
+
+<div class="container">
+
+    <!-- PATIENT INFO -->
+
+    <div class="card">
+
+        <h2>
+            <i class="fa-solid fa-user"></i>
+            Patient Information
+        </h2>
+
+        <div id="patientInfo">
+
+            Loading...
+
+        </div>
+
+<div class="action-row">
+
+   
+
+<button onclick="goToVisitCard()" class="quick-action cyan-action">
+
+    <div class="action-icon">
+        <i class="fa-solid fa-calendar-plus"></i>
+    </div>
+
+    <div class="action-text">
+        <strong>Book Visit</strong>
+        <small>Create New Appointment</small>
+    </div>
+
+    <i class="fa-solid fa-chevron-right arrow"></i>
+
+</button>
+ <button onclick="goToVisitsHistory()" class="quick-action purple-action">
+
+    <div class="action-icon">
+        <i class="fa-solid fa-calendar-check"></i>
+    </div>
+
+    <div class="action-text">
+        <strong>Visits History</strong>
+        <small>View all patient visits</small>
+    </div>
+
+    <i class="fa-solid fa-chevron-right arrow"></i>
+
+</button>
+
+    
+
+</div>
+
+    </div>
+
+
+   <!-- =========================
+PATIENTT SERVICES CARD
+========================= -->
+
+
+
+
+
+
+
+  <details  id="visitsHistoryDetails" class="modern-details">
+
+    <summary class="modern-summary cyan-summary">
+
+        <div class="summary-left">
+            <i class="fa-solid fa-notes-medical"></i>
+            <span>Visits History</span>
+        </div>
+
+        <div class="summary-right">
+            <i class="fa-solid fa-chevron-down arrow"></i>
+        </div>
+
+    </summary>
+
+    <div class="details-content">
+
+        <div class="card visits-card">
+
+            <div class="section-header">
+
+                <div class="section-title">
+
+                    <div class="icon-box">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+
+                    <div>
+                        <h2>Patient Visits</h2>
+                        <p>جميع الزيارات والمواعيد المسجلة للمريض</p>
+                    </div>
+
+                </div>
+
+                <span class="visits-badge" id="visitsCount">
+                    0 Visits
+                </span>
+
+            </div>
+
+            <div id="visitsContainer" class="visits-grid">
+
+                <div class="empty-visits">
+
+                    <i class="fa-solid fa-calendar-xmark"></i>
+
+                    <h3>لا توجد زيارات حتى الآن</h3>
+
+                    <p>ستظهر جميع زيارات المريض هنا تلقائياً</p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+<div class="infoo-box">
+    <i class="fa-solid fa-clock"></i>
+
+    <h6>
+        عند مرور 12 ساعة على موعد انتهاء الزيارة دون تأكيد،
+        سيتم تحويلها تلقائيًا إلى زيارة غير مكتملة.
+    </h6>
+</div>
+</details>
+
+<!-- =========================
+     PATIENT PROSTHESIS
+========================= -->
+
+<details
+    id="patientProsthesisDetails"
+    class="modern-details"
+>
+
+    <summary class="modern-summary purple-summary">
+
+        <div class="summary-left">
+
+            <i class="fa-solid fa-tooth"></i>
+
+            <span>
+                Patient Prosthesis
+            </span>
+
+        </div>
+
+        <div class="summary-right">
+
+ 
+            <i class="fa-solid fa-chevron-down arrow"></i>
+
+        </div>
+
+    </summary>
+
+
+    <div class="details-content">
+
+        <div class="card prosthesis-history-card">
+
+            <!-- HEADER -->
+
+            <div class="section-header">
+
+                <div class="section-title">
+
+                    <div class="icon-box">
+                        <i class="fa-solid fa-tooth"></i>
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Patient Prosthesis
+                        </h2>
+
+                        <p>
+                            جميع التركيبات الخاصة بهذا المريض
+                        </p>
+
+                    </div>
+
+                </div>
+           <span
+                id="patientProsthesisCount"
+                class="visits-badge"
+            >
+                0 Prosthesis
+            </span>
+
+            </div>
+
+
+            <!-- PROSTHESIS LIST -->
+
+          <div
+    id="patientProsthesisContainer"
+    class="patient-prosthesis-container"
+>
+
+    <div class="prosthesis-loading">
+
+        <i class="fa-solid fa-spinner fa-spin"></i>
+
+        <span>جاري تحميل التركيبات...</span>
+
+    </div>
+
+</div>
+
+        </div>
+
+    </div>
+
+</details>
+<sp></sp>
+
+<!-- TOOTH CHART -->
+
+<details class="modern-details">
+
+    <summary class="modern-summary purple-summary">
+
+        <div class="summary-left">
+
+            <i class="fa-solid fa-teeth"></i>
+
+            <span>Tooth Charts</span>
+
+        </div>
+
+        <div class="summary-right">
+
+            <i class="fa-solid fa-chevron-down arrow"></i>
+
+        </div>
+
+    </summary>
+
+    <div class="details-content">
+
+        <!-- =========================
+             PERMANENT TEETH
+        ========================= -->
+
+        <div class="card">
+
+            <h2 style="
+                color:#80ffdb;
+                margin-bottom:25px;
+            ">
+
+                <i class="fa-solid fa-tooth"></i>
+
+                Tooth Chart
+
+            </h2>
+
+            <div class="tooth-chart-wrapper">
+               
+
+                <div id="toothChart">
+                     <div class="chart-cross permanent-cross"></div>
+
+                    <div id="upperTeeth" class="teeth-row"></div>
+
+                    <div id="lowerTeeth" class="teeth-row"></div>
+
+                </div>
+
+            </div>
+
+            <h6>
+                عند الضغط على رقم السن تفتح نافذة، اختر منها حالة السن.
+            </h6>
+
+        </div>
+
+        <!-- =========================
+             PRIMARY TEETH
+        ========================= -->
+
+        <div id="primaryChartCard" style="display:none; margin-top:20px;">
+
+            <div class="card">
+
+                <h3>
+
+                    <i class="fa-solid fa-child"></i>
+
+                    Primary Tooth Chart
+
+                </h3>
+
+                <div class="tooth-chart-wrapper">
+
+    <div id="primaryToothChart">
+
+        <div class="chart-cross"></div>
+
+        <div id="primaryUpperTeeth" class="teeth-row"></div>
+
+        <div id="primaryLowerTeeth" class="teeth-row"></div>
+
+    </div>
+
+</div>
+
+                <h6>
+                    تظهر تلقائيًا عندما يكون عمر المريض أقل من 13 سنة.
+                </h6>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</details>
+
+
+
+
+
+<!-- SUPABASE -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/related-visits.js"></script>
+<script src="js/confirm-modal.js"></script>
+<script src="js/patientt-services.js"></script>
+<script src="js/patient-records.js"></script>
+<script src="js/patient-file.js"></script>
+
+
+<div id="imageModal" class="image-modal" onclick="closeImageViewer(event)">
+
+    <img id="modalImage">
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!--chart -->
+<div id="toothModal" style="
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.6);
+
+    display:none;
+    align-items:center;
+    justify-content:center;
+
+    z-index:9999;
+">
+
+    <div style="
+        background:#0f172a;
+        padding:20px;
+        border-radius:18px;
+
+        width:300px;
+
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+    ">
+
+        <h3 style="width:100%;color:#80ffdb;margin-bottom:10px;">
+            Select Tooth Status
+        </h3>
+
+        <div id="toothOptions"
+        style="
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px;
+        "></div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     IMAGE VIEWER
+========================= -->
+
+<div id="imageViewer">
+
+    <!-- CLOSE -->
+
+    <button id="closeViewer"
+        onclick="closeImageViewer()">
+
+        <i class="fa-solid fa-xmark"></i>
+
+    </button>
+
+    <!-- ZOOM IN -->
+
+    <button class="viewer-btn zoom-in"
+        onclick="zoomIn()">
+
+        <i class="fa-solid fa-plus"></i>
+
+    </button>
+
+    <!-- ZOOM OUT -->
+
+    <button class="viewer-btn zoom-out"
+        onclick="zoomOut()">
+
+        <i class="fa-solid fa-minus"></i>
+
+    </button>
+
+    <!-- IMAGE -->
+
+    <img id="viewerImage">
+
+</div>
+
+
+
+<!-- =====================================================
+     DENTIX PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">الرئيسية</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">الزيارات</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">إضافة مريض</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">ملفات المرضى</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">المزيد</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    المزيد
+                </h3>
+
+                <p data-i18n="103">
+                    أدوات وإدارة النظام
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        الفواتير
+                    </strong>
+
+                    <span data-i18n="105">
+                        إدارة الفواتير
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        المخزون
+                    </strong>
+
+                    <span data-i18n="107">
+                        المخزون والمشتريات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        المعامل
+                    </strong>
+
+                    <span data-i18n="109">
+                        أعمال المعمل
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        الأطباء
+                    </strong>
+
+                    <span data-i18n="111">
+                        إدارة الأطباء
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        المطبوعات
+                    </strong>
+
+                    <span data-i18n="113">
+                        الوصفات والمطبوعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        إدارة الأدوية والجرعات
+                    </strong>
+
+                    <span data-i18n="115">
+                        إدارة الأدوية وحساب الجرعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        التقارير
+                    </strong>
+
+                    <span data-i18n="117">
+                        الإحصاءات والأرباح
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        التسعير
+                    </strong>
+
+                    <span data-i18n="119">
+                        إدارة أسعار الخدمات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div id="visitDetailsModal" class="visit-modal">
+
+    <div class="visit-modal-content">
+
+        <div class="panel-header visit-details-header">
+    <i class="fa-solid fa-notes-medical"></i>
+    Visit Details
+</div>
+
+        <button
+            class="close-visit-modal"
+            onclick="closeVisitDetails()"
+        >
+            ×
+        </button>
+
+        <div id="visitDetailsBody">
+<!-- =========================================================
+PATIENT SERVICES — WITH TOOTH SELECTION (saveWork-style)
+========================================================= -->
+
+<details id="addServiceCard" class="modern-details">
+
+    <summary class="modern-summary cyan-summary">
+        <div class="summary-left">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+            <span>Patient Services</span>
+        </div>
+        <div class="summary-right">
+            <i class="fa-solid fa-chevron-down arrow"></i>
+        </div>
+    </summary>
+
+    <div class="details-content">
+
+        <div id="addServiceCardInner" class="card">
+
+            <details id="addServiceDetails" class="service-form-details">
+
+                <!-- HEADER -->
+                <summary class="service-form-summary">
+                    <div class="summary-left">
+                        <div class="summary-icon">
+                            <i class="fa-solid fa-circle-plus"></i>
+                        </div>
+                        <div>
+                            <h3>Add Service</h3>
+                            <p>إضافة خدمة جديدة للمريض</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down arrow"></i>
+                </summary>
+
+                <!-- FORM -->
+                <div class="service-form">
+
+                    <!-- SERVICE -->
+                    <div class="service-field service-field-full">
+                        <label for="serviceName">
+                            <i class="fa-solid fa-tooth"></i> الخدمة
+                        </label>
+                        <select id="serviceName" required>
+                            <option value="">اختر الخدمة</option>
+                        </select>
+                    </div>
+
+                    <!-- DOCTOR -->
+                    <div class="service-field">
+                        <label for="serviceDoctor">
+                            <i class="fa-solid fa-user-doctor"></i> (اختياري) الطبيب المسؤول عن الخدمة
+                        </label>
+                        <select id="serviceDoctor">
+                            <option value="">اختر الطبيب</option>
+                        </select>
+                    </div>
+
+                    <!-- DOCTOR PERCENT -->
+                    <div class="service-field" id="doctorPercentField" style="display:none;">
+                        <label for="serviceDoctorPercent">
+                            <i class="fa-solid fa-percent"></i> نسبة الطبيب
+                        </label>
+                        <div class="service-input-wrapper">
+                            <input type="number" id="serviceDoctorPercent" placeholder="0" min="0" max="100" step="0.01">
+                            <span>%</span>
+                        </div>
+                    </div>
+
+                    <!-- DOCTOR AMOUNT -->
+                    <div class="service-field" id="doctorAmountField" style="display:none;">
+                        <label for="serviceDoctorAmount">
+                            <i class="fa-solid fa-user-doctor"></i> مستحق الطبيب من الخدمة
+                        </label>
+                        <div class="service-input-wrapper">
+                            <input type="number" id="serviceDoctorAmount" placeholder="0.00" readonly>
+                            <span>EGP</span>
+                        </div>
+                    </div>
+<div class="service-field service-field-full">
+    <label for="serviceInsurance">
+        <i class="fa-solid fa-shield-halved"></i> جهة التأمين
+        <span class="optional-label">(اختياري)</span>
+    </label>
+    <select id="serviceInsurance"></select>
+</div>
+                    <!-- UNIT PRICE & QUANTITY -->
+                    <div class="service-financial-grid">
+                        <div class="service-field">
+                            <label for="serviceUnitPrice">
+                                <i class="fa-solid fa-tag"></i> سعر الخدمة (لسن واحد)
+                            </label>
+                            <div class="service-input-wrapper">
+                                <input type="number" id="serviceUnitPrice" placeholder="0.00" min="0" step="0.01">
+                                <span>EGP</span>
+                            </div>
+                        </div>
+                        <div class="service-field">
+                            <label for="serviceQuantity">
+                                <i class="fa-solid fa-hashtag"></i> عدد الأسنان / الوحدات
+                            </label>
+                            <div class="service-input-wrapper">
+                                <input type="number" id="serviceQuantity" placeholder="1" min="1" step="1" value="1">
+                                <span>سن</span>
+                            </div>
+                        </div>
+                    </div>
+
+<!-- =========================================================
+                         DENTAL SELECTION (saveWork-style)
+                    ========================================================= -->
+                    <div class="service-field service-field-full" style="margin-top:12px;">
+                        <label class="dental-select-label">
+                            <i class="fa-solid fa-tooth"></i> الأسنان المرتبطة
+                            <span class="optional-label">(اختياري)</span>
+                        </label>
+
+                        <div class="dental-selector-container">
+                            <!-- Selector Button -->
+                            <button type="button" id="openServiceDentalChartBtn" class="dental-selector-btn" onclick="toggleServiceDentalChart()">
+                                <span class="dental-selector-btn-icon"><i class="fa-solid fa-tooth"></i></span>
+                                <span class="dental-selector-btn-content">
+                                    <strong id="serviceDentalSelectorText">اختيار الأسنان</strong>
+                                    <small>اضغط لعرض مخطط الأسنان</small>
+                                </span>
+                                <i id="serviceDentalSelectorArrow" class="fa-solid fa-chevron-down dental-selector-arrow"></i>
+                            </button>
+
+                            <!-- Dental Chart Panel -->
+                            <div id="serviceDentalChartPanel" class="dental-chart-panel">
+                                <div class="dental-chart-header">
+                                    <div>
+                                        <strong>مخطط الأسنان</strong>
+                                        <span>يمكنك اختيار أكثر من سن</span>
+                                    </div>
+                                    <button type="button" class="close-dental-chart" onclick="closeServiceDentalChart()" title="إغلاق">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+
+                                <div class="dental-chart">
+                                    <!-- Upper Jaw -->
+                                    <div class="jaw upper-jaw">
+                                        <div class="quadrant q1">
+                                            <div class="quadrant-label">الربع الأول</div>
+                                            <div class="dental-row">
+                                                <div class="dental" data-dental="18" title="18 - ضرس العقل العلوي الأيمن">18</div>
+                                                <div class="dental" data-dental="17" title="17 - الضرس الثاني العلوي الأيمن">17</div>
+                                                <div class="dental" data-dental="16" title="16 - الضرس الأول العلوي الأيمن">16</div>
+                                                <div class="dental" data-dental="15" title="15 - الضاحك الثاني العلوي الأيمن">15</div>
+                                                <div class="dental" data-dental="14" title="14 - الضاحك الأول العلوي الأيمن">14</div>
+                                                <div class="dental" data-dental="13" title="13 - الناب العلوي الأيمن">13</div>
+                                                <div class="dental" data-dental="12" title="12 - القاطع الجانبي العلوي الأيمن">12</div>
+                                                <div class="dental" data-dental="11" title="11 - القاطع المركزي العلوي الأيمن">11</div>
+                                            </div>
+                                        </div>
+                                        <div class="quadrant q2">
+                                            <div class="quadrant-label">الربع الثاني</div>
+                                            <div class="dental-row">
+                                                <div class="dental" data-dental="21" title="21 - القاطع المركزي العلوي الأيسر">21</div>
+                                                <div class="dental" data-dental="22" title="22 - القاطع الجانبي العلوي الأيسر">22</div>
+                                                <div class="dental" data-dental="23" title="23 - الناب العلوي الأيسر">23</div>
+                                                <div class="dental" data-dental="24" title="24 - الضاحك الأول العلوي الأيسر">24</div>
+                                                <div class="dental" data-dental="25" title="25 - الضاحك الثاني العلوي الأيسر">25</div>
+                                                <div class="dental" data-dental="26" title="26 - الضرس الأول العلوي الأيسر">26</div>
+                                                <div class="dental" data-dental="27" title="27 - الضرس الثاني العلوي الأيسر">27</div>
+                                                <div class="dental" data-dental="28" title="28 - ضرس العقل العلوي الأيسر">28</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Midline -->
+                                    <div class="midline"><span>خط الوسط</span></div>
+
+                                    <!-- Lower Jaw -->
+                                    <div class="jaw lower-jaw">
+
+                                        <div class="quadrant q4">
+                                            <div class="quadrant-label">الربع الرابع</div>
+                                            <div class="dental-row">
+                                                <div class="dental" data-dental="41" title="41 - القاطع المركزي السفلي الأيمن">41</div>
+                                                <div class="dental" data-dental="42" title="42 - القاطع الجانبي السفلي الأيمن">42</div>
+                                                <div class="dental" data-dental="43" title="43 - الناب السفلي الأيمن">43</div>
+                                                <div class="dental" data-dental="44" title="44 - الضاحك الأول السفلي الأيمن">44</div>
+                                                <div class="dental" data-dental="45" title="45 - الضاحك الثاني السفلي الأيمن">45</div>
+                                                <div class="dental" data-dental="46" title="46 - الضرس الأول السفلي الأيمن">46</div>
+                                                <div class="dental" data-dental="47" title="47 - الضرس الثاني السفلي الأيمن">47</div>
+                                                <div class="dental" data-dental="48" title="48 - ضرس العقل السفلي الأيمن">48</div>
+                                            </div>
+                                        </div>
+                                                                                <div class="quadrant q3">
+                                            <div class="quadrant-label">الربع الثالث</div>
+                                            <div class="dental-row">
+                                                <div class="dental" data-dental="38" title="38 - ضرس العقل السفلي الأيسر">38</div>
+                                                <div class="dental" data-dental="37" title="37 - الضرس الثاني السفلي الأيسر">37</div>
+                                                <div class="dental" data-dental="36" title="36 - الضرس الأول السفلي الأيسر">36</div>
+                                                <div class="dental" data-dental="35" title="35 - الضاحك الثاني السفلي الأيسر">35</div>
+                                                <div class="dental" data-dental="34" title="34 - الضاحك الأول السفلي الأيسر">34</div>
+                                                <div class="dental" data-dental="33" title="33 - الناب السفلي الأيسر">33</div>
+                                                <div class="dental" data-dental="32" title="32 - القاطع الجانبي السفلي الأيسر">32</div>
+                                                <div class="dental" data-dental="31" title="31 - القاطع المركزي السفلي الأيسر">31</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Selected Dentals Chips -->
+                            <div id="serviceSelectedDentalsContainer" class="selected-dentals-container"></div>
+                        </div>
+
+                        <small class="dental-help-text">
+                            <i class="fa-solid fa-circle-info"></i>
+                            يمكنك حفظ الخدمة بدون تحديد سن
+                        </small>
+
+                        <input type="hidden" id="serviceDentalNumber" value="">
+                    </div>
+                    <!-- FINANCIAL GRID -->
+                    <div class="service-financial-grid">
+                        <div class="service-field">
+                            <label for="serviceTotal">
+                                <i class="fa-solid fa-money-bill-wave"></i> إجمالي المبلغ
+                            </label>
+                            <div class="service-input-wrapper">
+                                <input type="number" id="serviceTotal" placeholder="0.00" min="0" step="0.01" readonly>
+                                <span>EGP</span>
+                            </div>
+                        </div>
+                        <div class="service-field">
+                            <label for="serviceDiscount">
+                                <i class="fa-solid fa-tag"></i> الخصم
+                            </label>
+                            <div class="discount-wrapper">
+                                <input type="number" id="serviceDiscount" placeholder="0.00" value="0" min="0" step="0.01">
+                                <select id="serviceDiscountType">
+                                    <option value="amount">مبلغ</option>
+                                    <option value="percentage">نسبة %</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="service-field">
+                            <label for="serviceNetTotal">
+                                <i class="fa-solid fa-receipt"></i> المستحق بعد الخصم
+                            </label>
+                            <div class="service-input-wrapper net-total-wrapper">
+                                <input type="number" id="serviceNetTotal" placeholder="0.00" readonly>
+                                <span>EGP</span>
+                            </div>
+                        </div>
+                        <div class="service-field">
+                            <label for="servicePaid">
+                                <i class="fa-solid fa-circle-check"></i> المدفوع
+                            </label>
+                            <div class="service-input-wrapper">
+                                <input type="number" id="servicePaid" placeholder="0.00" min="0" step="0.01">
+                                <span>EGP</span>
+                            </div>
+                        </div>
+                        <!-- PAYMENT METHOD -->
+<div class="service-field">
+    <label for="servicePaymentMethod">
+        <i class="fa-solid fa-credit-card"></i> طريقة الدفع
+    </label>
+
+    <select id="servicePaymentMethod">
+        <option value="cash">كاش</option>
+        <option value="card">كارد</option>
+    </select>
+</div>
+                        <div class="service-field">
+                            <label for="serviceRemain">
+                                <i class="fa-solid fa-clock"></i> المتبقي
+                            </label>
+                            <div class="service-input-wrapper remaining-wrapper">
+                                <input type="number" id="serviceRemain" placeholder="0.00" readonly>
+                                <span>EGP</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="service-form-actions">
+                        <button type="button" id="saveServiceBtn" class="save-service-btn" onclick="savePatienttService()">
+                            <i class="fa-solid fa-floppy-disk"></i> <span>Save Service</span>
+                        </button>
+                        <button type="button" id="cancelEditServiceBtn" class="secondary-btn" onclick="cancelServiceEdit()" style="display:none;">
+                            <i class="fa-solid fa-xmark"></i> <span>Cancel Edit</span>
+                        </button>
+                    </div>
+
+                </div>
+            </details>
+
+            <!-- SERVICES TABLE -->
+            <div class="card services-card" style="margin-top:20px;">
+                <div class="table-wrapper">
+                    <h2 class="services-title">
+                        <i class="fa-solid fa-list-check"></i> الخدمات المسجلة
+                    </h2>
+                    <table class="services-table">
+                        <thead>
+    <tr>
+        <th>
+            <i class="fa-solid fa-tooth"></i>
+            الخدمة
+        </th>
+
+        <th>
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            المستحق
+        </th>
+
+        <th>
+            <i class="fa-solid fa-wallet"></i>
+            المدفوع
+        </th>
+
+        <th>
+            <i class="fa-solid fa-clock"></i>
+            المتبقي
+        </th>
+
+        <th>
+            <i class="fa-solid fa-circle-check"></i>
+            الحالة
+        </th>
+
+        <th>
+            <i class="fa-solid fa-gear"></i>
+            الإجراءات
+        </th>
+    </tr>
+</thead>
+                        <tbody id="patienttServicesList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <button id="recallServiceBtn" class="recall-service-btn" type="button" onclick="openRecallServiceModal()">
+            <i class="fa-solid fa-rotate"></i> Recall Service - استدعاء خدمة من زيارة سابقة
+        </button>
+
+    </div>
+</details>
+
+    <!-- بيشنت ريكوردز  -->
+
+
+<details class="modern-details">
+
+    <summary class="modern-summary green-summary">
+
+        <div class="summary-left">
+            <i class="fa-solid fa-folder-open"></i>
+            <span>Patient Records</span>
+        </div>
+
+        <div class="summary-right">
+            <i class="fa-solid fa-chevron-down arrow"></i>
+        </div>
+
+    </summary>
+
+    <div class="details-content">
+
+       <h2>
+        <i class="fa-solid fa-folder-open"></i>
+        Patient Records
+    </h2>
+
+    <!-- IMAGES -->
+
+<div class="card">
+
+    <div style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:15px;
+    margin-bottom:25px;
+    ">
+
+        <h2 style="color:#80ffdb;">
+            <i class="fa-solid fa-images"></i>
+            Patient Images (Before)
+        </h2>
+
+        <!-- ACTIONS -->
+
+        <div style="
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        ">
+
+            <!-- CLINICAL -->
+
+            <label class="upload-btn">
+
+                <i class="fa-solid fa-camera"></i>
+
+                Upload Clinical Image
+
+                <input 
+                    type="file"
+                    id="clinicalImage"
+                    hidden
+                    onchange="uploadClinicalImage()"
+                    multiple
+                >
+
+            </label>
+
+            <!-- XRAY -->
+
+            <label class="upload-btn xray-btn">
+
+                <i class="fa-solid fa-x-ray"></i>
+
+                Upload X-Ray
+
+                <input 
+                    type="file"
+                    id="xrayImage"
+                    hidden
+                    onchange="uploadXray()"
+                    multiple
+                >
+
+            </label>
+
+        </div>
+
+    </div>
+
+    <!-- IMAGES CONTAINER -->
+
+    <div id="imagesContainer" style="
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+    ">
+
+    </div>
+
+</div>
+
+<!-- image container after  -->
+<!-- AFTER IMAGES -->
+
+<div class="card">
+
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+        flex-wrap:wrap;
+        gap:15px;
+    ">
+
+        <h2 style="color:#80ffdb;">
+
+            <i class="fa-solid fa-images"></i>
+
+             Patient Images (After)
+
+        </h2>
+
+        <!-- UPLOAD BUTTON -->
+
+        <div style="
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+">
+
+    <!-- CLINICAL -->
+
+    <label class="upload-btn">
+
+        <i class="fa-solid fa-camera"></i>
+
+       Upload Clinical image
+
+        <input 
+            type="file"
+            hidden
+            accept="image/*"
+            onchange="uploadFile(this.id,'clinical_after')"
+            id="clinicalAfterInput"
+            multiple
+        >
+
+    </label>
+
+    <!-- XRAY -->
+
+    <label class="upload-btn xray-btn">
+
+        <i class="fa-solid fa-x-ray"></i>
+
+        Upload X-Ray 
+
+        <input 
+            type="file"
+            hidden
+            accept="image/*"
+            onchange="uploadFile(this.id,'xray_after')"
+            id="xrayAfterInput"
+            multiple
+        >
+
+    </label>
+
+</div>
+
+    </div>
+
+    <!-- CONTAINER -->
+
+    <div id="afterImagesContainer"
+    class="images-grid"></div>
+
+</div>
+
+
+<!-- MEDICAL FILES -->
+
+<div class="card">
+
+    
+
+    <h2>
+        <i class="fa-solid fa-folder-open"></i>
+        Patient Files
+    </h2>
+
+    <div id="medicalFilesContainer" style="
+        display:flex;
+        flex-wrap:wrap;
+        gap:20px;
+    ">
+
+    </div>
+
+    <!-- dicom  -->
+
+<label class="upload-btn">
+
+    <i class="fa-solid fa-cube"></i>
+
+    Upload DICOM
+
+    <input 
+        type="file"
+        hidden
+        accept=".dcm"
+        onchange="uploadDicom(this)"
+        multiple
+    >
+
+</label>
+
+<!-- STL -->
+<label class="upload-btn">
+
+    <i class="fa-solid fa-cubes"></i>
+
+    Upload STL
+
+    <input
+        type="file"
+        hidden
+        accept=".stl"
+        onchange="uploadSTL(this)"
+        multiple
+    >
+
+</label>
+
+<!-- obj  -->
+ <label class="upload-btn">
+
+    <i class="fa-solid fa-cube"></i>
+
+    Upload OBJ
+
+    <input 
+        type="file"
+        hidden
+        accept=".obj"
+        onchange="uploadOBJ(this)"
+        multiple
+    >
+
+</label>
+
+<!-- ply  -->
+ <label class="upload-btn">
+
+    <i class="fa-solid fa-shapes"></i>
+
+    Upload PLY
+
+    <input 
+        type="file"
+        hidden
+        accept=".ply"
+        onchange="uploadPLY(this)"
+        multiple
+    >
+
+</label>
+
+<!-- pdf  -->
+ <label class="upload-btn">
+
+    <i class="fa-solid fa-file-pdf"></i>
+
+    Upload PDF
+
+    <input 
+        type="file"
+        hidden
+        accept=".pdf"
+        onchange="uploadPDF(this)"
+        multiple
+    >
+
+</label>
+<!-- html  -->
+ <label class="upload-btn">
+
+    <i class="fa-solid fa-code"></i>
+
+    Upload HTML
+
+    <input 
+        type="file"
+        hidden
+        accept=".html"
+        onchange="uploadHTML(this)"
+        multiple
+    >
+
+</label>
+
+<!-- رفع فولدر DICOM -->
+<label class="upload-btn folder-btn">
+    <i class="fa-solid fa-folder-plus"></i>
+    Upload DICOM Folder
+    <input 
+        type="file"
+        id="dicomFolder"
+        hidden
+        webkitdirectory
+        directory
+        multiple
+        accept=".dcm,.dicom"
+        onchange="uploadDicomFolder(this)"
+    >
+</label>
+
+</div>
+    </div>
+
+</details>
+
+<!-- =========================
+     MEDICATION PRESCRIBED
+========================= -->
+
+<details class="modern-details">
+
+    <summary class="modern-summary purple-summary">
+
+        <div class="summary-left">
+
+            <i class="fa-solid fa-prescription-bottle-medical"></i>
+
+            <span>Medication Prescribed</span>
+
+        </div>
+
+
+        <div class="summary-right">
+
+            <i class="fa-solid fa-chevron-down arrow"></i>
+
+        </div>
+
+    </summary>
+
+
+    <div class="details-content">
+
+
+        <div class="card">
+
+
+            <h2>
+
+                <i class="fa-solid fa-capsules"></i>
+
+                Visit Medications
+
+            </h2>
+
+
+
+            <!-- ADD MEDICATION -->
+
+<details class="modern-form-details">
+
+    <summary class="modern-form-summary medication-summary">
+
+        <div class="summary-left">
+
+            <div class="summary-icon">
+                <i class="fa-solid fa-capsules"></i>
+            </div>
+
+            <div>
+
+                <h3>Add Medication</h3>
+
+                <p>إضافة دواء للمريض</p>
+
+            </div>
+
+        </div>
+
+        <i class="fa-solid fa-chevron-down arrow"></i>
+
+    </summary>
+
+
+    <div class="modern-form-body">
+
+
+        <!-- =========================
+             ROW 1
+        ========================== -->
+
+        <div class="medication-fields-grid">
+
+
+<div class="input-group medication-autocomplete">
+
+    <label>
+        <i class="fa-solid fa-capsules"></i>
+        Medication
+    </label>
+
+    <div class="medication-input-wrapper">
+
+        <input
+            type="text"
+            id="visitMedicationInput"
+            placeholder="اكتب اسم الدواء..."
+            autocomplete="off"
+        >
+
+        <!-- سيتم تخزين ID الدواء المختار هنا -->
+        <input
+            type="hidden"
+            id="visitMedicationId"
+        >
+
+        <div
+            id="medicationSuggestions"
+            class="medication-suggestions"
+        ></div>
+
+    </div>
+
+</div>
+
+            <div class="input-group">
+
+                <label>
+                    <i class="fa-solid fa-syringe"></i>
+                    Dose
+                </label>
+
+                <input
+                    type="text"
+                    id="medicationDose"
+                    placeholder="Dose / الجرعة"
+                >
+
+            </div>
+
+
+            <!-- =========================
+                 ROW 2
+            ========================== -->
+
+
+            <div class="input-group">
+
+                <label>
+                    <i class="fa-solid fa-calendar-days"></i>
+                    Duration
+                </label>
+
+                <input
+                    type="text"
+                    id="medicationDuration"
+                    placeholder="Duration / المدة"
+                >
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    <i class="fa-solid fa-file-medical"></i>
+                    Instructions
+                </label>
+
+                <input
+                    type="text"
+                    id="medicationInstructions"
+                    placeholder="Instructions / التعليمات"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             SAVE
+        ========================== -->
+
+        <button
+            class="modern-save-btn"
+            onclick="saveVisitMedication()">
+
+            <i class="fa-solid fa-floppy-disk"></i>
+
+            Save Medication
+
+        </button>
+
+
+    </div>
+
+</details>
+
+
+            <!-- MEDICATION LIST -->
+
+
+            <div class="card services-card" style="margin-top:20px;">
+
+
+                <div class="table-wrapper">
+
+
+
+                    <h2 class="services-title">
+
+
+                        <i class="fa-solid fa-list"></i>
+
+
+                        Prescribed Medications
+
+
+                    </h2>
+
+
+
+
+                    <table class="services-table">
+
+
+                        <thead>
+
+
+                            <tr>
+
+
+                                <th>
+                                    <i class="fa-solid fa-capsules"></i>
+                                    Medication
+                                </th>
+
+
+
+                                <th>
+                                    <i class="fa-solid fa-prescription"></i>
+                                    Dose
+                                </th>
+
+
+
+                                <th>
+                                    <i class="fa-solid fa-clock"></i>
+                                    Duration
+                                </th>
+
+
+
+                                <th>
+                                    <i class="fa-solid fa-file-medical"></i>
+                                    Instructions
+                                </th>
+
+
+
+                                <th>
+                                    <i class="fa-solid fa-gear"></i>
+                                    Actions
+                                </th>
+
+
+                            </tr>
+
+
+                        </thead>
+
+
+
+                        <tbody id="visitMedicationList"></tbody>
+
+
+
+                    </table>
+
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</details>
+
+<!-- نووتس -->
+
+<details class="modern-details">
+
+    <summary class="modern-summary blue-summary">
+
+        <div class="summary-left">
+
+            <i class="fa-solid fa-notes-medical"></i>
+
+            <span> Treatment Notes</span>
+
+        </div>
+
+        <div class="summary-right">
+
+            <i class="fa-solid fa-chevron-down arrow"></i>
+
+        </div>
+
+    </summary>
+
+    <div class="details-content">
+
+      
+
+        <!-- =========================
+             TREATMENT NOTES
+        ========================= -->
+
+        <div class="card" style="margin-top:20px;">
+
+            <h2>
+
+                <i class="fa-solid fa-notes-medical"></i>
+
+                Treatment Notes
+
+            </h2>
+
+            <textarea
+                id="treatmentNote"
+                placeholder="Write treatment notes..."
+            ></textarea>
+
+            <button onclick="saveNote()" class="green-btn">
+
+                <i class="fa-solid fa-floppy-disk"></i>
+
+                Save Note
+
+            </button>
+
+            <div id="notesContainer"></div>
+
+        </div>
+
+    </div>
+
+</details>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================
+PAYMENT HISTORY MODAL
+===================================== -->
+
+<div id="paymentHistoryModal" class="payment-history-modal">
+
+    <div class="payment-history-content">
+
+        <!-- HEADER -->
+
+        <div class="payment-history-header">
+
+            <h2>
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Payment History
+            </h2>
+
+            <button class="payment-history-close" onclick="closePaymentHistory()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+        <!-- SERVICE SUMMARY -->
+
+        <div class="payment-summary">
+
+            <div class="summary-box">
+                <span>Service</span>
+                <strong id="historyServiceName">-</strong>
+            </div>
+
+            <div class="summary-box">
+                <span>Total</span>
+                <strong id="historyTotal">0</strong>
+            </div>
+
+            <div class="summary-box">
+                <span>Paid</span>
+                <strong id="historyPaid">0</strong>
+            </div>
+
+            <div class="summary-box">
+                <span>Remaining</span>
+                <strong id="historyRemain">0</strong>
+            </div>
+
+        </div>
+
+        <!-- PAYMENTS TABLE -->
+
+        <div class="payment-history-table-wrapper">
+
+            <table class="payment-history-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+
+                        <th>Payment</th>
+
+                        <th>Method</th>
+
+                        <th>Paid Before</th>
+
+                        <th>Paid After</th>
+
+                        <th>Remain Before</th>
+
+                        <th>Remain After</th>
+
+                        <th>Note</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="paymentHistoryBody">
+
+                    <tr>
+
+                        <td colspan="9" style="text-align:center;padding:35px;color:#94a3b8;">
+
+                            No Payment History
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+            <div class="history-actions">
+
+                <button class="history-edit-btn" onclick="editServiceFromHistory()">
+                    <i class="fa-solid fa-pen"></i>
+                    Edit Service
+                </button>
+
+                <button class="history-delete-btn" onclick="deleteServiceFromHistory()">
+                    <i class="fa-solid fa-trash"></i>
+                    Delete Service
+                </button>
+
+                <!-- زر الطباعة الجديد -->
+                <button class="history-print-btn" onclick="printServiceInvoice(window.currentHistoryServiceId)" style="background: linear-gradient(135deg, #0f172a, #334155); color: #fff; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                    <i class="fa-solid fa-print"></i>
+                    Print Invoice
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- =========================
+ADD PAYMENT MODAL
+========================= -->
+
+<div id="addPaymentModal" class="payment-modal">
+
+    <div class="payment-modal-content">
+
+        <div class="payment-history-header">
+
+            <h2>
+                <i class="fa-solid fa-money-bill-wave"></i>
+                Add Payment
+            </h2>
+
+            <button class="payment-history-close" onclick="closeAddPayment()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+        <div class="payment-summary">
+
+            <div class="summary-box">
+                <span>Service</span>
+                <strong id="paymentServiceName">-</strong>
+            </div>
+
+            <div class="summary-box">
+                <span>Remaining</span>
+                <strong id="paymentCurrentRemain">0</strong>
+            </div>
+
+        </div>
+
+        <div style="margin-top:20px; display:flex; flex-direction:column; gap:16px;">
+
+            <!-- Payment Method Select -->
+            <div class="modern-field" style="margin:0;">
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px; color:var(--text-secondary); font-size:14px; font-weight:600;">
+                    <i class="fa-solid fa-credit-card" style="color:#a78bfa;"></i>
+                    طريقة الدفع
+                </label>
+                <div class="input-wrapper select-wrapper" style="position:relative;">
+                    <i class="fa-solid fa-wallet" style="position:absolute; right:16px; top:50%; transform:translateY(-50%); color:#a78bfa; z-index:2;"></i>
+                    <select id="paymentMethodSelect" style="width:100%; padding:16px 45px 16px 18px; border-radius:var(--radius-md); border:1px solid var(--border-subtle); background:rgba(0,0,0,0.25); color:#fff; font-size:15px; font-weight:600; appearance:none; -webkit-appearance:none; cursor:pointer; outline:none; transition:var(--transition-fast);">
+                        <option value="cash">💵 كاش</option>
+                        <option value="card">💳 كارد</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none;"></i>
+                </div>
+            </div>
+
+            <input type="number" id="newPaymentAmount" placeholder="Enter payment amount" style="width:100%;">
+
+            <button onclick="savePayment()">
+                <i class="fa-solid fa-check"></i>
+                Save Payment
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     RECALL SERVICE MODAL
+===================================================== -->
+
+<div
+    id="recallServiceModal"
+    class="recall-service-modal"
+    style="display:none;">
+
+    <div class="recall-service-modal-content">
+
+        <div class="recall-service-header">
+
+            <div>
+
+                <h3>
+                    <i class="fa-solid fa-rotate"></i>
+                    Recall Service
+                </h3>
+
+                <p>
+                    استدعاء خدمة سابقة للمريض الحالي
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="recall-close-btn"
+                onclick="closeRecallServiceModal()">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="recallServicesList"
+            class="recall-services-list">
+
+            <div class="recall-loading">
+
+                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                جاري تحميل الخدمات...
+
+            </div>
+
+        </div>
+
+
+        <div class="recall-service-footer">
+
+            <button
+                type="button"
+                class="secondary-btn"
+                onclick="closeRecallServiceModal()">
+
+                <i class="fa-solid fa-xmark"></i>
+
+                Cancel
+
+            </button>
+
+
+            <button
+                type="button"
+                class="recall-confirm-btn"
+                onclick="confirmRecallService()">
+
+                <i class="fa-solid fa-rotate"></i>
+
+                Recall Service
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     RESCHEDULE VISIT MODAL
+===================================================== -->
+
+<div
+    id="rescheduleVisitModal"
+    style="
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.65);
+        z-index:99999;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+    "
+>
+
+    <div
+        style="
+            width:100%;
+            max-width:500px;
+            background:#162033;
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:22px;
+            padding:25px;
+            box-shadow:0 20px 60px rgba(0,0,0,.4);
+        "
+    >
+
+        <div
+            style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:25px;
+            "
+        >
+
+            <div>
+
+                <h3
+                    style="
+                        margin:0;
+                        color:white;
+                    "
+                >
+
+                    <i
+                        class="fa-solid fa-calendar-pen"
+                        style="
+                            color:#60a5fa;
+                            margin-right:8px;
+                        "
+                    ></i>
+
+                    تغيير موعد الزيارة
+
+                </h3>
+
+                <p
+                    style="
+                        color:#94a3b8;
+                        margin:6px 0 0;
+                        font-size:13px;
+                    "
+                >
+                    اختر الموعد الجديد للزيارة
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                onclick="closeRescheduleVisitModal()"
+                style="
+                    width:36px;
+                    height:36px;
+                    border:none;
+                    border-radius:50%;
+                    background:rgba(255,255,255,.06);
+                    color:#cbd5e1;
+                    cursor:pointer;
+                    font-size:16px;
+                "
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+               <!-- START -->
+        <div style="margin-bottom:10px;">
+            <label style="display:block;color:#cbd5e1;margin-bottom:8px;font-size:14px;">
+                وقت بداية الزيارة
+            </label>
+            <input
+                type="datetime-local"
+                id="rescheduleAppointmentStart"
+                style="width:100%;box-sizing:border-box;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:#0f172a;color:white;"
+            >
+        </div>
+
+        <!-- DURATION SLIDER -->
+        <div class="visit-duration-slider-wrap">
+            <label>
+                <span>مدة الزيارة</span>
+                <span id="rescheduleDurationLabel">30 دقيقة</span>
+            </label>
+            <input type="range" id="rescheduleDurationSlider">
+            <div class="visit-duration-ticks">
+                <span>15د</span>
+                <span>1س</span>
+                <span>2س</span>
+                <span>3س</span>
+                <span>4س</span>
+            </div>
+        </div>
+
+        <!-- END (Auto-calculated) -->
+        <div style="margin-bottom:22px;">
+            <label style="display:block;color:#cbd5e1;margin-bottom:8px;font-size:14px;">
+                وقت نهاية الزيارة
+            </label>
+            <input
+                type="datetime-local"
+                id="rescheduleAppointmentEnd"
+                readonly
+                class="visit-end-readonly"
+                style="width:100%;box-sizing:border-box;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:#0f172a;color:white;"
+            >
+        </div>
+
+        <!-- ACTIONS -->
+
+        <div
+            style="
+                display:flex;
+                gap:10px;
+            "
+        >
+
+            <button
+                type="button"
+                onclick="closeRescheduleVisitModal()"
+                style="
+                    flex:1;
+                    padding:13px;
+                    border:none;
+                    border-radius:12px;
+                    background:#334155;
+                    color:white;
+                    cursor:pointer;
+                    font-weight:700;
+                "
+            >
+
+                إلغاء
+
+            </button>
+
+
+            <button
+                type="button"
+                onclick="saveRescheduledVisit()"
+                style="
+                    flex:1;
+                    padding:13px;
+                    border:none;
+                    border-radius:12px;
+                    background:#2563eb;
+                    color:white;
+                    cursor:pointer;
+                    font-weight:700;
+                "
+            >
+
+                <i class="fa-solid fa-calendar-check"></i>
+
+                حفظ الموعد
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- =========================================================
+     ADD RELATED VISIT MODAL
+========================================================= -->
+
+<div
+    id="addRelatedVisitModal"
+    class="related-modal"
+>
+
+    <div
+        class="related-modal-content add-related-modal-content"
+    >
+
+        <!-- HEADER -->
+
+        <div class="related-modal-header">
+
+            <div class="related-modal-header-icon">
+
+                <i class="fa-solid fa-calendar-plus"></i>
+
+            </div>
+
+            <div class="related-modal-header-info">
+
+                <div class="related-modal-title">
+
+                    إضافة زيارة ملحقة
+
+                </div>
+
+                <div class="related-modal-subtitle">
+
+                    إضافة زيارة جديدة إلى مجموعة هذه الزيارة
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="related-modal-close"
+                onclick="closeAddRelatedVisitModal()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- BODY -->
+
+        <form
+            id="addRelatedVisitForm"
+            class="related-modal-body"
+            onsubmit="
+                event.preventDefault();
+                saveRelatedVisit();
+            "
+        >
+
+            <!-- VISIT TITLE -->
+
+            <div class="related-form-group">
+
+                <label>
+
+                    <i class="fa-solid fa-heading"></i>
+
+                    عنوان الزيارة
+
+                </label>
+
+                <input
+                    type="text"
+                    id="relatedVisitTitle"
+                    placeholder="مثال: متابعة علاج العصب"
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <!-- DEPARTMENT -->
+
+            <div class="related-form-group">
+
+                <label>
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                    القسم
+
+                </label>
+
+                <select
+                    id="relatedVisitDepartment"
+                >
+
+                    <option value="">
+                        اختر القسم
+                    </option>
+
+                </select>
+
+            </div>
+
+
+                       <!-- DATE/TIME -->
+            <div class="related-form-grid">
+                <div class="related-form-group">
+                    <label><i class="fa-solid fa-clock"></i> بداية الزيارة</label>
+                    <input type="datetime-local" id="relatedVisitStart" required>
+                </div>
+                <div class="related-form-group">
+                    <label><i class="fa-solid fa-clock-rotate-left"></i> نهاية الزيارة</label>
+                    <input type="datetime-local" id="relatedVisitEnd" required readonly class="visit-end-readonly">
+                </div>
+            </div>
+
+            <!-- DURATION SLIDER -->
+            <div class="visit-duration-slider-wrap">
+                <label>
+                    <span>مدة الزيارة</span>
+                    <span id="relatedDurationLabel">30 دقيقة</span>
+                </label>
+                <input type="range" id="relatedDurationSlider">
+                <div class="visit-duration-ticks">
+                    <span>15د</span>
+                    <span>1س</span>
+                    <span>2س</span>
+                    <span>3س</span>
+                    <span>4س</span>
+                </div>
+            </div>
+
+
+            <!-- INFORMATION -->
+
+            <div class="related-form-info">
+
+                <div class="related-form-info-icon">
+
+                    <i class="fa-solid fa-circle-info"></i>
+
+                </div>
+
+                <div>
+
+                    <strong>
+                        زيارة ملحقة
+                    </strong>
+
+                    <p>
+                        سيتم ربط هذه الزيارة تلقائياً
+                        بنفس مجموعة الزيارة الأساسية.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div class="related-modal-actions">
+
+                <button
+                    type="button"
+                    class="related-cancel-btn"
+                    onclick="closeAddRelatedVisitModal()"
+                >
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                    إلغاء
+
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="related-save-btn"
+                >
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    إضافة الزيارة
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+<!-- =========================================================
+     RELATED VISITS MODAL
+========================================================= -->
+
+<div
+    id="relatedVisitsModal"
+    class="related-modal"
+>
+
+    <div
+        class="
+            related-modal-content
+            related-visits-modal-content
+        "
+    >
+
+        <!-- HEADER -->
+
+        <div class="related-modal-header">
+
+            <div class="related-modal-header-icon">
+
+                <i class="fa-solid fa-layer-group"></i>
+
+            </div>
+
+            <div class="related-modal-header-info">
+
+                <div class="related-modal-title">
+
+                    الزيارات الملحقة
+
+                </div>
+
+                <div class="related-modal-subtitle">
+
+                    جميع الزيارات التابعة لهذه الزيارة
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="related-modal-close"
+                onclick="closeRelatedVisitsModal()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- GROUP INFO -->
+
+        <div
+            class="related-group-info"
+        >
+
+            <div class="related-group-main">
+
+                <div class="related-group-icon">
+
+                    <i class="fa-solid fa-link"></i>
+
+                </div>
+
+                <div>
+
+                    <div class="related-group-title">
+
+                        مجموعة الزيارات
+
+                    </div>
+
+                    <div class="related-group-description">
+
+                        الزيارات المرتبطة بالزيارة الأساسية
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <span
+                id="relatedVisitsCount"
+                class="related-visits-count"
+            >
+
+                0 Visits
+
+            </span>
+
+        </div>
+
+
+        <!-- LIST -->
+
+        <div
+            id="relatedVisitsList"
+            class="related-visits-list"
+        ></div>
+
+
+        <!-- EMPTY -->
+
+        <div
+            id="relatedVisitsEmpty"
+            class="related-visits-empty"
+            style="display:none;"
+        >
+
+            <div class="related-empty-icon">
+
+                <i class="fa-solid fa-calendar-xmark"></i>
+
+            </div>
+
+            <h3>
+
+                لا توجد زيارات ملحقة
+
+            </h3>
+
+            <p>
+
+                لم تتم إضافة أي زيارة ملحقة إلى هذه المجموعة بعد.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     BOOK VISIT MODAL
+========================= -->
+
+<div id="visitBookingModal" class="visit-booking-modal">
+
+    <div class="visit-booking-overlay" onclick="closeVisitBookingModal()"></div>
+
+    <div class="visit-booking-content">
+
+        <!-- Header -->
+        <div class="visit-booking-header">
+
+            <div class="visit-booking-title">
+
+                <div class="visit-booking-icon">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+
+                <div>
+                    <h3>Book Visit</h3>
+                    <span>Create New Appointment</span>
+                </div>
+
+            </div>
+
+            <button
+                type="button"
+                class="visit-booking-close"
+                onclick="closeVisitBookingModal()"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+
+               <!-- Body -->
+        <div class="visit-booking-body">
+
+            <!-- Department -->
+            <div class="appointment-picker">
+                <label for="departmentSelect"><i class="fa-solid fa-hospital"></i> العيادة</label>
+                <select id="departmentSelect">
+                    <option value="">اختر العيادة</option>
+                </select>
+            </div>
+
+            <!-- Start -->
+            <div class="appointment-picker">
+                <label for="appointmentStart"><i class="fa-solid fa-clock"></i> Appointment Start <span>(بداية الموعد)</span></label>
+                <input type="datetime-local" id="appointmentStart">
+            </div>
+
+            <!-- Duration Slider -->
+            <div class="visit-duration-slider-wrap" style="background:transparent;border:none;padding:0;">
+                <label>
+                    <span>مدة الزيارة</span>
+                    <span id="bookingDurationLabel">30 دقيقة</span>
+                </label>
+                <input type="range" id="bookingDurationSlider">
+                <div class="visit-duration-ticks">
+                    <span>15د</span>
+                    <span>1س</span>
+                    <span>2س</span>
+                    <span>3س</span>
+                    <span>4س</span>
+                </div>
+            </div>
+
+            <!-- End -->
+            <div class="appointment-picker">
+                <label for="appointmentEnd"><i class="fa-solid fa-clock"></i> Appointment End <span>(نهاية الموعد)</span></label>
+                <input type="datetime-local" id="appointmentEnd" readonly class="visit-end-readonly">
+            </div>
+
+        </div>
+
+
+        <!-- Footer -->
+        <div class="visit-booking-footer">
+
+            <button
+                type="button"
+                class="visit-cancel-btn"
+                onclick="closeVisitBookingModal()"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                onclick="saveVisit()"
+                class="green-btn"
+            >
+                <i class="fa-solid fa-calendar-plus"></i>
+                Save Visit
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- 1. DICOM Parser (مطلوب للـ CBCT) -->
+
+<script src="https://unpkg.com/dicom-parser@1.8.13/dist/dicomParser.min.js"></script>
+
+
+<!-- Cornerstone Core -->
+<script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
+
+<!-- Cornerstone Tools (للـ Crosshair, Zoom, Pan, W/L) -->
+<script src="https://unpkg.com/cornerstone-tools@6.0.10/dist/cornerstoneTools.min.js"></script>
+
+<!-- Hammer.js (مطلوب لـ CornerstoneTools) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+
+<!-- WADO Image Loader -->
+<script src="https://unpkg.com/cornerstone-wado-image-loader@4.1.5/dist/cornerstoneWADOImageLoader.bundle.min.js"></script>
+
+<!-- dicom-parser (لديكه) -->
+<script src="https://unpkg.com/dicom-parser@1.8.13/dist/dicomParser.min.js"></script>
+
+
+<!-- 2. Cornerstone Core -->
+<script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
+
+<!-- 3. Cornerstone WADO Image Loader -->
+<script src="https://unpkg.com/cornerstone-wado-image-loader@4.1.5/dist/cornerstoneWADOImageLoader.bundle.min.js"></script>
+
+<!-- 4. Three.js (للملفات 3D) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<!-- 5. ZIP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+<!-- 6. Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- 7. ملفاتك (ترتيب مهم!) -->
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/related-visits.js"></script>
+<script src="js/confirm-modal.js"></script>
+<script src="js/patientt-services.js"></script>
+<script src="js/patient-records.js"></script>
+<script src="js/patient-file.js"></script>
+</body>
+</html>

@@ -1,0 +1,4856 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title data-i18n="reports_title">Reports</title>
+
+    <!-- FontAwesome -->
+
+<link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- ملفات الـ CSS الخاصة بالمشروع -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/reports.css">
+    <link rel="stylesheet" href="css/notification.css">
+
+</head>
+
+<body>
+  <!-- FLOATING ICONS -->
+    <i class="fa-solid fa-tooth floating-icon icon1"></i>
+    <i class="fa-solid fa-heart-pulse floating-icon icon2"></i>
+    <i class="fa-solid fa-stethoscope floating-icon icon3"></i>
+
+   <div class="reports-main-title">
+    <span data-i18n="198">التقارير</span>
+</div>
+
+<!-- التقارير  -->
+
+<!-- =====================================================
+     VISITS STATISTICS
+===================================================== -->
+
+<!-- =====================================================
+     VISITS STATISTICS
+===================================================== -->
+
+<details class="reports-details">
+
+    <summary class="reports-summary visits-statistics-summary">
+
+        <span>
+            <i class="fa-solid fa-calendar-check"></i>
+            <span data-i18n="199">إحصائيات الزيارات</span>
+        </span>
+
+        <i class="fa-solid fa-chevron-down arrow"></i>
+
+    </summary>
+
+
+    <div class="dashboard-card visits-statistics-card">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <div class="dashboard-header visits-statistics-header">
+
+            <div class="dashboard-title">
+
+                <div class="dashboard-title-icon">
+
+                    <i class="fa-solid fa-chart-pie"></i>
+
+                </div>
+
+
+                <div>
+
+                    <h2 data-i18n="visits_statistics">
+                        Visits Statistics
+                    </h2>
+
+                    <p data-i18n="visits_statistics_desc">
+                        تحليل أداء الزيارات خلال الفترة المحددة
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             DATE FILTER
+        ================================================== -->
+
+        <div class="visits-statistics-filter-box">
+
+
+            <div class="visits-filter-title">
+
+                <i class="fa-solid fa-filter"></i>
+
+                <span data-i18n="filter_period">تحديد فترة الإحصائيات</span>
+
+            </div>
+
+
+            <div class="visits-statistics-date-filter">
+
+
+                <!-- FROM -->
+
+                <div class="statistics-date-field">
+
+                    <label for="visitsStatisticsFrom">
+
+                        <i class="fa-solid fa-calendar-day"></i>
+
+                        <span data-i18n="from_date">From</span>
+
+                    </label>
+
+
+                    <input
+                        type="date"
+                        id="visitsStatisticsFrom"
+                    >
+
+                </div>
+
+
+                <!-- TO -->
+
+                <div class="statistics-date-field">
+
+                    <label for="visitsStatisticsTo">
+
+                        <i class="fa-solid fa-calendar-check"></i>
+
+                        <span data-i18n="to_date">To</span>
+
+                    </label>
+
+
+                    <input
+                        type="date"
+                        id="visitsStatisticsTo"
+                    >
+
+                </div>
+
+
+                <!-- BUTTON -->
+
+                <button
+                    type="button"
+                    class="statistics-filter-btn"
+                    onclick="loadVisitsStatistics()"
+                >
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    <span data-i18n="show_statistics">عرض الإحصائيات</span>
+
+                </button>
+
+
+            </div>
+
+
+            <div class="visits-filter-hint">
+
+                <i class="fa-solid fa-circle-info"></i>
+
+                <span data-i18n="visits_filter_hint">
+                    اختر تاريخ البداية والنهاية لعرض إحصائيات الزيارات خلال الفترة المحددة.
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             PERIOD DESCRIPTION
+        ================================================== -->
+
+        <div class="visits-statistics-period">
+
+            <i class="fa-solid fa-chart-column"></i>
+
+            <span data-i18n="visits_period_desc">
+                نسبة الزيارات المكتملة وغير المكتملة خلال الفترة المحددة
+            </span>
+
+        </div>
+
+
+        <!-- =================================================
+             MAIN CONTENT
+        ================================================== -->
+
+        <div class="visits-statistics-layout">
+
+
+            <!-- =================================================
+                 CHART
+            ================================================== -->
+
+            <div class="visits-statistics-chart-card">
+
+                <div class="visits-chart-header">
+
+                    <div>
+
+                        <strong data-i18n="visit_status">
+                            Visit Status
+                        </strong>
+
+                        <small data-i18n="visit_status_ar">
+                            حالة الزيارات
+                        </small>
+
+                    </div>
+
+
+                    <i class="fa-solid fa-chart-pie"></i>
+
+                </div>
+
+
+                <div class="visits-pie-wrapper">
+
+                    <canvas
+                        id="visitsStatisticsChart"
+                    ></canvas>
+
+                </div>
+
+            </div>
+
+
+<!-- =================================================
+     STATISTICS CARDS
+================================================= -->
+
+<div class="visits-statistics-cards">
+
+    <!-- COMPLETED -->
+
+    <div class="visit-stat-card completed-visit-stat">
+
+        <div class="visit-stat-icon">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <div class="visit-stat-info">
+
+            <div class="visit-stat-title" data-i18n="completed_visits">
+                الزيارات المكتملة
+            </div>
+
+            <div
+                id="completedVisitsCount"
+                class="visit-stat-count"
+            >
+                0
+            </div>
+
+            <div
+                id="completedVisitsPercent"
+                class="visit-stat-percent"
+            >
+                0%
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- WAITING -->
+
+    <div class="visit-stat-card waiting-visit-stat">
+
+        <div class="visit-stat-icon">
+            <i class="fa-solid fa-clock"></i>
+        </div>
+
+        <div class="visit-stat-info">
+
+            <div class="visit-stat-title" data-i18n="waiting_visits">
+                الزيارات قيد الانتظار
+            </div>
+
+            <div
+                id="waitingVisitsCount"
+                class="visit-stat-count"
+            >
+                0
+            </div>
+
+            <div
+                id="waitingVisitsPercent"
+                class="visit-stat-percent"
+            >
+                0%
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- INCOMPLETE -->
+
+    <div class="visit-stat-card incomplete-visit-stat">
+
+        <div class="visit-stat-icon">
+            <i class="fa-solid fa-circle-exclamation"></i>
+        </div>
+
+        <div class="visit-stat-info">
+
+            <div class="visit-stat-title" data-i18n="incomplete_visits">
+                الزيارات غير المكتملة
+            </div>
+
+            <div
+                id="incompleteVisitsCount"
+                class="visit-stat-count"
+            >
+                0
+            </div>
+
+            <div
+                id="incompleteVisitsPercent"
+                class="visit-stat-percent"
+            >
+                0%
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- TOTAL -->
+
+    <div class="visit-stat-card total-visit-stat">
+
+        <div class="visit-stat-icon">
+            <i class="fa-solid fa-calendar-days"></i>
+        </div>
+
+        <div class="visit-stat-info">
+
+            <div class="visit-stat-title" data-i18n="total_visits">
+                إجمالي الزيارات
+            </div>
+
+            <div
+                id="totalVisitsStatistics"
+                class="visit-stat-count"
+            >
+                0
+            </div>
+
+            <div class="visit-stat-percent" data-i18n="total_visits_label">
+                Total Visits
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+</details>
+<!-- =========================
+DAILY FINANCIAL DASHBOARD
+========================= -->
+
+
+
+
+<details id="analyticsSection" class="reports-details">
+
+ <summary class="reports-summary today-summary">
+
+ <span>
+ <i class="fa-solid fa-calendar-day"></i>
+ <span data-i18n="200">عرض تقرير إحصاءات اليوم</span>
+ </span>
+
+ <i class="fa-solid fa-chevron-down arrow"></i>
+
+ </summary>
+
+
+
+ <div class="card dash-inner-card">
+
+ <!-- HEADER -->
+
+ <div class="dash-card-header">
+
+ <div>
+
+ <h2 class="dash-card-title" data-i18n="today_statistics_title">
+ Today Statistics
+ </h2>
+
+ <p class="dash-card-subtitle" data-i18n="daily_financial_summary">
+ Daily Financial Summary
+ </p>
+
+ </div>
+
+ <div class="dash-icon-box blue">
+
+ <i class="fa-solid fa-calendar-day"
+ ></i>
+
+ </div>
+
+ </div>
+
+ <!-- STATS -->
+
+ <div class="stats-grid-3">
+
+ <!-- PATIENTS -->
+
+ <div class="stat-card">
+
+ <p class="stat-label">
+ <span data-i18n="today_new_patients">Today's new Patients</span>
+ <h6 data-i18n="today_new_patients_ar">المرضى الجدد المسجلين اليوم</h6>
+ </p>
+
+ <h1 id="dailyPatients"
+ class="stat-value blue no-margin">
+ 0
+ </h1>
+
+ </div>
+
+ <!-- =========================
+ DAILY SERVICES CARD
+========================= -->
+
+<div
+ class="services-track-card"
+ id="todayServicesCard"
+ data-period="today"
+>
+
+ <!-- MAIN CARD -->
+
+ <div class="services-card-main">
+
+ <div>
+
+ <span data-i18n="today_services">Today's Services</span>
+
+ <h6 data-i18n="today_services_count">
+ عدد الخدمات اليوم
+ </h6>
+
+ </div>
+
+ <i class="fa-solid fa-tooth"></i>
+
+ </div>
+
+
+ <h2 id="dailyServices">
+ 0
+ </h2>
+
+
+ <div class="services-track-hint">
+
+ <i class="fa-solid fa-hand-pointer"></i>
+
+ <span data-i18n="hover_services_hint">مرر المؤشر لعرض تفاصيل الخدمات</span>
+
+ </div>
+
+
+ <!-- =========================
+ HOVER PANEL
+ ========================= -->
+
+ <div
+ class="services-hover-panel"
+ id="todayServicesHover"
+ >
+
+ <div class="services-hover-header">
+
+ <div>
+
+ <strong data-i18n="today_services_breakdown">
+ Today's Services Breakdown
+ </strong>
+
+ <small data-i18n="today_services_breakdown_ar">
+ تفاصيل خدمات اليوم
+ </small>
+
+ </div>
+
+ <i class="fa-solid fa-chart-pie"></i>
+
+ </div>
+
+
+ <!-- SUMMARY -->
+
+ <div class="services-summary-grid">
+
+ <!-- COMPLETED -->
+
+ <div class="service-summary-completed">
+
+ <span data-i18n="completed">
+ مكتملة
+ </span>
+
+ <strong
+ id="todayCompletedServices"
+ >
+ 0
+ </strong>
+
+ </div>
+
+
+ <!-- INCOMPLETE -->
+
+ <div class="service-summary-incomplete">
+
+ <span data-i18n="incomplete">
+ غير مكتملة
+ </span>
+
+ <strong
+ id="todayIncompleteServices"
+ >
+ 0
+ </strong>
+
+ </div>
+
+
+ <!-- TOTAL -->
+
+ <div class="service-summary-total">
+
+ <span data-i18n="total_services">
+ إجمالي الخدمات
+ </span>
+
+ <strong
+ id="todayTotalServices"
+ >
+ 0
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <!-- PROGRESS -->
+
+ <div class="services-progress-container">
+
+ <div class="services-progress-label">
+
+ <span data-i18n="completion_rate">
+ نسبة الإنجاز
+ </span>
+
+ <strong
+ id="todayServicesCompletionPercentage"
+ >
+ 0%
+ </strong>
+
+ </div>
+
+ <div class="services-progress-bar">
+
+ <div
+ id="todayServicesProgress"
+ class="services-progress-fill"
+ ></div>
+
+ </div>
+
+ </div>
+
+ </div>
+
+</div>
+ <!-- TOTAL -->
+
+ <div class="stat-card">
+
+ <p class="stat-label">
+ <span data-i18n="today_total">Today Total</span>
+
+ <i class="fa-solid fa-wallet stat-inline-icon blue"></i>
+ <h6 data-i18n="today_total_ar">اجمالي المبالغ المستحقة</h6>
+ </p>
+
+ <h1 id="dailyTotal"
+ class="stat-value blue no-margin">
+ 0 EGP
+ </h1>
+
+ </div>
+
+ <!-- PAID -->
+
+ <div class="stat-card">
+
+ <p class="stat-label">
+ <span data-i18n="today_paid">Today Paid</span>
+
+<i class="fa-solid fa-circle-check stat-inline-icon green"></i>
+ <h6 data-i18n="today_paid_ar">اجمالي المبالغ المدفوعة</h6>
+ </p>
+
+ <h1 id="dailyPaid"
+ class="stat-value green no-margin">
+ 0 EGP
+ </h1>
+
+ </div>
+
+ <!-- =========================
+ TODAY REMAINING
+========================= -->
+
+<div
+ class="remaining-track-card"
+ id="todayRemainingCard"
+ data-period="today"
+
+>
+
+ <p class="stat-label no-margin">
+
+ <span data-i18n="today_remaining">Today Remaining</span>
+
+ <i
+ class="fa-solid fa-hourglass-half stat-inline-icon pink"
+ ></i>
+
+ <h6 data-i18n="today_remaining_ar">
+ اجمالي المبالغ المتبقية اليوم
+ </h6>
+
+ </p>
+
+
+ <h1
+ id="dailyRemain"
+ class="stat-value pink"
+ >
+ 0 EGP
+ </h1>
+
+
+<div
+ class="stat-hint"
+>
+ <i
+ class="fa-solid fa-hand-pointer"
+
+ ></i>
+
+ <span data-i18n="remaining_hint">اضغط أو مرر للمؤشر لتتبع المبالغ المتبقية</span>
+</div>
+
+
+
+ <!-- =========================
+ HOVER DETAILS
+ ========================= -->
+
+ <div
+ class="remaining-hover-panel"
+ id="todayRemainingHover"
+ >
+
+ <div class="remaining-hover-header">
+
+ <div>
+
+ <strong data-i18n="remaining_breakdown">
+ Remaining Breakdown
+ </strong>
+
+ <small data-i18n="remaining_breakdown_ar">
+ تفاصيل المبالغ المتبقية اليوم
+ </small>
+
+ </div>
+
+ <i class="fa-solid fa-chart-pie"></i>
+
+ </div>
+
+
+ <div class="remaining-summary-grid">
+
+ <div>
+
+ <span data-i18n="patients_label">المرضى</span>
+
+ <strong id="todayRemainingPatients">
+ 0
+ </strong>
+
+ </div>
+
+
+ <div>
+
+ <span data-i18n="due_label">المستحق</span>
+
+ <strong id="todayRemainingTotal">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <div>
+
+ <span data-i18n="paid_label">المدفوع</span>
+
+ <strong id="todayRemainingPaid">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <div>
+
+ <span data-i18n="remaining_label">المتبقي</span>
+
+ <strong
+ id="todayRemainingAmount"
+ class="remaining-red"
+ >
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <div class="remaining-source-title">
+
+ <i class="fa-solid fa-list"></i>
+
+ <span data-i18n="remaining_sources">مصادر المبالغ المتبقية</span>
+
+ </div>
+
+
+ <div
+ id="todayRemainingSources"
+ class="remaining-sources"
+ >
+
+ <div class="remaining-loading">
+
+ <i class="fa-solid fa-spinner fa-spin"></i>
+
+ <span data-i18n="loading_details">جاري تحميل التفاصيل...</span>
+
+ </div>
+
+ </div>
+
+
+ <button
+ type="button"
+ class="remaining-details-btn"
+ onclick="openRemainingDetails('today',event)"
+ >
+
+ <i class="fa-solid fa-arrow-up-right-from-square"></i>
+
+ <span data-i18n="view_all_details">عرض كل التفاصيل</span>
+
+ </button>
+
+ </div>
+
+</div>
+
+ <!-- profit -->
+
+ <!-- =========================
+ TODAY PROFIT TRACKER
+========================= -->
+
+<div
+ class="profit-track-card"
+ id="todayProfitCard"
+ data-period="today"
+>
+
+ <div class="profit-card-main">
+
+ <div>
+
+ <span data-i18n="today_profit">Today Profit</span>
+
+ <h6 data-i18n="today_profit_ar">
+ صافي الربح اليوم
+ </h6>
+
+ </div>
+
+ <i class="fa-solid fa-sack-dollar"></i>
+
+ </div>
+
+
+ <h2 id="dailyProfit">
+ 0 EGP
+ </h2>
+
+
+ <div class="profit-track-hint">
+
+ <i class="fa-solid fa-hand-pointer"></i>
+
+ <span data-i18n="hover_profit_hint">مرر المؤشر لتتبع تفاصيل الربح</span>
+
+ </div>
+
+
+ <!-- =========================
+ HOVER PANEL
+ ========================= -->
+
+ <div
+ class="profit-hover-panel"
+ id="todayProfitHover"
+ >
+
+ <div class="profit-hover-header">
+
+ <div>
+
+ <strong data-i18n="today_profit_breakdown">
+ Today's Profit Breakdown
+ </strong>
+
+ <small data-i18n="today_profit_breakdown_ar">
+ تفاصيل صافي الربح اليوم
+ </small>
+
+ </div>
+
+ <i class="fa-solid fa-chart-line"></i>
+
+ </div>
+
+
+ <div class="profit-summary-grid">
+
+ <!-- PAID -->
+
+ <div>
+
+ <span data-i18n="paid">Paid</span>
+
+ <strong
+ id="todayProfitPaid"
+ class="profit-positive"
+ >
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- LAB -->
+
+ <div>
+
+ <span data-i18n="lab_costs">Lab Costs</span>
+
+ <strong id="todayProfitLab">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- NET -->
+
+ <div class="profit-final">
+
+ <span data-i18n="net_profit">Net Profit</span>
+
+ <strong id="todayProfitNet">
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <div class="profit-equation">
+
+ <span data-i18n="paid_eq">المدفوع</span>
+
+ <i class="fa-solid fa-minus"></i>
+
+ <span data-i18n="lab_costs_eq">تكاليف المعمل</span>
+
+ <i class="fa-solid fa-equals"></i>
+
+ <strong data-i18n="net_profit_eq">صافي الربح</strong>
+
+ </div>
+
+ </div>
+
+</div>
+
+ </div>
+
+</details>
+<!-- =========================
+MONTHLY FINANCIAL DASHBOARD
+========================= -->
+
+
+
+<details class="reports-details">
+
+ <summary class="reports-summary month-summary">
+
+ <span>
+ <i class="fa-solid fa-calendar-days"></i>
+ <span data-i18n="201">عرض تقرير إحصاءات الشهر</span>
+ </span>
+
+ <i class="fa-solid fa-chevron-down arrow"></i>
+
+ </summary>
+
+ <div class="card dash-inner-card">
+
+
+
+ <!-- HEADER -->
+
+ <div class="dash-card-header">
+
+ <div>
+
+ <h2 class="dash-card-title" data-i18n="month_statistics_title">
+ Current Month Statistics
+ </h2>
+
+ <p class="dash-card-subtitle" data-i18n="monthly_financial_summary">
+ Financial Summary For This Month
+ </p>
+
+ </div>
+
+ <div class="dash-icon-box pink">
+
+ <i class="fa-solid fa-calendar-days"
+ ></i>
+
+ </div>
+
+ </div>
+
+ <!-- STATS -->
+
+
+
+ <div class="stats-grid-3">
+<!-- PATIENTS COUNT -->
+
+
+<div class="stat-card">
+
+ <p class="stat-label">
+ <span data-i18n="monthly_patients">Monthly patients</span>
+ <h6 data-i18n="monthly_patients_ar">المرضى المسجلين هذا الشهر</h6>
+ </p>
+
+ <h1 id="monthUniquePatients"
+ class="stat-value lime no-margin">
+ 0
+ </h1>
+
+</div>
+
+<!-- =========================
+ MONTHLY SERVICES CARD
+========================= -->
+
+<div
+ class="services-track-card"
+ id="monthServicesCard"
+ data-period="month"
+
+>
+
+ <!-- MAIN CARD -->
+
+ <div class="services-card-main">
+
+ <div>
+
+ <span data-i18n="monthly_services">Monthly Services</span>
+
+ <h6 class="stat-label" data-i18n="monthly_services_count">
+ عدد الخدمات هذا الشهر
+ </h6>
+
+ </div>
+
+ <i class="fa-solid fa-tooth"></i>
+
+ </div>
+
+
+ <!-- MAIN NUMBER -->
+
+ <h1
+ id="monthPatients"
+ class="stat-value purple"
+ >
+ 0
+ </h1>
+
+
+ <!-- HINT -->
+
+ <div class="services-track-hint">
+
+ <i class="fa-solid fa-hand-pointer"></i>
+
+ <span data-i18n="hover_monthly_hint">مرر المؤشر لعرض تفاصيل الخدمات</span>
+
+ </div>
+
+
+ <!-- =========================
+ HOVER PANEL
+ ========================= -->
+
+ <div
+ class="services-hover-panel"
+ id="monthServicesHover"
+ >
+
+ <!-- HEADER -->
+
+ <div class="services-hover-header">
+
+ <div>
+
+ <strong data-i18n="monthly_services_breakdown">
+ Monthly Services Breakdown
+ </strong>
+
+ <small data-i18n="monthly_services_breakdown_ar">
+ تفاصيل خدمات الشهر
+ </small>
+
+ </div>
+
+ <i class="fa-solid fa-chart-pie"></i>
+
+ </div>
+
+
+ <!-- =========================
+ SUMMARY
+ ========================= -->
+
+ <div class="services-summary-grid">
+
+
+ <!-- COMPLETED -->
+
+ <div class="service-summary-completed">
+
+ <span data-i18n="completed">
+ مكتملة
+ </span>
+
+ <strong
+ id="monthCompletedServices"
+ >
+ 0
+ </strong>
+
+ </div>
+
+
+ <!-- INCOMPLETE -->
+
+ <div class="service-summary-incomplete">
+
+ <span data-i18n="incomplete">
+ غير مكتملة
+ </span>
+
+ <strong
+ id="monthIncompleteServices"
+ >
+ 0
+ </strong>
+
+ </div>
+
+
+ <!-- TOTAL -->
+
+ <div class="service-summary-total">
+
+ <span data-i18n="total_services">
+ إجمالي الخدمات
+ </span>
+
+ <strong
+ id="monthTotalServices"
+ >
+ 0
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <!-- =========================
+ PROGRESS
+ ========================= -->
+
+ <div class="services-progress-container">
+
+ <div class="services-progress-label">
+
+ <span data-i18n="completion_rate">
+ نسبة الإنجاز
+ </span>
+
+ <strong
+ id="monthServicesCompletionPercentage"
+ >
+ 0%
+ </strong>
+
+ </div>
+
+
+ <div class="services-progress-bar">
+
+ <div
+ id="monthServicesProgress"
+ class="services-progress-fill"
+ style="width:0%;"
+ ></div>
+
+ </div>
+
+ </div>
+
+ </div>
+
+</div>
+ <!-- TOTAL -->
+
+ <div class="stat-card">
+
+ <p class="stat-label">
+ <span data-i18n="monthly_total">Monthly Total</span>
+ <i class="fa-solid fa-wallet stat-inline-icon blue"></i>
+ <h6 data-i18n="monthly_total_ar">اجمالي المبالغ المستحقة هذا الشهر</h6>
+ </p>
+
+ <h1 id="monthTotal"
+ class="stat-value blue no-margin">
+ 0 EGP
+ </h1>
+
+ </div>
+
+ <!-- PAID -->
+
+ <div class="stat-card">
+
+ <p class="stat-label">
+ <span data-i18n="monthly_paid">Monthly Paid</span>
+<i class="fa-solid fa-circle-check stat-inline-icon green"></i>
+<h6 data-i18n="monthly_paid_ar">اجمالي المبالغ المدفوعة هذا الشهر</h6>
+ </p>
+
+ <h1 id="monthPaid"
+ class="stat-value green no-margin">
+ 0 EGP
+ </h1>
+
+ </div>
+
+ <!-- =========================
+ MONTHLY REMAINING
+========================= -->
+
+<div
+ class="remaining-track-card"
+ id="monthlyRemainingCard"
+ data-period="month"
+
+>
+
+ <p class="stat-label no-margin">
+
+ <span data-i18n="monthly_remaining">Monthly Remaining</span>
+
+ <i
+ class="fa-solid fa-hourglass-half stat-inline-icon pink"
+ ></i>
+
+ <h6 data-i18n="monthly_remaining_ar">
+ اجمالي المبالغ المتبقية هذا الشهر
+ </h6>
+
+ </p>
+
+
+ <h1
+ id="monthRemaining"
+ class="stat-value pink"
+ >
+ 0 EGP
+ </h1>
+
+<div class="stat-hint"> 
+ <i class="fa-solid fa-hand-pointer">
+
+</i> <span data-i18n="remaining_month_hint">اضغط أو مرر للمؤشر لتتبع المبالغ المتبقية هذا الشهر</span> </div>
+ <!-- =========================
+ HOVER DETAILS
+ ========================= -->
+
+ <div
+ class="remaining-hover-panel"
+ id="monthlyRemainingHover"
+ >
+
+ <div class="remaining-hover-header">
+
+ <div>
+
+ <strong data-i18n="monthly_breakdown">
+ Monthly Breakdown
+ </strong>
+
+ <small data-i18n="monthly_breakdown_ar">
+ تفاصيل المبالغ المتبقية هذا الشهر
+ </small>
+
+ </div>
+
+ <i class="fa-solid fa-chart-pie"></i>
+
+ </div>
+
+
+ <div class="remaining-summary-grid">
+
+ <div>
+
+ <span data-i18n="patients_label">المرضى</span>
+
+ <strong id="monthlyRemainingPatients">
+ 0
+ </strong>
+
+ </div>
+
+
+ <div>
+
+ <span data-i18n="due_label">المستحق</span>
+
+ <strong id="monthlyRemainingTotal">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <div>
+
+ <span data-i18n="paid_label">المدفوع</span>
+
+ <strong id="monthlyRemainingPaid">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <div>
+
+ <span data-i18n="remaining_label">المتبقي</span>
+
+ <strong
+ id="monthlyRemainingAmount"
+ class="remaining-red"
+ >
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <div class="remaining-source-title">
+
+ <i class="fa-solid fa-list"></i>
+
+ <span data-i18n="remaining_sources">مصادر المبالغ المتبقية</span>
+
+ </div>
+
+
+ <div
+ id="monthlyRemainingSources"
+ class="remaining-sources"
+ >
+
+ <div class="remaining-loading">
+
+ <i class="fa-solid fa-spinner fa-spin"></i>
+
+ <span data-i18n="loading_details">جاري تحميل التفاصيل...</span>
+
+ </div>
+
+ </div>
+
+
+ <button
+ type="button"
+ class="remaining-details-btn"
+ onclick="openRemainingDetails('month',event)"
+ >
+
+ <i class="fa-solid fa-arrow-up-right-from-square"></i>
+
+ <span data-i18n="view_all_details">عرض كل التفاصيل</span>
+
+ </button>
+
+ </div>
+
+</div>
+
+
+<!-- ربح -->
+
+ <!-- =========================
+ MONTHLY PROFIT TRACKER
+========================= -->
+
+<div
+ class="profit-track-card"
+ id="monthlyProfitCard"
+ data-period="month"
+>
+
+ <div class="profit-card-main">
+
+ <div>
+
+ <span data-i18n="monthly_profit">Monthly Profit</span>
+
+ <h6 data-i18n="monthly_profit_ar">
+ صافي الربح هذا الشهر
+ </h6>
+
+ </div>
+
+ <i class="fa-solid fa-sack-dollar"></i>
+
+ </div>
+
+
+ <h2 id="monthProfit">
+ 0 EGP
+ </h2>
+
+
+ <div class="profit-track-hint">
+
+ <i class="fa-solid fa-hand-pointer"></i>
+
+ <span data-i18n="hover_profit_hint">مرر المؤشر لتتبع تفاصيل الربح</span>
+
+ </div>
+
+
+ <!-- =========================
+ HOVER PANEL
+ ========================= -->
+
+ <div
+ class="profit-hover-panel"
+ id="monthlyProfitHover"
+ >
+
+ <div class="profit-hover-header">
+
+ <div>
+
+ <strong data-i18n="monthly_profit_breakdown">
+ Monthly Profit Breakdown
+ </strong>
+
+ <small data-i18n="monthly_profit_breakdown_ar">
+ تفاصيل صافي الربح هذا الشهر
+ </small>
+
+ </div>
+
+ <i class="fa-solid fa-chart-line"></i>
+
+ </div>
+
+
+ <div class="profit-summary-grid">
+
+ <!-- PAID -->
+
+ <div>
+
+ <span data-i18n="paid">Paid</span>
+
+ <strong
+ id="monthlyProfitPaid"
+ class="profit-positive"
+ >
+ 0 EGP
+ </strong>
+
+ </div>
+
+ <!-- INSURANCE PAYMENTS -->
+<div>
+    <span data-i18n="498">
+        دفعات التأمينات
+    </span>
+
+    <strong
+        id="monthlyProfitInsurance"
+        class="profit-positive"
+    >
+        0 EGP
+    </strong>
+</div>
+
+ <!-- LAB -->
+
+ <div>
+
+ <span data-i18n="lab_costs">Lab Costs</span>
+
+ <strong id="monthlyProfitLab">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- BILLS -->
+
+ <div>
+
+ <span data-i18n="bills">Bills</span>
+
+ <strong id="monthlyProfitBills">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- INVENTORY -->
+
+ <div>
+
+ <span data-i18n="inventory">Inventory</span>
+
+ <strong id="monthlyProfitInventory">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- NET -->
+
+ <div class="profit-final">
+
+ <span data-i18n="net_profit">Net Profit</span>
+
+ <strong id="monthlyProfitNet">
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+<div class="profit-equation">
+
+    <span data-i18n="paid_insurance_eq">
+        المدفوع + دفعات التأمينات
+    </span>
+
+    <i class="fa-solid fa-minus"></i>
+
+    <span data-i18n="lab_bills_inventory_eq">
+        المعمل + الفواتير + المخزن
+    </span>
+
+    <i class="fa-solid fa-equals"></i>
+
+    <strong data-i18n="net_profit_eq">
+        صافي الربح
+    </strong>
+
+</div>
+
+ </div>
+
+</div>
+
+ </div>
+
+</details>
+<!-- =========================
+MAIN FINANCIAL DASHBOARD
+========================= -->
+
+<details class="reports-details">
+
+ <summary class="reports-summary finance-summary">
+
+ <span>
+ <i class="fa-solid fa-chart-line"></i>
+ <span data-i18n="202">عرض التقرير المالي العام</span>
+ </span>
+
+ <i class="fa-solid fa-chevron-down arrow"></i>
+
+ </summary>
+
+ <div class="card"
+class="fin-inner-card">
+
+ <!-- HEADER -->
+
+ <div class="fin-card-header">
+
+ <div>
+
+ <h2 class="fin-card-title" data-i18n="clinic_financial_dashboard">
+ Clinic Financial Dashboard
+ </h2>
+
+ <p class="fin-card-subtitle" data-i18n="based_on_services">
+ Based On Patient Services
+ </p>
+
+ </div>
+
+ <div class="fin-icon-box">
+
+ <i class="fa-solid fa-chart-line"
+ ></i>
+
+ </div>
+
+ </div>
+
+ <!-- STATS -->
+
+ <div class="fin-stats-grid">
+
+ <!-- TOTAL -->
+
+ <div class="fin-stat-card">
+
+ <div class="fin-stat-header">
+
+ <span class="fin-stat-label" data-i18n="total_amount">
+ Total Amount
+ </span>
+
+ <i class="fa-solid fa-wallet"
+ class="fin-inline-icon blue"></i>
+ <h6 data-i18n="total_amount_ar">اجمالي المبالغ المستحقة</h6>
+
+ </div>
+
+ <h1 id="dashboardTotal"
+ class="fin-stat-value blue">
+ 0 EGP
+ </h1>
+
+ </div>
+
+ <!-- PAID -->
+
+ <div class="fin-stat-card">
+
+ <div class="fin-stat-header">
+
+ <span class="fin-stat-label" data-i18n="paid_amount">
+ Paid Amount
+ </span>
+
+ <i class="fa-solid fa-circle-check"
+ class="fin-inline-icon green"></i>
+<h6 data-i18n="paid_amount_ar">اجمالي المبالغ المدفوعة</h6>
+ </div>
+
+ <h1 id="dashboardPaid"
+ class="fin-stat-value green">
+ 0 EGP
+ </h1>
+
+ </div>
+
+ <!-- REMAINING -->
+
+ <div
+ class="remaining-track-card"
+ id="allRemainingCard"
+ data-period="all"
+ class="fin-remaining-card"
+>
+
+ <div class="fin-stat-header">
+
+ <div>
+
+ <span class="fin-stat-label" data-i18n="remaining_amount">
+ Remaining Amount
+ </span>
+
+ <h6 data-i18n="remaining_amount_ar">
+ إجمالي المبالغ المتبقية
+ </h6>
+
+ </div>
+
+ <i
+ class="fa-solid fa-hourglass-half"
+ class="fin-inline-icon pink"
+ ></i>
+
+ </div>
+
+
+ <h1
+ id="dashboardRemaining"
+ class="fin-stat-value pink"
+ >
+ 0 EGP
+ </h1>
+
+
+ <div class="fin-stat-hint">
+
+ <i
+ class="fa-solid fa-hand-pointer"
+
+ ></i>
+
+ <span data-i18n="hover_remaining_hint">مرر المؤشر لتتبع المبالغ المتبقية</span>
+
+ </div>
+
+
+ <!-- HOVER DETAILS -->
+
+ <div
+ class="remaining-hover-panel"
+ id="allRemainingHover"
+ >
+
+ <div class="remaining-hover-header">
+
+ <div>
+
+ <strong data-i18n="total_remaining_breakdown">
+ Total Remaining Breakdown
+ </strong>
+
+ <small data-i18n="total_remaining_breakdown_ar">
+ تفاصيل جميع المبالغ المتبقية
+ </small>
+
+ </div>
+
+ <i class="fa-solid fa-chart-pie"></i>
+
+ </div>
+
+
+ <div class="remaining-summary-grid">
+
+ <div>
+
+ <span data-i18n="patients_label">المرضى</span>
+
+ <strong id="allRemainingPatients">
+ 0
+ </strong>
+
+ </div>
+
+
+ <div>
+
+ <span data-i18n="due_label">المستحق</span>
+
+ <strong id="allRemainingTotal">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <div>
+
+ <span data-i18n="paid_label">المدفوع</span>
+
+ <strong id="allRemainingPaid">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <div>
+
+ <span data-i18n="remaining_label">المتبقي</span>
+
+ <strong
+ id="allRemainingAmount"
+ class="remaining-red"
+ >
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <div class="remaining-source-title">
+
+ <i class="fa-solid fa-list"></i>
+
+ <span data-i18n="remaining_sources">مصادر المبالغ المتبقية</span>
+
+ </div>
+
+
+ <div
+ id="allRemainingSources"
+ class="remaining-sources"
+ >
+
+ <div class="remaining-loading">
+
+ <i class="fa-solid fa-spinner fa-spin"></i>
+
+ <span data-i18n="loading_details">جاري تحميل التفاصيل...</span>
+
+ </div>
+
+ </div>
+
+
+ <button
+ type="button"
+ class="remaining-details-btn"
+ onclick="openRemainingDetails('all',event)"
+ >
+
+ <i class="fa-solid fa-arrow-up-right-from-square"></i>
+
+ <span data-i18n="view_all_details">عرض كل التفاصيل</span>
+
+ </button>
+
+ </div>
+
+</div>
+
+ <!-- NET PROFIT -->
+
+<!-- NET PROFIT TRACKING -->
+
+<div
+ class="profit-track-card dashboard-net-profit-track"
+ id="dashboardNetProfitCard"
+>
+
+ <div class="profit-card-main">
+
+ <div>
+
+ <span data-i18n="net_profit">Net Profit</span>
+
+ <h6 data-i18n="net_profit_total_ar">
+ صافي الربح الكلي
+ </h6>
+
+ </div>
+
+ <i class="fa-solid fa-sack-dollar"></i>
+
+ </div>
+
+
+ <h2 id="dashboardNetProfit">
+ 0 EGP
+ </h2>
+
+
+ <div class="profit-track-hint">
+
+ <i class="fa-solid fa-hand-pointer"></i>
+
+ <span data-i18n="hover_profit_hint">مرر المؤشر لتتبع تفاصيل الربح</span>
+
+ </div>
+
+
+ <!-- =========================
+ PROFIT HOVER DETAILS
+ ========================= -->
+
+ <div
+ class="profit-hover-panel"
+ id="dashboardNetProfitHover"
+ >
+
+ <div class="profit-hover-header">
+
+ <div>
+
+ <strong data-i18n="net_profit_breakdown">
+ Net Profit Breakdown
+ </strong>
+
+ <small data-i18n="net_profit_breakdown_ar">
+ تفاصيل صافي الربح الكلي
+ </small>
+
+ </div>
+
+ <i class="fa-solid fa-chart-line"></i>
+
+ </div>
+
+
+ <div class="profit-summary-grid">
+
+ <!-- PAID -->
+
+ <div>
+
+ <span data-i18n="paid">Paid</span>
+
+ <strong
+ id="dashboardProfitPaid"
+ class="profit-positive"
+ >
+ 0 EGP
+ </strong>
+
+ </div>
+
+<!-- INSURANCE -->
+
+<div>
+
+    <span>
+        <span data-i18n="498">
+            دفعات التأمينات
+        </span>
+    </span>
+
+    <strong
+        id="dashboardProfitInsurance"
+        class="profit-positive"
+    >
+        0 EGP
+    </strong>
+
+</div>
+ <!-- LAB -->
+
+ <div>
+
+ <span data-i18n="lab_costs">Lab Costs</span>
+
+ <strong id="dashboardProfitLab">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- BILLS -->
+
+ <div>
+
+ <span data-i18n="invoices">Invoices</span>
+
+ <strong id="dashboardProfitBills">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- INVENTORY -->
+
+ <div>
+
+ <span data-i18n="inventory">Inventory</span>
+
+ <strong id="dashboardProfitInventory">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- FINAL -->
+
+ <div class="profit-final">
+
+ <span data-i18n="net_profit">Net Profit</span>
+
+ <strong id="dashboardProfitNet">
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <!-- EQUATION -->
+
+<div class="profit-equation">
+
+    <strong data-i18n="paid_eq">
+        Paid
+    </strong>
+
+    <i class="fa-solid fa-plus"></i>
+
+    <strong data-i18n="insurance_payments">
+        Insurance Payments
+    </strong>
+
+    <i class="fa-solid fa-minus"></i>
+
+    <span data-i18n="lab_eq">
+        Lab
+    </span>
+
+    <i class="fa-solid fa-minus"></i>
+
+    <span data-i18n="bills_eq">
+        invoies
+    </span>
+
+    <i class="fa-solid fa-minus"></i>
+
+    <span data-i18n="inventory_eq">
+        Inventory
+    </span>
+
+    <i class="fa-solid fa-equals"></i>
+
+    <strong data-i18n="net_profit_eq">
+        Net Profit
+    </strong>
+
+</div>
+ </div>
+
+</div>
+</div>
+
+ <!-- ثم الصق بعده مباشرة هذا القسم أيضاً -->
+ <div class="card net-profit-card">
+
+ <div class="net-profit-header">
+
+ <div>
+ <h3>
+ <i class="fa-solid fa-sack-dollar"></i>
+ <span data-i18n="net_profit_title">Net Profit</span>
+ </h3>
+
+ <h6 data-i18n="net_profit_formula">
+ الربح = المدفوع - التكاليف المحددة
+ </h6>
+ </div>
+
+ </div>
+
+
+ <!-- =========================
+ PROFIT FILTER
+ ========================= -->
+
+ <div class="profit-filter">
+
+ <h3>
+ <i class="fa-solid fa-filter"></i>
+ <span data-i18n="profit_filter">Profit Filter</span>
+ </h3>
+
+ <div class="profit-date-range">
+
+ <div class="profit-date-field">
+
+ <label>
+ <i class="fa-solid fa-calendar-day"></i>
+ <span data-i18n="from">From</span>
+ </label>
+
+ <input
+ type="date"
+ id="profitFrom"
+ >
+
+ </div>
+
+
+ <div class="profit-date-field">
+
+ <label>
+ <i class="fa-solid fa-calendar-check"></i>
+ <span data-i18n="to">To</span>
+ </label>
+
+ <input
+ type="date"
+ id="profitTo"
+ >
+
+ </div>
+
+
+ <button
+ type="button"
+ class="profit-filter-btn"
+ onclick="loadNetProfit()"
+ >
+
+ <i class="fa-solid fa-chart-line"></i>
+
+ <span data-i18n="calculate_profit">Calculate Profit</span>
+
+ </button>
+
+ </div>
+
+</div>
+
+
+ <!-- =========================
+ COST TOGGLES
+ ========================= -->
+
+ <div class="profit-cost-options">
+
+ <!-- LAB -->
+ <label class="profit-cost-option">
+
+ <input
+ type="checkbox"
+ id="includeLabCost"
+ checked
+ onchange="loadNetProfit()"
+ >
+
+ <span class="profit-checkbox">
+
+ <i class="fa-solid fa-check"></i>
+
+ </span>
+
+ <span class="profit-cost-icon lab">
+
+ <i class="fa-solid fa-screwdriver-wrench"></i>
+
+ </span>
+
+ <span class="profit-cost-info">
+
+ <strong data-i18n="lab_costs_toggle">
+ Lab Costs
+ </strong>
+
+ <small data-i18n="lab_costs_toggle_ar">
+ تكاليف المعامل
+ </small>
+
+ </span>
+
+ </label>
+
+
+ <!-- BILLS -->
+ <label class="profit-cost-option">
+
+ <input
+ type="checkbox"
+ id="includeBills"
+ checked
+ onchange="loadNetProfit()"
+ >
+
+ <span class="profit-checkbox">
+
+ <i class="fa-solid fa-check"></i>
+
+ </span>
+
+ <span class="profit-cost-icon bills">
+
+ <i class="fa-solid fa-file-invoice-dollar"></i>
+
+ </span>
+
+ <span class="profit-cost-info">
+
+ <strong data-i18n="bills_toggle">
+ Invoices
+ </strong>
+
+ <small data-i18n="bills_toggle_ar">
+ الفواتير والمصروفات
+ </small>
+
+ </span>
+
+ </label>
+
+
+ <!-- INVENTORY -->
+ <label class="profit-cost-option">
+
+ <input
+ type="checkbox"
+ id="includeInventory"
+ checked
+ onchange="loadNetProfit()"
+ >
+
+ <span class="profit-checkbox">
+
+ <i class="fa-solid fa-boxes-stacked"></i>
+
+ </span>
+
+ <span class="profit-cost-icon inventory">
+
+ <i class="fa-solid fa-box-open"></i>
+
+ </span>
+
+ <span class="profit-cost-info">
+
+ <strong data-i18n="inventory_toggle">
+ Inventory
+ </strong>
+
+ <small data-i18n="inventory_toggle_ar">
+ مشتريات المخزن
+ </small>
+
+ </span>
+
+ </label>
+
+ <!-- DOCTOR PAYMENTS -->
+
+<label class="profit-cost-option">
+
+ <input
+ type="checkbox"
+ id="includeDoctorPayments"
+ checked
+ onchange="loadNetProfit()"
+ >
+
+ <span class="profit-checkbox">
+
+ <i class="fa-solid fa-check"></i>
+
+ </span>
+
+ <span class="profit-cost-icon doctors">
+
+ <i class="fa-solid fa-user-doctor"></i>
+
+ </span>
+
+ <span class="profit-cost-info">
+
+ <strong data-i18n="doctor_payments_toggle">
+ Doctor Payments
+ </strong>
+
+ <small data-i18n="doctor_payments_toggle_ar">
+ مدفوعات الأطباء
+ </small>
+
+ </span>
+
+</label>
+
+ </div>
+
+
+ <!-- =========================
+ NET PROFIT
+ ========================= -->
+
+ <h1
+ id="netProfit"
+ class="net-profit-value"
+ >
+ 0 EGP
+ </h1>
+
+
+ <!-- =========================
+ DETAILS
+ ========================= -->
+
+ <div
+ id="netProfitDetails"
+ class="net-profit-details"
+ ></div>
+
+</div>
+<!-- =====================================================
+ CUSTOM STATISTICS
+===================================================== -->
+
+
+
+
+
+ <div class="custom-stats-card">
+
+ <!-- =================================================
+ HEADER
+ ================================================= -->
+
+ <div class="custom-stats-header">
+
+ <div class="custom-stats-title">
+
+ <div class="custom-stats-icon">
+ <i class="fa-solid fa-chart-line"></i>
+ </div>
+
+ <div>
+
+ <h2 data-i18n="statistics_dashboard">
+ Statistics Dashboard
+ </h2>
+
+ <p data-i18n="statistics_dashboard_desc">
+ تحليل أداء العيادة خلال فترة زمنية محددة
+ </p>
+
+ </div>
+
+ </div>
+
+
+ <!-- CURRENT RANGE -->
+ <div
+ class="custom-stats-range"
+ id="customStatsRange"
+ >
+
+ <i class="fa-regular fa-calendar"></i>
+
+ <span data-i18n="current_month">
+ الشهر الحالي
+ </span>
+
+ </div>
+
+ </div>
+
+
+ <!-- =================================================
+ FILTER
+ ================================================= -->
+
+ <div class="custom-stats-filter">
+
+ <div class="stats-date-group">
+
+ <div class="stats-date-input">
+
+ <label>
+ <i class="fa-regular fa-calendar"></i>
+ <span data-i18n="from_label">من</span>
+ </label>
+
+ <input
+ type="date"
+ id="statsFrom"
+ >
+
+ </div>
+
+
+ <div class="stats-date-separator">
+ <i class="fa-solid fa-arrow-right"></i>
+ </div>
+
+
+ <div class="stats-date-input">
+
+ <label>
+ <i class="fa-regular fa-calendar"></i>
+ <span data-i18n="to_label">إلى</span>
+ </label>
+
+ <input
+ type="date"
+ id="statsTo"
+ >
+
+ </div>
+
+ </div>
+
+
+ <button
+ type="button"
+ onclick="loadCustomStats()"
+ class="custom-stats-btn"
+ >
+
+ <i class="fa-solid fa-filter"></i>
+
+ <span data-i18n="apply_period">
+ تطبيق الفترة
+ </span>
+
+ </button>
+
+ </div>
+
+
+ <!-- =================================================
+ RESULTS
+ ================================================= -->
+
+ <div class="custom-stats-grid">
+
+
+ <!-- TOTAL -->
+
+ <div class="custom-stat-item total-stat">
+
+ <div class="custom-stat-icon">
+ <i class="fa-solid fa-coins"></i>
+ </div>
+
+ <div class="custom-stat-content">
+
+ <span data-i18n="custom_total_due">
+ إجمالي المستحق
+ </span>
+
+ <strong id="customTotal">
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <!-- PAID -->
+
+ <div class="custom-stat-item paid-stat">
+
+ <div class="custom-stat-icon">
+ <i class="fa-solid fa-money-bill-wave"></i>
+ </div>
+
+ <div class="custom-stat-content">
+
+ <span data-i18n="custom_paid">
+ المدفوع
+ </span>
+
+ <strong id="customPaid">
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <!-- =================================================
+ REMAINING
+ ================================================== -->
+
+ <div class="custom-stat-item remain-stat">
+
+ <div class="custom-stat-main">
+
+ <div class="custom-stat-icon">
+
+ <i class="fa-solid fa-wallet"></i>
+
+ </div>
+
+ <div class="custom-stat-content">
+
+ <span data-i18n="custom_remaining">
+ المتبقي
+ </span>
+
+ <strong id="customRemain">
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <!-- HOVER DETAILS -->
+
+ <div class="custom-stat-hover-panel">
+
+ <div class="custom-hover-header">
+
+ <div>
+
+ <strong data-i18n="custom_remaining_breakdown">
+ Custom Remaining Breakdown
+ </strong>
+
+ <small data-i18n="custom_remaining_breakdown_ar">
+ تفاصيل المبالغ المتبقية للفترة المحددة
+ </small>
+
+ </div>
+
+ <i class="fa-solid fa-wallet"></i>
+
+ </div>
+
+
+ <div class="custom-remaining-summary-grid">
+
+ <!-- SERVICES -->
+
+ <div>
+
+ <span data-i18n="services_label">الخدمات</span>
+
+ <strong id="customRemainingServices">
+ 0
+ </strong>
+
+ </div>
+
+
+ <!-- DUE -->
+
+ <div>
+
+ <span data-i18n="due_label">المستحق</span>
+
+ <strong id="customRemainingTotal">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- PAID -->
+
+ <div>
+
+ <span data-i18n="paid_label">المدفوع</span>
+
+ <strong id="customRemainingPaid">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- REMAIN -->
+
+ <div>
+
+ <span data-i18n="remaining_label">المتبقي</span>
+
+ <strong
+ id="customRemainingAmount"
+ class="remaining-red"
+ >
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <div class="custom-remaining-equation">
+
+ <span data-i18n="due_after_discount">المستحق بعد الخصم</span>
+
+ <i class="fa-solid fa-minus"></i>
+
+ <span data-i18n="all_payments">كل المدفوعات</span>
+
+ <i class="fa-solid fa-equals"></i>
+
+ <strong data-i18n="remaining_eq">المتبقي</strong>
+
+ </div>
+
+ </div>
+
+ </div>
+
+ <!-- =================================================
+ SERVICES
+ ================================================== -->
+
+ <div class="custom-stat-item services-stat">
+
+ <div class="custom-stat-main">
+
+ <div class="custom-stat-icon">
+
+ <i class="fa-solid fa-tooth"></i>
+
+ </div>
+
+ <div class="custom-stat-content">
+
+ <span data-i18n="services_label">الخدمات</span>
+
+ <strong id="customServices">
+ 0
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <!-- HOVER DETAILS -->
+
+ <div class="custom-stat-hover-panel">
+
+ <div class="custom-hover-header">
+
+ <div>
+
+ <strong data-i18n="custom_services_breakdown">
+ Custom Services Breakdown
+ </strong>
+
+ <small data-i18n="custom_services_breakdown_ar">
+ تفاصيل الخدمات للفترة المحددة
+ </small>
+
+ </div>
+
+ <i class="fa-solid fa-chart-pie"></i>
+
+ </div>
+
+
+ <div class="custom-services-summary-grid">
+
+ <!-- COMPLETED -->
+
+ <div class="service-summary-completed">
+
+ <span data-i18n="completed">
+ مكتملة
+ </span>
+
+ <strong id="customCompletedServices">
+ 0
+ </strong>
+
+ </div>
+
+
+ <!-- INCOMPLETE -->
+
+ <div class="service-summary-incomplete">
+
+ <span data-i18n="incomplete">
+ غير مكتملة
+ </span>
+
+ <strong id="customIncompleteServices">
+ 0
+ </strong>
+
+ </div>
+
+
+ <!-- TOTAL -->
+
+ <div class="service-summary-total">
+
+ <span data-i18n="total_services">
+ إجمالي الخدمات
+ </span>
+
+ <strong id="customTotalServices">
+ 0
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <!-- PROGRESS -->
+
+ <div class="custom-services-progress-container">
+
+ <div class="custom-services-progress-label">
+
+ <span data-i18n="completion_rate">
+ نسبة الإنجاز
+ </span>
+
+ <strong id="customServicesCompletionPercentage">
+ 0%
+ </strong>
+
+ </div>
+
+
+ <div class="custom-services-progress-bar">
+
+ <div
+ id="customServicesProgress"
+ class="custom-services-progress-fill"
+ style="width:0%;"
+ ></div>
+
+ </div>
+
+ </div>
+
+ </div>
+
+ </div>
+
+
+
+ <!-- PATIENTS -->
+
+ <div class="custom-stat-item patients-stat">
+
+ <div class="custom-stat-icon">
+ <i class="fa-solid fa-user-group"></i>
+ </div>
+
+ <div class="custom-stat-content">
+
+ <span data-i18n="patients_label">المرضى</span>
+
+ <strong id="customPatients">
+ 0
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <!-- =================================================
+ NET PROFIT
+ ================================================== -->
+ <div class="custom-stat-item profit-stat">
+
+ <div class="custom-stat-main">
+
+ <div class="custom-stat-icon">
+ <i class="fa-solid fa-chart-line"></i>
+ </div>
+
+ <div class="custom-stat-content">
+
+ <span data-i18n="custom_net_profit">
+ صافي الربح
+ </span>
+
+ <strong id="customNetProfit">
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <!-- HOVER DETAILS -->
+
+ <div class="custom-stat-hover-panel">
+
+ <div class="custom-hover-header">
+
+ <div>
+ <strong data-i18n="custom_profit_breakdown">
+ Custom Profit Breakdown
+ </strong>
+
+ <small data-i18n="custom_profit_breakdown_ar">
+ تفاصيل صافي الربح للفترة المحددة
+ </small>
+ </div>
+
+ <i class="fa-solid fa-chart-line"></i>
+
+ </div>
+
+
+ <div class="custom-summary-grid">
+
+ <!-- PAID -->
+
+ <div>
+
+ <span data-i18n="paid_label">المدفوع</span>
+
+ <strong
+ id="customProfitPaid"
+ class="profit-positive"
+ >
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- LAB -->
+
+ <div>
+
+ <span data-i18n="lab_label">المعمل</span>
+
+ <strong id="customProfitLab">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- BILLS -->
+
+ <div>
+
+ <span data-i18n="bills_label">الفواتير</span>
+
+ <strong id="customProfitBills">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- INVENTORY -->
+
+ <div>
+
+ <span data-i18n="inventory_label">المخزن</span>
+
+ <strong id="customProfitInventory">
+ 0 EGP
+ </strong>
+
+ </div>
+
+
+ <!-- NET -->
+
+ <div class="custom-profit-final">
+
+ <span data-i18n="net_profit_label">صافي الربح</span>
+
+ <strong id="customProfitNet">
+ 0 EGP
+ </strong>
+
+ </div>
+
+ </div>
+
+
+ <div class="custom-profit-equation">
+
+ <span data-i18n="paid_eq">المدفوع</span>
+
+ <i class="fa-solid fa-minus"></i>
+
+ <span data-i18n="lab_bills_inventory_eq">المعمل + الفواتير + المخزن</span>
+
+ <i class="fa-solid fa-equals"></i>
+
+ <strong data-i18n="net_profit_eq">صافي الربح</strong>
+
+ </div>
+
+ </div>
+
+ </div>
+
+
+
+ </div>
+
+ </div>
+
+
+
+ </div>
+
+</details>
+
+
+<details class="reports-details">
+
+    <summary class="reports-summary chart-summary">
+
+        <span>
+           <i class="fa-solid fa-chart-simple"></i>
+            <span data-i18n="203">عرض الرسم البياني الشهري</span>
+        </span>
+
+        <i class="fa-solid fa-chevron-down arrow"></i>
+
+    </summary>
+
+   <div class="monthly-chart-filter">
+
+    <div class="monthly-filter-field">
+
+        <label data-i18n="from_month">
+            من شهر
+        </label>
+
+        <input
+            type="month"
+            id="monthlyFrom"
+        >
+
+    </div>
+
+
+    <div class="monthly-filter-field">
+
+        <label data-i18n="to_month">
+            إلى شهر
+        </label>
+
+        <input
+            type="month"
+            id="monthlyTo"
+        >
+
+    </div>
+
+
+    <button
+        type="button"
+        class="monthly-filter-btn"
+        onclick="loadMonthlyComparison()"
+    >
+
+        <i class="fa-solid fa-chart-column"></i>
+
+        <span data-i18n="show_comparison">عرض المقارنة</span>
+
+    </button>
+
+</div>
+
+
+<div class="monthly-range-info">
+
+    <i class="fa-solid fa-calendar-days"></i>
+
+    <span id="monthlyRangeLabel" data-i18n="last_6_months">
+        آخر 6 شهور
+    </span>
+
+</div>
+
+
+<canvas id="monthlyChart"></canvas>
+
+</details>
+
+<!-- مقارنة العيادات  -->
+
+<details class="reports-details">
+
+    <summary
+    class="reports-summary departments-summary"
+>
+
+    <span>
+        <i class="fa-solid fa-chart-column"></i>
+       <span data-i18n="204">عرض مقارنة أداء العيادات</span>
+    </span>
+
+    <i class="fa-solid fa-chevron-down arrow"></i>
+
+</summary>
+
+    <div class="dashboard-card" style="margin-top:20px;">
+
+     <div class="chart-filters custom-date-filter">
+
+    <div class="date-filter-group">
+
+        <label data-i18n="from_label">
+            من
+        </label>
+
+        <input
+            type="date"
+            id="departmentsFromDate"
+        >
+
+    </div>
+
+
+    <div class="date-filter-group">
+
+        <label data-i18n="to_label">
+            إلى
+        </label>
+
+        <input
+            type="date"
+            id="departmentsToDate"
+        >
+
+    </div>
+
+
+    <button
+        class="chart-filter-btn"
+        type="button"
+        onclick="loadDepartmentsStatistics()"
+    >
+
+        <i class="fa-solid fa-filter"></i>
+
+        <span data-i18n="31">تطبيق</span>
+
+    </button>
+
+</div>
+        <div class="card-header">
+
+            <i class="fa-solid fa-chart-column"></i>
+
+            <span data-i18n="departments_performance">أداء العيادات</span>
+
+        </div>
+
+       <div class="departments-chart-wrapper">
+
+    <canvas
+        id="departmentsChart"
+    ></canvas>
+
+</div>
+
+    </div>
+
+</details>
+<!-- =====================================================
+     DENTIX PRO
+     DOCTORS REPORTS
+===================================================== -->
+
+<details class="reports-details doctors-report-section">
+
+    <summary class="reports-summary doctors-report-summary">
+
+        <span>
+            <i class="fa-solid fa-user-doctor"></i>
+           <span data-i18n="205">عرض تقارير الأطباء</span>
+        </span>
+
+        <i class="fa-solid fa-chevron-down arrow"></i>
+
+    </summary>
+
+
+    <div class="doctors-report-card">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================= -->
+
+        <div class="doctors-report-header">
+
+            <div class="doctors-report-title">
+
+                <div class="doctors-report-icon">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <h2 data-i18n="doctors_financial_report">
+                        Doctors Financial Report
+                    </h2>
+
+                    <p data-i18n="doctors_report_desc">
+                        متابعة خدمات الأطباء ومستحقاتهم ومدفوعاتهم
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="doctors-report-status">
+
+                <span class="doctors-status-dot"></span>
+
+                <span data-i18n="financial_report">تقرير مالي</span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             FILTER
+        ================================================= -->
+
+        <div class="doctors-report-filter">
+
+            <div class="doctors-filter-heading">
+
+                <div class="doctors-filter-heading-icon">
+
+                    <i class="fa-solid fa-sliders"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="report_settings">
+                        إعدادات التقرير
+                    </strong>
+
+                    <span data-i18n="report_settings_desc">
+                        اختر الفترة والطبيب المطلوب
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="doctors-filter-row">
+
+
+                <!-- FROM -->
+
+                <div class="doctors-filter-field">
+
+                    <label>
+
+                        <i class="fa-regular fa-calendar"></i>
+
+                        <span data-i18n="from_date_label">من التاريخ</span>
+
+                    </label>
+
+                    <div class="doctors-input-wrapper">
+
+                        <input
+                            type="date"
+                            id="doctorsReportFrom"
+                        >
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- TO -->
+
+                <div class="doctors-filter-field">
+
+                    <label>
+
+                        <i class="fa-regular fa-calendar-check"></i>
+
+                        <span data-i18n="to_date_label">إلى التاريخ</span>
+
+                    </label>
+
+                    <div class="doctors-input-wrapper">
+
+                        <input
+                            type="date"
+                            id="doctorsReportTo"
+                        >
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- DOCTOR -->
+
+                <div class="doctors-filter-field">
+
+                    <label>
+
+                        <i class="fa-solid fa-user-doctor"></i>
+
+                        <span data-i18n="doctor_label">الطبيب</span>
+
+                    </label>
+
+                    <div class="doctors-input-wrapper">
+
+                        <select id="doctorsReportDoctor">
+
+                            <option value="" data-i18n="all_doctors">
+                                جميع الأطباء
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- BUTTON -->
+
+                <button
+                    type="button"
+                    class="doctors-report-filter-btn"
+                    onclick="loadDoctorsReport()"
+                >
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    <span data-i18n="show_report">
+                        عرض التقرير
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             QUICK SUMMARY
+        ================================================= -->
+
+        <div class="doctors-report-section-label">
+
+            <div class="section-label-icon">
+
+                <i class="fa-solid fa-chart-simple"></i>
+
+            </div>
+
+            <div>
+
+                <strong data-i18n="report_summary">
+                    ملخص التقرير
+                </strong>
+
+                <span data-i18n="quick_overview">
+                    نظرة سريعة على الأداء المالي
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="doctors-report-summary-grid">
+
+
+            <!-- DOCTORS -->
+
+            <div class="doctor-report-stat">
+
+                <div class="doctor-report-stat-top">
+
+                    <div class="doctor-report-stat-icon doctors-icon">
+
+                        <i class="fa-solid fa-user-doctor"></i>
+
+                    </div>
+
+                    <span class="doctor-stat-badge" data-i18n="doctors_badge">
+                        أطباء
+                    </span>
+
+                </div>
+
+                <div class="doctor-report-stat-content">
+
+                    <span data-i18n="doctors_count_label">عدد الأطباء</span>
+
+                    <strong id="doctorsReportDoctors">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- SERVICES -->
+
+            <div class="doctor-report-stat">
+
+                <div class="doctor-report-stat-top">
+
+                    <div class="doctor-report-stat-icon services-icon">
+
+                        <i class="fa-solid fa-tooth"></i>
+
+                    </div>
+
+                    <span class="doctor-stat-badge" data-i18n="services_badge">
+                        خدمات
+                    </span>
+
+                </div>
+
+                <div class="doctor-report-stat-content">
+
+                    <span data-i18n="services_done">الخدمات المنفذة</span>
+
+                    <strong id="doctorsReportServices">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- PATIENTS -->
+
+            <div class="doctor-report-stat">
+
+                <div class="doctor-report-stat-top">
+
+                    <div class="doctor-report-stat-icon patients-icon">
+
+                        <i class="fa-solid fa-users"></i>
+
+                    </div>
+
+                    <span class="doctor-stat-badge" data-i18n="patients_badge">
+                        مرضى
+                    </span>
+
+                </div>
+
+                <div class="doctor-report-stat-content">
+
+                    <span data-i18n="patients_count">المرضى</span>
+
+                    <strong id="doctorsReportPatients">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- NET TOTAL -->
+
+            <div class="doctor-report-stat doctor-stat-primary">
+
+                <div class="doctor-report-stat-top">
+
+                    <div class="doctor-report-stat-icon net-icon">
+
+                        <i class="fa-solid fa-wallet"></i>
+
+                    </div>
+
+                    <span class="doctor-stat-badge" data-i18n="net_badge">
+                        صافي
+                    </span>
+
+                </div>
+
+                <div class="doctor-report-stat-content">
+
+                    <span data-i18n="net_after_discount">المستحق بعد الخصم</span>
+
+                    <strong id="doctorsReportTotal">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- PATIENT PAYMENTS -->
+
+            <div class="doctor-report-stat">
+
+                <div class="doctor-report-stat-top">
+
+                    <div class="doctor-report-stat-icon paid-icon">
+
+                        <i class="fa-solid fa-money-bill-wave"></i>
+
+                    </div>
+
+                    <span class="doctor-stat-badge" data-i18n="collection_badge">
+                        تحصيل
+                    </span>
+
+                </div>
+
+                <div class="doctor-report-stat-content">
+
+                    <span data-i18n="patient_payments">مدفوعات المرضى</span>
+
+                    <strong id="doctorsReportPaid">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- PATIENT REMAINING -->
+
+            <div class="doctor-report-stat">
+
+                <div class="doctor-report-stat-top">
+
+                    <div class="doctor-report-stat-icon remaining-icon">
+
+                        <i class="fa-solid fa-hourglass-half"></i>
+
+                    </div>
+
+                    <span class="doctor-stat-badge" data-i18n="remaining_badge">
+                        متبقي
+                    </span>
+
+                </div>
+
+                <div class="doctor-report-stat-content">
+
+                    <span data-i18n="patient_remaining">المتبقي على المرضى</span>
+
+                    <strong id="doctorsReportRemaining">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- DOCTOR FEES -->
+
+            <div class="doctor-report-stat doctor-stat-fees">
+
+                <div class="doctor-report-stat-top">
+
+                    <div class="doctor-report-stat-icon fees-icon">
+
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+
+                    </div>
+
+                    <span class="doctor-stat-badge" data-i18n="due_badge">
+                        مستحق
+                    </span>
+
+                </div>
+
+                <div class="doctor-report-stat-content">
+
+                    <span data-i18n="doctor_fees">مستحقات الأطباء</span>
+
+                    <strong id="doctorsReportFees">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- DOCTOR PAYMENTS -->
+
+            <div class="doctor-report-stat doctor-stat-doctor-paid">
+
+                <div class="doctor-report-stat-top">
+
+                    <div class="doctor-report-stat-icon doctor-paid-icon">
+
+                        <i class="fa-solid fa-money-check-dollar"></i>
+
+                    </div>
+
+                    <span class="doctor-stat-badge" data-i18n="paid_badge">
+                        مدفوع
+                    </span>
+
+                </div>
+
+                <div class="doctor-report-stat-content">
+
+                    <span data-i18n="doctor_payments">مدفوعات الأطباء</span>
+
+                    <strong id="doctorsReportDoctorPaid">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- DOCTOR REMAINING -->
+
+            <div class="doctor-report-stat doctor-stat-remaining">
+
+                <div class="doctor-report-stat-top">
+
+                    <div class="doctor-report-stat-icon doctor-remaining-icon">
+
+                        <i class="fa-solid fa-scale-balanced"></i>
+
+                    </div>
+
+                    <span class="doctor-stat-badge" data-i18n="balance_badge">
+                        رصيد
+                    </span>
+
+                </div>
+
+                <div class="doctor-report-stat-content">
+
+                    <span data-i18n="doctor_remaining">المتبقي للأطباء</span>
+
+                    <strong id="doctorsReportDoctorRemaining">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- =================================================
+             DOCTOR MONEY OVERVIEW
+        ================================================= -->
+
+        <div class="doctors-money-overview">
+
+            <div class="doctors-money-overview-title">
+
+                <div class="overview-title-icon">
+
+                    <i class="fa-solid fa-coins"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="doctor_money_movement">
+                        حركة مستحقات الأطباء
+                    </strong>
+
+                    <span data-i18n="doctor_money_comparison">
+                        مقارنة المستحق والمدفوع والمتبقي
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="doctors-money-overview-grid">
+
+
+                <div class="money-overview-item">
+
+                    <div class="money-overview-icon">
+
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span data-i18n="due_amount">المستحق</span>
+
+                        <strong id="doctorsOverviewFees">
+                            0 EGP
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="money-overview-line"></div>
+
+
+
+                <div class="money-overview-item">
+
+                    <div class="money-overview-icon">
+
+                        <i class="fa-solid fa-check-double"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span data-i18n="paid_amount_label">المدفوع</span>
+
+                        <strong id="doctorsOverviewPaid">
+                            0 EGP
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="money-overview-line"></div>
+
+
+
+                <div class="money-overview-item">
+
+                    <div class="money-overview-icon">
+
+                        <i class="fa-solid fa-scale-balanced"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span data-i18n="remaining_amount_label">المتبقي</span>
+
+                        <strong id="doctorsOverviewRemaining">
+                            0 EGP
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             CHART
+        ================================================= -->
+
+        <div class="doctors-report-chart-card">
+
+            <div class="doctors-report-chart-header">
+
+                <div class="doctors-chart-heading">
+
+                    <div class="doctors-chart-icon">
+
+                        <i class="fa-solid fa-chart-column"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong data-i18n="doctors_comparison">
+                            مقارنة الأطباء
+                        </strong>
+
+                        <small data-i18n="doctors_comparison_desc">
+                            صافي المستحق لكل طبيب
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="doctors-report-chart-wrapper">
+
+                <canvas
+                    id="doctorsReportChart"
+                ></canvas>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             TABLE
+        ================================================= -->
+
+        <div class="doctors-report-table-card">
+
+
+            <div class="doctors-report-table-header">
+
+                <div class="doctors-table-heading">
+
+                    <div class="doctors-table-icon">
+
+                        <i class="fa-solid fa-table"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong data-i18n="doctors_details">
+                            تفاصيل الأطباء
+                        </strong>
+
+                        <small data-i18n="doctors_details_desc">
+                            المستحقات والمدفوعات والأرصدة
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="doctors-table-count">
+
+                    <i class="fa-solid fa-list"></i>
+
+                    <span data-i18n="by_selected_period">
+                        حسب الفترة المحددة
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="doctors-report-table-wrapper">
+
+                <table class="doctors-report-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th data-i18n="doctor_col">الطبيب</th>
+
+                            <th data-i18n="services_col">الخدمات</th>
+
+                            <th data-i18n="patients_col">المرضى</th>
+
+                            <th data-i18n="net_after_discount_col">المستحق بعد الخصم</th>
+
+                            <th data-i18n="patient_payments_col">مدفوعات المرضى</th>
+
+                            <th data-i18n="patient_remaining_col">المتبقي على المرضى</th>
+
+                            <th data-i18n="doctor_fees_col">مستحق الطبيب</th>
+
+                            <th data-i18n="doctor_payments_col">مدفوعات الطبيب</th>
+
+                            <th data-i18n="doctor_remaining_col">المتبقي للطبيب</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="doctorsReportTable">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- MOBILE TABLE NOTE -->
+
+            <div class="doctors-table-mobile-note">
+
+                <i class="fa-solid fa-arrows-left-right"></i>
+
+                <span data-i18n="swipe_table">اسحب الجدول أفقيًا لعرض جميع التفاصيل</span>
+
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+</details>
+<!-- اكثر خدمة تكرارا -->
+
+<details class="reports-details">
+
+    <summary class="reports-summary services-summary">
+
+        <span>
+            <i class="fa-solid fa-chart-simple"></i>
+            <span data-i18n="206">عرض تحليلات الخدمات والإحصائيات</span>
+        </span>
+
+        <i class="fa-solid fa-chevron-down arrow"></i>
+
+    </summary>
+
+
+<!-- مقارنة الخدمات  -->
+ <!-- =========================
+SERVICES ANALYTICS
+========================= -->
+
+
+
+<div style="
+    margin-top:25px;
+    background:linear-gradient(135deg,var(--bg-card),var(--bg-card-elevated));
+    border-radius:24px;
+    padding:25px;
+    border:1px solid rgba(var(--highlight-rgb), 0.08);
+    box-shadow:0 10px 30px rgba(var(--shadow-rgb), .25);
+">
+
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        flex-wrap:wrap;
+        gap:15px;
+        margin-bottom:25px;
+    ">
+
+        <div>
+            <h2 style="
+                margin:0;
+                color:var(--text-inverse);
+                font-size:28px;
+            " data-i18n="services_analytics">
+                📊 Services Analytics
+            </h2>
+
+            <p style="
+                margin-top:8px;
+                color:var(--text-muted);
+            " data-i18n="services_analytics_desc">
+                مقارنة بين جميع الخدمات المسجلة
+            </p>
+        </div>
+
+        <div style="
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+
+    background:var(--bg-card);
+    padding:16px;
+    border-radius:16px;
+
+    border:1px solid rgba(var(--highlight-rgb), 0.06);
+    margin-bottom:20px;
+    box-shadow:0 10px 25px rgba(var(--shadow-rgb), .25);
+">
+
+    <!-- FROM -->
+    <div style="display:flex;flex-direction:column;">
+        <label style="color:var(--text-muted);font-size:12px;margin-bottom:6px;" data-i18n="from_date_analytics">
+            من تاريخ
+        </label>
+
+        <input type="date" id="analyticsFrom"
+            style="
+                padding:10px 12px;
+                border-radius:10px;
+                border:1px solid rgba(var(--highlight-rgb), 0.08);
+                background:var(--bg-card-elevated);
+                color:var(--text-inverse);
+                outline:none;
+                min-width:160px;
+            ">
+    </div>
+
+    <!-- TO -->
+    <div style="display:flex;flex-direction:column;">
+        <label style="color:var(--text-muted);font-size:12px;margin-bottom:6px;" data-i18n="to_date_analytics">
+            إلى تاريخ
+        </label>
+
+        <input type="date" id="analyticsTo"
+            style="
+                padding:10px 12px;
+                border-radius:10px;
+                border:1px solid rgba(var(--highlight-rgb), 0.08);
+                background:var(--bg-card-elevated);
+                color:var(--text-inverse);
+                outline:none;
+                min-width:160px;
+            ">
+    </div>
+
+    <!-- BUTTON -->
+    <button onclick="loadServicesAnalytics()"
+        style="
+            padding:11px 18px;
+
+            border-radius:12px;
+            border:none;
+            cursor:pointer;
+
+            background:linear-gradient(135deg,var(--color-cyan-light),var(--color-info));
+            color:var(--text-inverse);
+            font-weight:700;
+
+            box-shadow:0 8px 20px rgba(var(--color-cyan-rgb), .25);
+
+            transition:all .25s ease;
+        "
+        onmouseover="this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.transform='translateY(0)'"
+    >
+        🔍 <span data-i18n="filter_btn">فلترة</span>
+    </button>
+
+</div>
+
+    </div>
+
+    <!-- TOP SERVICE -->
+
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+        gap:18px;
+        margin-bottom:25px;
+    ">
+
+        <div style="
+            background:var(--bg-card);
+            padding:20px;
+            border-radius:18px;
+            border:1px solid rgba(var(--highlight-rgb), 0.06);
+        ">
+
+            <div style="color:var(--text-muted);font-size:14px;" data-i18n="top_service">
+                أكثر خدمة تكراراً
+            </div>
+
+            <div id="topService"
+            style="
+                margin-top:12px;
+                font-size:24px;
+                font-weight:700;
+                color:var(--color-cyan-light);
+            ">
+                ---
+            </div>
+
+        </div>
+
+        <div style="
+            background:var(--bg-card);
+            padding:20px;
+            border-radius:18px;
+            border:1px solid rgba(var(--highlight-rgb), 0.06);
+        ">
+
+            <div style="color:var(--text-muted);font-size:14px;" data-i18n="services_count">
+                عدد الخدمات المسجلة
+            </div>
+
+            <div id="servicesCount"
+            style="
+                margin-top:12px;
+                font-size:24px;
+                font-weight:700;
+                color:var(--color-success);
+            ">
+                0
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TABLE -->
+
+    <div style="
+        overflow:auto;
+        margin-top:20px;
+    ">
+
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+            overflow:hidden;
+            border-radius:18px;
+        ">
+
+            <thead>
+
+                <tr style="
+                    background:var(--color-info-alt);
+                    color:var(--text-inverse);
+                ">
+                    <th style="padding:14px;" data-i18n="service_col">الخدمة</th>
+                    <th style="padding:14px;" data-i18n="count_col">عدد المرات</th>
+                    <th style="padding:14px;" data-i18n="total_due_col">إجمالي المستحق</th>
+                    <th style="padding:14px;" data-i18n="total_paid_col">إجمالي المدفوع</th>
+                    <th style="padding:14px;" data-i18n="total_remaining_col">إجمالي المتبقي</th>
+                </tr>
+
+            </thead>
+
+            <tbody id="servicesAnalyticsTable"></tbody>
+
+        </table>
+
+    </div>
+
+    <!-- CHART -->
+
+    <div style="
+        margin-top:35px;
+        background:var(--bg-card);
+        padding:20px;
+        border-radius:20px;
+    ">
+
+        <canvas id="servicesChart"></canvas>
+
+    </div>
+
+
+</div>
+
+
+
+</div>
+
+</details>
+
+
+   <!-- =========================================================
+     PATIENT AGE & GENDER ANALYTICS
+========================================================= -->
+
+<details class="reports-details">
+
+    <!-- =========================
+         COLLAPSE HEADER
+    ========================== -->
+
+    <summary class="reports-summary age-summary">
+
+        <span>
+
+            <i class="fa-solid fa-user-group"></i>
+
+            <span data-i18n="207">عرض تحليل أعمار المرضى - النوع</span>
+
+        </span>
+
+        <i class="fa-solid fa-chevron-down arrow"></i>
+
+    </summary>
+
+
+    <!-- =========================
+         MAIN CARD
+    ========================== -->
+
+    <div class="dashboard-card">
+
+
+        <!-- =========================
+             ANALYTICS HEADER
+        ========================== -->
+
+        <div class="dashboard-header">
+
+            <!-- TITLE -->
+
+            <div class="dashboard-title">
+
+                <i class="fa-solid fa-chart-line"></i>
+
+                <span data-i18n="patient_age_gender">
+                    Patient Age & Gender Analytics
+                </span>
+
+            </div>
+
+
+            <!-- DATE RANGE FILTER -->
+
+            <div
+                class="filter-group"
+                style="
+                    display:flex;
+                    align-items:center;
+                    gap:10px;
+                    flex-wrap:wrap;
+                "
+            >
+
+                <!-- FROM -->
+
+                <div
+                    style="
+                        display:flex;
+                        align-items:center;
+                        gap:8px;
+                    "
+                >
+
+                    <span
+                        style="
+                            color:#94a3b8;
+                            font-size:13px;
+                            font-weight:700;
+                            white-space:nowrap;
+                        "
+                        data-i18n="from_small"
+                    >
+                        من
+                    </span>
+
+
+                    <input
+                        type="date"
+                        id="dateFrom"
+                        class="dashboard-select"
+                        onchange="loadStats()"
+                    >
+
+                </div>
+
+
+                <!-- SEPARATOR -->
+
+                <span
+                    style="
+                        color:#64748b;
+                        font-size:13px;
+                        font-weight:700;
+                    "
+                >
+                    —
+                </span>
+
+
+                <!-- TO -->
+
+                <div
+                    style="
+                        display:flex;
+                        align-items:center;
+                        gap:8px;
+                    "
+                >
+
+                    <span
+                        style="
+                            color:#94a3b8;
+                            font-size:13px;
+                            font-weight:700;
+                            white-space:nowrap;
+                        "
+                        data-i18n="to_small"
+                    >
+                        إلى
+                    </span>
+
+
+                    <input
+                        type="date"
+                        id="dateTo"
+                        class="dashboard-select"
+                        onchange="loadStats()"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =========================
+             AGE STATISTICS
+        ========================== -->
+
+        <div class="age-statistics-section">
+
+            <!-- SECTION TITLE -->
+
+            <div
+                style="
+                    display:flex;
+                    align-items:center;
+                    gap:10px;
+                    margin-bottom:18px;
+                "
+            >
+
+                <i
+                    class="fa-solid fa-cake-candles"
+                    style="
+                        color:#38bdf8;
+                        font-size:18px;
+                    "
+                ></i>
+
+                <div>
+
+                    <div
+                        style="
+                            color:#f8fafc;
+                            font-size:16px;
+                            font-weight:800;
+                        "
+                        data-i18n="age_distribution"
+                    >
+                        Age Distribution
+                    </div>
+
+                    <div
+                        style="
+                            color:#64748b;
+                            font-size:12px;
+                            margin-top:3px;
+                        "
+                        data-i18n="age_distribution_desc"
+                    >
+                        توزيع المرضى حسب الفئة العمرية
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- AGE TABLE -->
+
+            <div class="table-wrapper">
+
+                <table class="age-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th data-i18n="category_col">
+                                Category
+                            </th>
+
+                            <th data-i18n="age_range_col">
+                                Age Range
+                            </th>
+
+                            <th data-i18n="patients_count_col">
+                                Patients
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="ageStats">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =========================
+             DIVIDER
+        ========================== -->
+
+        <div
+            style="
+                height:1px;
+                background:rgba(255,255,255,.06);
+                margin:30px 0;
+            "
+        ></div>
+
+
+
+        <!-- =========================
+             GENDER STATISTICS
+        ========================== -->
+
+        <div class="gender-stats-card">
+
+
+            <!-- GENDER HEADER -->
+
+            <div class="gender-header">
+
+                <div class="gender-header-text">
+
+                    <h3>
+
+                        <i class="fa-solid fa-venus-mars"></i>
+
+                        <span data-i18n="patient_distribution">توزيع المرضى</span>
+
+                    </h3>
+
+
+                    <span data-i18n="gender_stats">
+                        إحصائية الذكور والإناث
+                    </span>
+
+                </div>
+
+
+                <!-- TOTAL -->
+
+                <div
+                    style="
+                        display:flex;
+                        align-items:center;
+                        gap:8px;
+                        padding:8px 14px;
+                        border-radius:12px;
+                        background:rgba(255,255,255,.04);
+                        border:1px solid rgba(255,255,255,.06);
+                    "
+                >
+
+                    <i
+                        class="fa-solid fa-users"
+                        style="
+                            color:#38bdf8;
+                            font-size:13px;
+                        "
+                    ></i>
+
+                    <span
+                        style="
+                            color:#94a3b8;
+                            font-size:12px;
+                            font-weight:600;
+                        "
+                        data-i18n="total_patients_label"
+                    >
+                        إجمالي المرضى
+                    </span>
+
+                    <strong
+                        id="genderTotalPatients"
+                        style="
+                            color:#f8fafc;
+                            font-size:15px;
+                            font-weight:900;
+                        "
+                    >
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- GENDER CHART -->
+
+            <div
+                class="gender-chart-wrapper"
+                style="
+                    position:relative;
+                    width:100%;
+                    height:320px;
+                    margin-top:20px;
+                "
+            >
+
+                <canvas
+                    id="genderStatisticsChart"
+                ></canvas>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+</details>
+<!-- =====================================================
+     DENTIX PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">الرئيسية</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">الزيارات</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">إضافة مريض</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">ملفات المرضى</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">المزيد</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    المزيد
+                </h3>
+
+                <p data-i18n="103">
+                    أدوات وإدارة النظام
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        الفواتير
+                    </strong>
+
+                    <span data-i18n="105">
+                        إدارة الفواتير
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        المخزون
+                    </strong>
+
+                    <span data-i18n="107">
+                        المخزون والمشتريات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        المعامل
+                    </strong>
+
+                    <span data-i18n="109">
+                        أعمال المعمل
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        الأطباء
+                    </strong>
+
+                    <span data-i18n="111">
+                        إدارة الأطباء
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        المطبوعات
+                    </strong>
+
+                    <span data-i18n="113">
+                        الوصفات والمطبوعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        إدارة الأدوية والجرعات
+                    </strong>
+
+                    <span data-i18n="115">
+                        إدارة الأدوية وحساب الجرعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        التقارير
+                    </strong>
+
+                    <span data-i18n="117">
+                        الإحصاءات والأرباح
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        التسعير
+                    </strong>
+
+                    <span data-i18n="119">
+                        إدارة أسعار الخدمات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/doctorsreport.js"></script>
+
+
+<!-- =====================================================
+     REMAINING DETAILS MODAL
+===================================================== -->
+
+<div
+    id="remainingDetailsModal"
+    class="remaining-modal"
+>
+
+    <div class="remaining-modal-content">
+
+        <div class="remaining-modal-header">
+
+            <div>
+
+                <h2 id="remainingModalTitle" data-i18n="remaining_details_title">
+                    Remaining Details
+                </h2>
+
+                <p id="remainingModalSubtitle" data-i18n="remaining_details_subtitle">
+                    تفاصيل المبالغ المتبقية
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="remaining-modal-close"
+                onclick="closeRemainingDetails()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="remainingDetailsBody"
+            class="remaining-details-body"
+        >
+
+            <div class="remaining-loading">
+
+                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                <span data-i18n="loading_details">جاري تحميل التفاصيل...</span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+</body>
+
+</html>

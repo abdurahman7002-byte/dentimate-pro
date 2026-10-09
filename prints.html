@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title data-i18n="prints_title">Medical Prints | Dentix Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prints.css">
+<link rel="stylesheet" href="css/notification.css">
+
+
+</head>
+
+<body>
+  <!-- FLOATING ICONS -->
+    <i class="fa-solid fa-tooth floating-icon icon1"></i>
+    <i class="fa-solid fa-heart-pulse floating-icon icon2"></i>
+    <i class="fa-solid fa-stethoscope floating-icon icon3"></i>
+
+<!-- ===== PAGE HEADER ===== -->
+<header class="page-header">
+    <h1>
+        <i class="fa-solid fa-file-prescription"></i>
+        <span data-i18n="medical_prints">Medical Prints</span>
+    </h1>
+    <p data-i18n="medical_prints_desc">Create and manage prescriptions, reports and invoices professionally</p>
+</header>
+
+
+<!-- ===== ADD FAB BUTTON ===== -->
+<button type="button" class="add-fab" onclick="openFormModal()">
+    <i class="fa-solid fa-plus"></i>
+    <span data-i18n="create_new_print">Create New Print</span>
+</button>
+
+
+<div class="container">
+
+
+    <!-- ===== SECTION LABEL ===== -->
+    <div class="section-label">
+        <i class="fa-solid fa-layer-group"></i>
+        <span data-i18n="saved_prints">Saved Prints</span>
+    </div>
+
+
+    <!-- ===== PRINTS GRID ===== -->
+    <div class="prints-grid" id="printsGrid">
+        <!-- Injected by JS -->
+    </div>
+
+
+    <!-- ===== EMPTY STATE (Hidden by default) ===== -->
+    <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">📝</div>
+        <h3 data-i18n="no_prints_yet">No prints yet</h3>
+        <p data-i18n="start_first_print">Start by creating your first print</p>
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     FORM MODAL
+===================================================== -->
+<div class="modal-overlay" id="formModal">
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h2>
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span data-i18n="new_print">New Print</span>
+            </h2>
+            <button type="button" class="modal-close" onclick="closeFormModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+
+        <!-- CLINIC & DOCTOR INFO -->
+        <div class="form-section-title">
+            <i class="fa-solid fa-hospital"></i>
+            <span data-i18n="clinic_doctor_info">Clinic & Doctor Information</span>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label data-i18n="clinic_name_label">Clinic Name</label>
+                <input type="text" id="clinicName" data-i18n-placeholder="clinic_name_placeholder" placeholder="e.g. Smile Clinic">
+            </div>
+            <div class="form-group">
+                <label data-i18n="doctor_name_label">Doctor Name</label>
+                <input type="text" id="doctorName" data-i18n-placeholder="doctor_name_placeholder" placeholder="e.g. Dr. Abdurahman Badawy">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label data-i18n="job_title_label">Job Title</label>
+            <input type="text" id="doctorTitle" data-i18n-placeholder="job_title_placeholder" placeholder="e.g. Oral & Dental Surgery Specialist">
+        </div>
+
+
+        <!-- DOCUMENT INFO -->
+        <div class="form-section-title">
+            <i class="fa-solid fa-file-lines"></i>
+            <span data-i18n="document_info">Document Information</span>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label data-i18n="print_title_label">Print Title *</label>
+                <input type="text" id="title" data-i18n-placeholder="print_title_placeholder" placeholder="e.g. Prescription - Abdurahman Mohamed">
+            </div>
+            <div class="form-group">
+                <label data-i18n="document_type_label">Document Type *</label>
+                <select id="type">
+                    <option value="prescription" data-i18n="type_prescription">Prescription</option>
+                    <option value="instruction" data-i18n="type_instruction">Instructions</option>
+                    <option value="invoice" data-i18n="type_invoice">Invoice</option>
+                    <option value="consent" data-i18n="type_consent">Medical Consent</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label data-i18n="content_label">Content *</label>
+            <textarea id="content" data-i18n-placeholder="content_placeholder" placeholder="Write print content here..."></textarea>
+        </div>
+
+
+        <!-- FILES -->
+        <div class="form-row">
+            <div class="form-group">
+                <label data-i18n="main_image_label">Main Image</label>
+                <div class="file-upload-box" onclick="document.getElementById('image').click()">
+                    <div class="icon">📎</div>
+                    <strong id="imageText" data-i18n="click_upload_image">Click to upload image</strong>
+                    <span data-i18n="png_jpg_optional">PNG, JPG — Optional</span>
+                    <input type="file" id="image" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'imageText')">
+                </div>
+            </div>
+            <div class="form-group">
+                <label data-i18n="clinic_logo_label">Clinic Logo</label>
+                <div class="file-upload-box" onclick="document.getElementById('logo').click()">
+                    <div class="icon">🏥</div>
+                    <strong id="logoText" data-i18n="click_upload_logo">Click to upload logo</strong>
+                    <span data-i18n="png_transparent">PNG with transparent background</span>
+                    <input type="file" id="logo" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'logoText')">
+                </div>
+            </div>
+        </div>
+
+
+        <!-- SAVE BUTTON -->
+        <button type="button" class="save-btn" onclick="addPrint()">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span data-i18n="save_print">Save Print</span>
+        </button>
+
+    </div>
+</div>
+
+
+<!-- =====================================================
+     PREVIEW / PRINT MODAL (A4 Style)
+===================================================== -->
+<div class="modal-overlay preview-modal" id="previewModal">
+    <div class="modal-content">
+
+        <!-- Floating Close Button -->
+        <button type="button" class="preview-close-float" onclick="closePreviewModal()" title="Close Preview">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="a4-page" id="a4Preview">
+            <!-- Injected by JS -->
+        </div>
+
+        <div class="preview-actions">
+            <button type="button" class="btn-print-now" onclick="printCurrent()">
+                <i class="fa-solid fa-print"></i>
+                <span data-i18n="print_now">Print Now</span>
+            </button>
+            <button type="button" class="btn-close-preview" onclick="closePreviewModal()">
+                <i class="fa-solid fa-xmark"></i>
+                <span data-i18n="close">Close</span>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =====================================================
+     DENTIX PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">الرئيسية</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">الزيارات</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">إضافة مريض</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">ملفات المرضى</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">المزيد</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    المزيد
+                </h3>
+
+                <p data-i18n="103">
+                    أدوات وإدارة النظام
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        الفواتير
+                    </strong>
+
+                    <span data-i18n="105">
+                        إدارة الفواتير
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        المخزون
+                    </strong>
+
+                    <span data-i18n="107">
+                        المخزون والمشتريات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        المعامل
+                    </strong>
+
+                    <span data-i18n="109">
+                        أعمال المعمل
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        الأطباء
+                    </strong>
+
+                    <span data-i18n="111">
+                        إدارة الأطباء
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        المطبوعات
+                    </strong>
+
+                    <span data-i18n="113">
+                        الوصفات والمطبوعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        إدارة الأدوية والجرعات
+                    </strong>
+
+                    <span data-i18n="115">
+                        إدارة الأدوية وحساب الجرعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        التقارير
+                    </strong>
+
+                    <span data-i18n="117">
+                        الإحصاءات والأرباح
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        التسعير
+                    </strong>
+
+                    <span data-i18n="119">
+                        إدارة أسعار الخدمات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/confirm-modal.js"></script>
+<script src="js/prints.js"></script>
+
+</body>
+</html>

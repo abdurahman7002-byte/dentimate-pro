@@ -1,0 +1,2559 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title data-i18n="243">Storage | Dentix Pro</title>
+
+
+<!-- Font Awesome -->
+
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
+
+
+<!-- Main CSS -->
+
+<link
+    rel="stylesheet"
+    href="style.css"
+>
+
+
+<!-- Storage CSS -->
+
+<link
+    rel="stylesheet"
+    href="css/storage.css"
+>
+<link rel="stylesheet" href="css/notification.css">
+
+<!-- Supabase -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"
+></script>
+
+
+
+</head>
+
+<body>
+  <!-- FLOATING ICONS -->
+    <i class="fa-solid fa-tooth floating-icon icon1"></i>
+    <i class="fa-solid fa-heart-pulse floating-icon icon2"></i>
+    <i class="fa-solid fa-stethoscope floating-icon icon3"></i>
+
+<div class="storage-page">
+
+
+<!-- =====================================================
+     HEADER
+====================================================== -->
+
+<div class="storage-header">
+
+    <div>
+
+        <div class="storage-title">
+
+            <i class="fa-solid fa-boxes-stacked"></i>
+
+            <span data-i18n="244">Storage</span>
+
+        </div>
+
+        <div class="storage-subtitle" data-i18n="245">
+
+            Manage clinic inventory and material consumption
+
+        </div>
+
+    </div>
+
+
+  <div class="storage-header-actions">
+
+    <!-- ADD PURCHASE -->
+
+    <button
+        class="storage-add-btn"
+        onclick="openAddItemModal()"
+        type="button"
+    >
+
+        <span class="storage-header-btn-icon">
+            <i class="fa-solid fa-plus"></i>
+        </span>
+
+        <span class="storage-header-btn-content">
+
+            <strong data-i18n="170">
+                Add Invoice
+            </strong>
+
+            <small data-i18n="171">
+                Add New Purchase Invoice
+            </small>
+
+        </span>
+
+    </button>
+
+
+    <!-- PURCHASE RECORDS -->
+
+    <button
+        class="storage-records-btn"
+        onclick="openPurchaseInvoicesModal()"
+        type="button"
+    >
+
+        <span class="storage-header-btn-icon">
+            <i class="fa-solid fa-file-invoice"></i>
+        </span>
+
+        <span class="storage-header-btn-content">
+
+            <strong data-i18n="172">
+                Purchase History
+            </strong>
+
+            <small data-i18n="173">
+                Purchase Payment History
+            </small>
+
+        </span>
+
+        <span class="storage-header-btn-arrow">
+
+            <i class="fa-solid fa-chevron-right"></i>
+
+        </span>
+
+    </button>
+
+
+    <!-- SUPPLIERS -->
+
+    <button
+        class="storage-suppliers-btn"
+        onclick="openSuppliersModal()"
+        type="button"
+    >
+
+        <span class="storage-suppliers-icon">
+
+            <i class="fa-solid fa-truck-field"></i>
+
+        </span>
+
+        <span class="storage-suppliers-content">
+
+            <strong data-i18n="168">
+                Suppliers
+            </strong>
+
+            <small data-i18n="169">
+                Manage Suppliers
+            </small>
+
+        </span>
+
+        <span class="storage-suppliers-arrow">
+
+            <i class="fa-solid fa-chevron-right"></i>
+
+        </span>
+
+    </button>
+
+</div>
+
+</div>
+
+
+
+<!-- =====================================================
+     DASHBOARD
+====================================================== -->
+
+<div class="storage-stats">
+
+
+    <div class="storage-stat-card">
+
+        <div class="storage-stat-icon">
+
+            <i class="fa-solid fa-box"></i>
+
+        </div>
+
+        <div>
+
+            <span data-i18n="246">Total Items</span>
+
+            <strong id="totalItems">
+                0
+            </strong>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="storage-stat-card">
+
+        <div class="storage-stat-icon">
+
+            <i class="fa-solid fa-cart-shopping"></i>
+
+        </div>
+
+        <div>
+
+           <span data-i18n="247">This Month Purchase Cost</span>
+
+            <strong id="totalPurchaseCost">
+                0 EGP
+            </strong>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- LOW STOCK -->
+
+<div
+    class="storage-stat-card low-stock-track-card"
+    id="lowStockCard"
+>
+
+    <div class="storage-stat-icon">
+
+        <i class="fa-solid fa-triangle-exclamation"></i>
+
+    </div>
+
+
+    <div class="low-stock-main">
+
+        <span data-i18n="174">
+            Shortages
+        </span>
+
+        <strong id="lowStockCount">
+            0
+        </strong>
+
+        <small data-i18n="197">
+            sroll to show low-stock items
+        </small>
+
+    </div>
+
+
+    <!-- =========================
+         HOVER DETAILS
+    ========================= -->
+
+    <div
+        class="low-stock-hover"
+        id="lowStockHover"
+    >
+
+        <div class="low-stock-hover-header">
+
+            <div>
+
+                <strong data-i18n="196">
+                    Low Stock Items
+                </strong>
+
+                <small data-i18n="249">
+                    Items that reached or exceeded the stock limit
+                </small>
+
+            </div>
+
+            <i class="fa-solid fa-triangle-exclamation"></i>
+
+        </div>
+
+
+        <div
+            id="lowStockItemsList"
+            class="low-stock-items-list"
+        >
+
+            <div class="low-stock-loading" data-i18n="249">
+                No low stock items
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     SEARCH
+====================================================== -->
+
+<div class="storage-search-card">
+
+    <i class="fa-solid fa-magnifying-glass"></i>
+
+    <input
+        type="text"
+        id="storageSearch"
+        data-i18n-placeholder="248"
+        placeholder="Search inventory..."
+        oninput="filterInventory()"
+    >
+
+</div>
+
+
+
+<!-- =====================================================
+     INVENTORY
+====================================================== -->
+
+<div
+    id="inventoryContainer"
+    class="inventory-grid"
+></div>
+
+
+</div>
+
+
+<!-- =====================================================
+     DENTIX PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">Home</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">Visits</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">Add Patient</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">Patient Files</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">More</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    More
+                </h3>
+
+                <p data-i18n="103">
+                    Manage System
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        Invoices
+                    </strong>
+
+                    <span data-i18n="105">
+                        Manage Clinic Invoices
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        Storage
+                    </strong>
+
+                    <span data-i18n="107">
+                        Clinic Storage and Purchases
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        Labs
+                    </strong>
+
+                    <span data-i18n="109">
+                        Manage Labs and Prosthesis
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        Doctors
+                    </strong>
+
+                    <span data-i18n="111">
+                        Manage Doctors
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        Prints
+                    </strong>
+
+                    <span data-i18n="113">
+                        Print prescriptions, consents and instructions
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        Drugs and Doses
+                    </strong>
+
+                    <span data-i18n="115">
+                        Manage drugs and calculate doses
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        Reports
+                    </strong>
+
+                    <span data-i18n="117">
+                        Detailed Clinic Reports
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        Prices and Departments
+                    </strong>
+
+                    <span data-i18n="119">
+                        Price clinic services, prosthesis and add departments
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     PURCHASE INVOICES / RECORDS MODAL
+========================================================= -->
+
+<div
+    id="purchaseInvoicesModal"
+    class="storage-modal"
+    style="display:none;"
+>
+
+    <div class="storage-modal-box purchase-records-modal">
+
+        <!-- HEADER -->
+
+        <div class="storage-modal-header">
+
+            <div>
+
+                <h2>
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                    <span data-i18n="172">Purchase History</span>
+
+                </h2>
+
+                <small class="modal-header-subtitle" data-i18n="173">
+
+                    Purchase Payment History
+
+                </small>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close-btn"
+                onclick="closePurchaseInvoicesModal()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             SEARCH / FILTER
+        ================================================== -->
+
+        <div class="purchase-records-toolbar">
+
+
+            <div class="storage-search-card purchase-record-search">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="text"
+                    id="purchaseInvoiceSearch"
+                    data-i18n-placeholder="248"
+                    placeholder="Search invoice, supplier..."
+                    oninput="filterPurchaseInvoices()"
+                >
+
+            </div>
+
+
+            <select
+                id="purchaseInvoiceSupplierFilter"
+                onchange="filterPurchaseInvoices()"
+                class="purchase-record-filter"
+            >
+
+                <option value="" data-i18n="254">
+                    All Suppliers
+                </option>
+
+            </select>
+
+
+            <button
+                type="button"
+                class="purchase-refresh-btn"
+                onclick="loadPurchaseInvoices()"
+                data-i18n-title="255"
+                title="Refresh"
+            >
+
+                <i class="fa-solid fa-rotate"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             SUMMARY
+        ================================================== -->
+
+        <div class="purchase-records-summary">
+
+
+            <div class="purchase-record-stat">
+
+                <div class="purchase-record-stat-icon">
+
+                    <i class="fa-solid fa-file-invoice"></i>
+
+                </div>
+
+                <div>
+
+                    <span data-i18n="250">
+                        Invoices
+                    </span>
+
+                    <strong id="purchaseRecordsCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="purchase-record-stat">
+
+                <div class="purchase-record-stat-icon">
+
+                    <i class="fa-solid fa-coins"></i>
+
+                </div>
+
+                <div>
+
+                    <span data-i18n="251">
+                        Total Purchases
+                    </span>
+
+                    <strong id="purchaseRecordsTotal">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="purchase-record-stat">
+
+                <div class="purchase-record-stat-icon">
+
+                    <i class="fa-solid fa-money-bill-wave"></i>
+
+                </div>
+
+                <div>
+
+                    <span data-i18n="252">
+                        Paid
+                    </span>
+
+                    <strong id="purchaseRecordsPaid">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="purchase-record-stat purchase-record-stat-warning">
+
+                <div class="purchase-record-stat-icon">
+
+                    <i class="fa-solid fa-clock"></i>
+
+                </div>
+
+                <div>
+
+                    <span data-i18n="253">
+                        Remaining
+                    </span>
+
+                    <strong id="purchaseRecordsRemaining">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             INVOICES LIST
+        ================================================== -->
+
+        <div
+            id="purchaseInvoicesList"
+            class="purchase-invoices-list"
+        >
+
+            <div class="storage-loading">
+
+                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                <span data-i18n="65">Loading waiting list .....</span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     PURCHASE INVOICE DETAILS MODAL
+========================================================= -->
+
+<div
+    id="purchaseInvoiceDetailsModal"
+    class="storage-modal"
+    style="display:none;"
+>
+
+    <div class="storage-modal-box purchase-details-modal">
+
+        <!-- HEADER -->
+
+        <div class="storage-modal-header">
+
+            <div>
+
+                <h2>
+
+                    <i class="fa-solid fa-receipt"></i>
+
+                    <span data-i18n="212">Invoice Details</span>
+
+                </h2>
+
+                <small
+                    id="purchaseDetailsSubtitle"
+                    class="modal-header-subtitle"
+                    data-i18n="285"
+                >
+                    Purchase invoice
+                </small>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close-btn"
+                onclick="closePurchaseInvoiceDetails()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             INVOICE HEADER
+        ================================================== -->
+
+        <div class="purchase-details-header">
+
+            <div class="purchase-details-main">
+
+
+                <div class="purchase-details-number">
+
+                    <span data-i18n="256">
+                        Invoice
+                    </span>
+
+                    <strong id="purchaseDetailsInvoiceNumber">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div class="purchase-details-supplier">
+
+                    <i class="fa-solid fa-truck-field"></i>
+
+                    <div>
+
+                        <span data-i18n="257">
+                            Supplier
+                        </span>
+
+                        <strong id="purchaseDetailsSupplier">
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="purchase-details-date">
+
+                    <i class="fa-solid fa-calendar"></i>
+
+                    <div>
+
+                        <span data-i18n="258">
+                            Date
+                        </span>
+
+                        <strong id="purchaseDetailsDate">
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            <div
+                id="purchaseDetailsStatus"
+                class="purchase-payment-status"
+                data-i18n="259"
+            >
+
+                Unpaid
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             FINANCIAL SUMMARY
+        ================================================== -->
+
+        <div class="purchase-details-financial">
+
+
+            <div>
+
+                <span data-i18n="260">
+                    Subtotal
+                </span>
+
+                <strong id="purchaseDetailsSubtotal">
+                    0 EGP
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span data-i18n="261">
+                    Discount
+                </span>
+
+                <strong id="purchaseDetailsDiscount">
+                    0 EGP
+                </strong>
+
+            </div>
+
+
+            <div class="purchase-details-total">
+
+                <span data-i18n="262">
+                    Total
+                </span>
+
+                <strong id="purchaseDetailsTotal">
+                    0 EGP
+                </strong>
+
+            </div>
+
+
+            <div class="purchase-details-paid">
+
+                <span data-i18n="263">
+                    Paid
+                </span>
+
+                <strong id="purchaseDetailsPaid">
+                    0 EGP
+                </strong>
+
+            </div>
+
+
+            <div class="purchase-details-remaining">
+
+                <span data-i18n="264">
+                    Remaining
+                </span>
+
+                <strong id="purchaseDetailsRemaining">
+                    0 EGP
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             ACTIONS
+        ================================================== -->
+
+        <div class="purchase-details-actions">
+
+
+            <button
+                type="button"
+                class="purchase-payment-btn"
+                onclick="openAddPurchasePayment()"
+            >
+
+                <i class="fa-solid fa-money-bill-wave"></i>
+
+                <span data-i18n="265">Add Payment</span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="purchase-edit-discount-btn"
+                onclick="openEditPurchaseDiscount()"
+            >
+
+                <i class="fa-solid fa-percent"></i>
+
+                <span data-i18n="266">Edit Discount</span>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             ITEMS
+        ================================================== -->
+
+        <div class="purchase-details-section">
+
+            <div class="purchase-details-section-header">
+
+                <div>
+
+                    <h3>
+
+                        <i class="fa-solid fa-box-open"></i>
+
+                        <span data-i18n="267">Purchased Items</span>
+
+                    </h3>
+
+                    <span data-i18n="268">
+                        Items included in this invoice
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="purchaseInvoiceDetailsItems"
+                class="purchase-details-items"
+            ></div>
+
+        </div>
+
+
+        <!-- =================================================
+             PAYMENTS
+        ================================================== -->
+
+        <div class="purchase-details-section">
+
+            <div class="purchase-details-section-header">
+
+                <div>
+
+                    <h3>
+
+                        <i class="fa-solid fa-money-check-dollar"></i>
+
+                        <span data-i18n="269">Payment History</span>
+
+                    </h3>
+
+                    <span data-i18n="270">
+                        All payments made for this invoice
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="purchaseInvoicePaymentsList"
+                class="purchase-invoice-payments-list"
+            ></div>
+
+        </div>
+
+
+        <!-- =================================================
+             NOTES
+        ================================================== -->
+
+        <div class="purchase-details-notes">
+
+            <div>
+
+                <i class="fa-solid fa-note-sticky"></i>
+
+                <strong data-i18n="271">
+                    Notes
+                </strong>
+
+            </div>
+
+
+            <p id="purchaseDetailsNotes" data-i18n="272">
+                No notes
+            </p>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     ADD PURCHASE PAYMENT MODAL
+========================================================= -->
+
+<div
+    id="purchasePaymentModal"
+    class="storage-modal"
+    style="display:none;"
+>
+
+    <div class="storage-modal-box purchase-payment-modal">
+
+        <div class="storage-modal-header">
+
+            <div>
+
+                <h2>
+
+                    <i class="fa-solid fa-money-bill-wave"></i>
+
+                    <span data-i18n="265">Add Payment</span>
+
+                </h2>
+
+                <small class="modal-header-subtitle" data-i18n="273">
+
+                    Record a new payment for this invoice
+
+                </small>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close-btn"
+                onclick="closePurchasePaymentModal()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <div class="storage-form">
+
+
+            <input
+                type="hidden"
+                id="purchasePaymentInvoiceId"
+            >
+
+
+            <!-- INVOICE -->
+
+            <div class="purchase-payment-invoice-preview">
+
+                <div>
+
+                    <span data-i18n="256">
+                        Invoice
+                    </span>
+
+                    <strong id="purchasePaymentInvoiceNumber">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span data-i18n="264">
+                        Remaining
+                    </span>
+
+                    <strong id="purchasePaymentRemaining">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- AMOUNT -->
+
+            <div>
+
+                <label for="purchasePaymentAmount" data-i18n="274">
+
+                    Payment Amount
+
+                </label>
+
+                <div class="purchase-payment-input">
+
+                    <input
+                        type="number"
+                        id="purchasePaymentAmount"
+                        min="0"
+                        step="0.01"
+                        data-i18n-placeholder="275"
+                        placeholder="Enter payment amount"
+                    >
+
+                    <span>
+                        EGP
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- DATE -->
+
+            <div>
+
+                <label for="purchasePaymentDate" data-i18n="258">
+
+                    Date
+
+                </label>
+
+                <input
+                    type="date"
+                    id="purchasePaymentDate"
+                >
+
+            </div>
+
+
+            <!-- NOTES -->
+
+            <div>
+
+                <label for="purchasePaymentNotes" data-i18n="271">
+
+                    Notes
+
+                </label>
+
+                <textarea
+                    id="purchasePaymentNotes"
+                    rows="3"
+                    data-i18n-placeholder="277"
+                    placeholder="Optional payment notes..."
+                ></textarea>
+
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div class="storage-modal-actions">
+
+                <button
+                    type="button"
+                    class="storage-cancel-btn"
+                    onclick="closePurchasePaymentModal()"
+                    data-i18n="278"
+                >
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="storage-save-btn"
+                    onclick="savePurchasePayment()"
+                >
+
+                    <i class="fa-solid fa-check"></i>
+
+                    <span data-i18n="279">Save Payment</span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     EDIT PURCHASE DISCOUNT MODAL
+========================================================= -->
+
+<div
+    id="purchaseDiscountModal"
+    class="storage-modal"
+    style="display:none;"
+>
+
+    <div class="storage-modal-box purchase-payment-modal">
+
+        <div class="storage-modal-header">
+
+            <div>
+
+                <h2>
+
+                    <i class="fa-solid fa-percent"></i>
+
+                    <span data-i18n="266">Edit Discount</span>
+
+                </h2>
+
+                <small class="modal-header-subtitle" data-i18n="280">
+
+                    Update the discount for this invoice
+
+                </small>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close-btn"
+                onclick="closePurchaseDiscountModal()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <div class="storage-form">
+
+
+            <input
+                type="hidden"
+                id="purchaseDiscountInvoiceId"
+            >
+
+
+            <div class="purchase-payment-invoice-preview">
+
+                <div>
+
+                    <span data-i18n="256">
+                        Invoice
+                    </span>
+
+                    <strong id="purchaseDiscountInvoiceNumber">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span data-i18n="281">
+                        Current Total
+                    </span>
+
+                    <strong id="purchaseDiscountCurrentTotal">
+                        0 EGP
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <label for="purchaseEditDiscount" data-i18n="261">
+
+                    Discount
+
+                </label>
+
+                <div class="purchase-payment-input">
+
+                    <input
+                        type="number"
+                        id="purchaseEditDiscount"
+                        min="0"
+                        step="0.01"
+                        data-i18n-placeholder="282"
+                        placeholder="Enter discount"
+                    >
+
+                    <span>
+                        EGP
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="purchase-discount-warning"
+                data-i18n="283"
+            >
+
+                <i class="fa-solid fa-circle-info"></i>
+
+                Changing the discount will automatically recalculate the invoice total and remaining amount.
+
+            </div>
+
+
+            <div class="storage-modal-actions">
+
+                <button
+                    type="button"
+                    class="storage-cancel-btn"
+                    onclick="closePurchaseDiscountModal()"
+                    data-i18n="278"
+                >
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="storage-save-btn"
+                    onclick="savePurchaseInvoiceDiscount()"
+                >
+
+                    <i class="fa-solid fa-check"></i>
+
+                    <span data-i18n="284">Save Discount</span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- =========================================================
+     ADD ITEM MODAL
+========================================================= -->
+
+<!-- =========================================================
+     PURCHASE INVOICE MODAL
+========================================================= -->
+
+<div
+    id="addItemModal"
+    class="storage-modal"
+>
+
+    <div class="storage-modal-box purchase-invoice-modal">
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <div class="storage-modal-header">
+
+            <h2>
+
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                <span data-i18n="285">Purchase Invoice</span>
+
+            </h2>
+
+
+            <button
+                onclick="closeAddItemModal()"
+                class="modal-close-btn"
+                type="button"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+
+        <!-- =================================================
+             FORM
+        ================================================== -->
+
+        <div class="storage-form">
+
+
+            <!-- =================================================
+                 SUPPLIER + INVOICE NUMBER
+            ================================================== -->
+
+            <div class="storage-form-row">
+
+                <!-- SUPPLIER -->
+
+                <div>
+
+                    <label data-i18n="257">
+                        Supplier
+                    </label>
+
+                    <select
+                        id="purchaseSupplier"
+                    >
+
+                        <option value="" data-i18n="286">
+                            Select Supplier
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- INVOICE NUMBER -->
+
+                <div>
+
+                    <label data-i18n="287">
+                        Invoice Number
+                    </label>
+
+                    <input
+                        id="purchaseInvoiceNumber"
+                        type="text"
+                        data-i18n-placeholder="288"
+                        placeholder="e.g. INV-001"
+                    >
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 DATE
+            ================================================== -->
+
+            <div class="storage-form-row">
+
+                <div>
+
+                    <label data-i18n="289">
+                        Invoice Date
+                    </label>
+
+                    <input
+                        id="purchaseInvoiceDate"
+                        type="date"
+                    >
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 ITEMS HEADER
+            ================================================== -->
+
+            <div class="purchase-items-header">
+
+                <div>
+
+                    <strong data-i18n="290">
+                        Invoice Items
+                    </strong>
+
+                    <span data-i18n="291">
+                        Add all purchased materials to this invoice
+                    </span>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="purchase-add-line-btn"
+                    onclick="addPurchaseInvoiceItem()"
+                >
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    <span data-i18n="292">Add Item</span>
+
+                </button>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 ITEMS
+            ================================================== -->
+
+            <div
+                id="purchaseInvoiceItems"
+                class="purchase-invoice-items"
+            ></div>
+
+
+
+            <!-- =================================================
+                 TOTALS
+            ================================================== -->
+
+            <div class="purchase-invoice-summary">
+
+
+                <!-- =================================================
+                     SUBTOTAL
+                ================================================== -->
+
+                <div class="purchase-summary-row">
+
+                    <span data-i18n="293">
+                        Subtotal
+                    </span>
+
+                    <strong>
+
+                        <span id="purchaseSubtotal">
+                            0
+                        </span>
+
+                        EGP
+
+                    </strong>
+
+                </div>
+
+
+
+               <!-- =================================================
+     DISCOUNT
+================================================= -->
+
+<div class="purchase-discount-group">
+
+    <label data-i18n="294">
+        Discount
+    </label>
+
+    <div class="purchase-discount-row">
+
+        <select
+            id="purchaseDiscountType"
+            onchange="calculatePurchaseInvoiceTotals()"
+        >
+            <option value="amount" data-i18n="295">EGP</option>
+            <option value="percent" data-i18n="296">%</option>
+        </select>
+
+        <input
+            type="number"
+            id="purchaseDiscount"
+            min="0"
+            step="0.01"
+            placeholder="0"
+            oninput="calculatePurchaseInvoiceTotals()"
+        >
+
+    </div>
+
+</div>
+
+
+
+                <!-- =================================================
+                     TOTAL
+                ================================================== -->
+
+                <div
+                    class="
+                        purchase-summary-row
+                        purchase-summary-total
+                    "
+                >
+
+                    <span data-i18n="297">
+                        Total
+                    </span>
+
+                    <strong>
+
+                        <span id="purchaseTotal">
+                            0
+                        </span>
+
+                        EGP
+
+                    </strong>
+
+                </div>
+
+
+
+               <!-- =================================================
+     INITIAL PAYMENT
+================================================= -->
+
+<div
+    class="
+        purchase-summary-row
+        purchase-first-payment-row
+    "
+>
+
+    <div class="purchase-summary-label">
+
+        <label
+            for="purchasePaidAmount"
+            data-i18n="298"
+        >
+            Initial Payment
+        </label>
+
+        <small data-i18n="299">
+            Optional first payment
+        </small>
+
+    </div>
+
+
+    <div class="purchase-summary-input">
+
+        <input
+            id="purchasePaidAmount"
+            type="number"
+            min="0"
+            step="0.01"
+            data-i18n-placeholder="300"
+            placeholder="Enter initial payment"
+            oninput="calculatePurchaseInvoiceTotals()"
+        >
+
+        <span>
+            EGP
+        </span>
+
+    </div>
+
+</div>
+
+
+
+                <!-- =================================================
+                     REMAINING
+                ================================================== -->
+
+                <div
+                    class="
+                        purchase-summary-row
+                        purchase-summary-remaining
+                    "
+                >
+
+                    <span data-i18n="301">
+                        Remaining
+                    </span>
+
+                    <strong>
+
+                        <span id="purchaseRemaining">
+                            0
+                        </span>
+
+                        EGP
+
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =================================================
+                 NOTES
+            ================================================== -->
+
+            <div>
+
+                <label data-i18n="271">
+                    Notes
+                </label>
+
+                <textarea
+                    id="purchaseInvoiceNotes"
+                    rows="3"
+                    data-i18n-placeholder="302"
+                    placeholder="Optional notes..."
+                ></textarea>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 ACTIONS
+            ================================================== -->
+
+            <div class="storage-modal-actions">
+
+                <button
+                    class="storage-cancel-btn"
+                    onclick="closeAddItemModal()"
+                    type="button"
+                    data-i18n="278"
+                >
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    class="storage-save-btn"
+                    onclick="savePurchaseInvoice()"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-file-circle-check"></i>
+
+                    <span data-i18n="303">Save Invoice</span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     SUPPLIERS MODAL
+========================================================= -->
+
+<div
+    id="suppliersModal"
+    class="storage-modal"
+    style="display:none;"
+>
+
+    <div
+        class="storage-modal-box suppliers-modal-box"
+    >
+
+        <!-- HEADER -->
+
+        <div class="storage-modal-header">
+
+            <div>
+
+                <h2>
+
+                    <i class="fa-solid fa-truck-field"></i>
+
+                    <span data-i18n="168">Suppliers</span>
+
+                </h2>
+
+                <small
+                    style="
+                        display:block;
+                        margin-top:5px;
+                        color:#94a3b8;
+                        font-size:12px;
+                    "
+                    data-i18n="304"
+                >
+
+                    Manage suppliers and purchases
+
+                </small>
+
+            </div>
+
+
+            <button
+                onclick="closeSuppliersModal()"
+                class="modal-close-btn"
+                type="button"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- SUPPLIER ACTIONS -->
+
+        <div
+            class="suppliers-toolbar"
+        >
+
+            <div
+                class="storage-search-card supplier-search"
+            >
+
+                <i
+                    class="fa-solid fa-magnifying-glass"
+                ></i>
+
+                <input
+                    type="text"
+                    id="supplierSearch"
+                    data-i18n-placeholder="306"
+                    placeholder="Search suppliers..."
+                    oninput="filterSuppliers()"
+                >
+
+            </div>
+
+
+            <button
+                type="button"
+                class="storage-save-btn"
+                onclick="openAddSupplierForm()"
+            >
+
+                <i class="fa-solid fa-plus"></i>
+
+                <span data-i18n="307">Add Supplier</span>
+
+            </button>
+
+        </div>
+
+
+        <!-- SUPPLIER FORM -->
+
+        <div
+            id="supplierForm"
+            class="supplier-form"
+            style="display:none;"
+        >
+
+            <input
+                type="hidden"
+                id="supplierId"
+            >
+
+
+            <div class="storage-form">
+
+                <!-- NAME -->
+
+                <div>
+
+                    <label data-i18n="308">
+                        Supplier Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="supplierName"
+                        data-i18n-placeholder="309"
+                        placeholder="e.g. Dental Supply Co."
+                    >
+
+                </div>
+
+
+                <!-- PHONE + EMAIL -->
+
+                <div
+                    class="storage-form-row"
+                >
+
+                    <div>
+
+                        <label data-i18n="310">
+                            Phone
+                        </label>
+
+                        <input
+                            type="text"
+                            id="supplierPhone"
+                            data-i18n-placeholder="311"
+                            placeholder="01xxxxxxxxx"
+                        >
+
+                    </div>
+
+
+                    <div>
+
+                        <label data-i18n="312">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="supplierEmail"
+                            data-i18n-placeholder="313"
+                            placeholder="supplier@example.com"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- ADDRESS -->
+
+                <div>
+
+                    <label data-i18n="314">
+                        Address
+                    </label>
+
+                    <input
+                        type="text"
+                        id="supplierAddress"
+                        data-i18n-placeholder="315"
+                        placeholder="Supplier address"
+                    >
+
+                </div>
+
+
+                <!-- NOTES -->
+
+                <div>
+
+                    <label data-i18n="271">
+                        Notes
+                    </label>
+
+                    <textarea
+                        id="supplierNotes"
+                        rows="3"
+                        data-i18n-placeholder="316"
+                        placeholder="Additional notes..."
+                    ></textarea>
+
+                </div>
+
+
+                <!-- ACTIONS -->
+
+                <div
+                    class="storage-modal-actions"
+                >
+
+                    <button
+                        type="button"
+                        class="storage-cancel-btn"
+                        onclick="closeSupplierForm()"
+                        data-i18n="278"
+                    >
+
+                        Cancel
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="storage-save-btn"
+                        onclick="saveSupplier()"
+                    >
+
+                        <i
+                            class="fa-solid fa-floppy-disk"
+                        ></i>
+
+                        <span data-i18n="317">Save Supplier</span>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SUPPLIERS LIST -->
+
+        <div
+            id="suppliersList"
+            class="suppliers-list"
+        >
+
+            <div class="storage-loading">
+
+                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                <span data-i18n="318">Loading suppliers...</span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     SERVICE CONSUMPTION MODAL
+========================================================= -->
+
+<div
+    id="usageModal"
+    class="storage-modal"
+>
+
+
+<div class="storage-modal-box">
+
+    <!-- HEADER -->
+
+    <div class="storage-modal-header">
+
+        <h2>
+
+            <i class="fa-solid fa-link"></i>
+
+            <span data-i18n="319">Service Consumption</span>
+
+        </h2>
+
+
+        <button
+            onclick="closeUsageModal()"
+            class="modal-close-btn"
+            type="button"
+        >
+
+            <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+    </div>
+
+
+
+
+
+        <!-- SERVICES -->
+
+        <label data-i18n="320">
+
+            Services using this item
+
+        </label>
+
+
+        <div
+            id="usageServicesList"
+            class="usage-services-list"
+        >
+
+            <div class="usage-empty">
+
+                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                <span data-i18n="321">Loading services...</span>
+
+            </div>
+
+        </div>
+
+
+        <!-- ACTIONS -->
+
+        <div class="storage-modal-actions">
+
+
+            <button
+                class="storage-cancel-btn"
+                onclick="closeUsageModal()"
+                type="button"
+                data-i18n="278"
+            >
+
+                Cancel
+
+            </button>
+
+
+            <button
+                class="storage-save-btn"
+                onclick="saveServiceUsage()"
+                type="button"
+            >
+
+                <i class="fa-solid fa-link"></i>
+
+                <span data-i18n="322">Save Consumption</span>
+
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+</div>
+
+
+
+    <!-- CURRENT ITEM -->
+
+    <input
+        type="hidden"
+        id="usageItemId"
+    >
+
+
+    <div class="storage-form">
+
+
+        <!-- ITEM NAME -->
+
+        <div
+            id="usageItemName"
+            class="usage-item-name"
+        ></div>
+
+<div
+    id="editInventoryQuantityModal"
+    class="storage-modal"
+    style="display:none;"
+>
+
+    <div class="storage-modal-box">
+
+        <!-- HEADER -->
+
+        <div class="storage-modal-header">
+
+            <h2>
+
+                <i
+                    class="fa-solid fa-boxes-stacked"
+                ></i>
+
+                <span data-i18n="323">Edit Quantity</span>
+
+            </h2>
+
+
+            <button
+                type="button"
+                class="modal-close-btn"
+                onclick="
+                    closeEditInventoryQuantityModal()
+                "
+            >
+
+                <i
+                    class="fa-solid fa-xmark"
+                ></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- FORM -->
+
+        <div class="storage-form">
+
+            <input
+                type="hidden"
+                id="editInventoryQuantityItemId"
+            >
+
+
+            <div
+                id="editInventoryQuantityItemName"
+                class="usage-item-name"
+            ></div>
+
+
+            <label data-i18n="324">
+
+                Current Quantity
+
+            </label>
+
+
+            <input
+                type="number"
+                id="editInventoryQuantityInput"
+                min="0"
+                step="any"
+                data-i18n-placeholder="325"
+                placeholder="Enter quantity"
+            >
+
+
+            <div
+                style="
+                    margin-top:8px;
+                    color:#94a3b8;
+                    font-size:12px;
+                    line-height:1.7;
+                "
+                data-i18n="326"
+            >
+
+                This changes the current stock only. Purchase history and prices will remain unchanged.
+
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div
+                class="storage-modal-actions"
+            >
+
+                <button
+                    class="storage-cancel-btn"
+                    type="button"
+                    onclick="
+                        closeEditInventoryQuantityModal()
+                    "
+                    data-i18n="278"
+                >
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    class="storage-save-btn"
+                    type="button"
+                    onclick="
+                        saveEditedInventoryQuantity()
+                    "
+                >
+
+                    <i
+                        class="fa-solid fa-check"
+                    ></i>
+
+                    <span data-i18n="327">Save Quantity</span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     TOAST
+========================================================= -->
+
+<div
+    id="toast"
+    class="storage-toast"
+></div>
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script src="js/supabase.js"></script>
+
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/confirm-modal.js"></script>
+<script src="js/storage.js"></script>
+
+</body>
+
+</html>
