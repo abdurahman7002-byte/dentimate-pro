@@ -1,0 +1,893 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+
+/* =====================================================
+   THEME VARIABLES
+   ===================================================== */
+
+/* ---------- DARK THEME (Default) ---------- */
+:root[data-theme="dark"],
+body[data-theme="dark"] {
+    /* Backgrounds */
+    --bg-primary:       #0b1120;
+    --bg-secondary:     #0f172a;
+    --bg-card:          #111827;
+    --bg-card-hover:    #111c31;
+    --bg-card-hover-2:  #131e32;
+    --bg-input:         #0f172a;
+    --bg-success:       rgba(16,185,129,.12);
+    --bg-success-hover: rgba(16,185,129,.20);
+    --bg-danger:        rgba(239,68,68,.10);
+    --bg-danger-hover:  rgba(239,68,68,.18);
+    --bg-floating:      rgba(255,255,255,0.07);
+
+    /* Text */
+    --text-primary:     #f8fafc;
+    --text-secondary:   #64748b;
+    --text-muted:       #94a3b8;
+    --text-placeholder: #64748b;
+    --text-success:     #6ee7b7;
+    --text-danger:      #fca5a5;
+    --text-arrow:       #64748b;
+
+    /* Accents */
+    --accent:           #38bdf8;
+    --accent-secondary: #2563eb;
+    --accent-tertiary:  #0891b2;
+    --accent-glow:      rgba(56,189,248,.10);
+    --accent-glow-2:    rgba(56,189,248,.20);
+    --accent-glow-3:    rgba(56,189,248,.30);
+    --accent-glow-4:    rgba(56,189,248,.35);
+    --accent-glow-5:    rgba(56,189,248,.6);
+    --accent-soft:      rgba(56,189,248,.08);
+    --accent-border:    rgba(56,189,248,.12);
+
+    /* Gradients */
+    --grad-1:           #1d3557;
+    --grad-2:           #2a9d8f;
+    --btn-grad-1:       #2563eb;
+    --btn-grad-2:       #0891b2;
+    --btn-shadow:       rgba(37,99,235,.20);
+    --btn-shadow-hover: rgba(37,99,235,.30);
+
+    /* Borders */
+    --border:           rgba(148,163,184,.12);
+    --border-2:         rgba(148,163,184,.10);
+    --border-3:         rgba(148,163,184,.15);
+    --border-success:   rgba(16,185,129,.18);
+    --border-danger:    rgba(239,68,68,.16);
+
+    /* Shadows */
+    --shadow-sm:        rgba(0,0,0,.15);
+    --shadow-md:        rgba(0,0,0,.20);
+
+    /* Scrollbar */
+    --scrollbar-track:  #0b1120;
+    --scrollbar-thumb:  #334155;
+    --scrollbar-hover:  #475569;
+}
+
+/* ---------- LIGHT THEME ---------- */
+:root[data-theme="light"],
+body[data-theme="light"] {
+    /* Backgrounds */
+    --bg-primary:       #f8fafc;
+    --bg-secondary:     #f1f5f9;
+    --bg-card:          #ffffff;
+    --bg-card-hover:    #f8fafc;
+    --bg-card-hover-2:  #f1f5f9;
+    --bg-input:         #ffffff;
+    --bg-success:       rgba(16,185,129,.10);
+    --bg-success-hover: rgba(16,185,129,.18);
+    --bg-danger:        rgba(239,68,68,.08);
+    --bg-danger-hover:  rgba(239,68,68,.15);
+    --bg-floating:      rgba(15,23,42,0.06);
+
+    /* Text — Dark & Bold for readability */
+    --text-primary:     #0f172a;
+    --text-secondary:   #475569;
+    --text-muted:       #64748b;
+    --text-placeholder: #94a3b8;
+    --text-success:     #059669;
+    --text-danger:      #dc2626;
+    --text-arrow:       #94a3b8;
+
+    /* Accents */
+    --accent:           #0ea5e9;
+    --accent-secondary: #2563eb;
+    --accent-tertiary:  #0891b2;
+    --accent-glow:      rgba(14,165,233,.10);
+    --accent-glow-2:    rgba(14,165,233,.20);
+    --accent-glow-3:    rgba(14,165,233,.30);
+    --accent-glow-4:    rgba(14,165,233,.35);
+    --accent-glow-5:    rgba(14,165,233,.6);
+    --accent-soft:      rgba(14,165,233,.08);
+    --accent-border:    rgba(14,165,233,.12);
+
+    /* Gradients */
+    --grad-1:           #bfdbfe;
+    --grad-2:           #99f6e4;
+    --btn-grad-1:       #2563eb;
+    --btn-grad-2:       #0891b2;
+    --btn-shadow:       rgba(37,99,235,.15);
+    --btn-shadow-hover: rgba(37,99,235,.25);
+
+    /* Borders */
+    --border:           rgba(148,163,184,.20);
+    --border-2:         rgba(148,163,184,.15);
+    --border-3:         rgba(148,163,184,.25);
+    --border-success:   rgba(16,185,129,.25);
+    --border-danger:    rgba(239,68,68,.20);
+
+    /* Shadows */
+    --shadow-sm:        rgba(0,0,0,.06);
+    --shadow-md:        rgba(0,0,0,.08);
+
+    /* Scrollbar */
+    --scrollbar-track:  #f1f5f9;
+    --scrollbar-thumb:  #cbd5e1;
+    --scrollbar-hover:  #94a3b8;
+}
+
+
+/* =====================================================
+   GLOBAL
+===================================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body {
+    background:
+        radial-gradient(circle at top left, var(--grad-1) 0%, transparent 25%),
+        radial-gradient(circle at bottom right, var(--grad-2) 0%, transparent 25%),
+        var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 30px;
+    padding-bottom: 90px;
+    overflow-x: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+}
+
+        /* FLOATING ICONS */
+
+        .floating-icon{
+
+            position:fixed;
+
+            color: var(--bg-floating);
+
+            font-size:45px;
+
+            animation:float 6s ease-in-out infinite;
+
+            pointer-events:none;
+        }
+
+        .icon1{
+            top:10%;
+            left:5%;
+        }
+
+        .icon2{
+            bottom:12%;
+            right:7%;
+            animation-delay:2s;
+        }
+
+        .icon3{
+            top:50%;
+            right:15%;
+            animation-delay:1s;
+        }
+
+        @keyframes float{
+
+            0%{
+                transform:translateY(0px) rotate(0deg);
+            }
+
+            50%{
+                transform:translateY(-18px) rotate(8deg);
+            }
+
+            100%{
+                transform:translateY(0px) rotate(0deg);
+            }
+
+        }
+
+        /* MOBILE */
+
+        @media(max-width:768px){
+
+            form{
+                grid-template-columns:1fr;
+            }
+
+            textarea,
+            .full{
+                grid-column:auto;
+            }
+
+            h2{
+                font-size:28px;
+            }
+
+            .card{
+                padding:25px;
+            }
+
+            .buttons{
+                flex-direction:column;
+            }
+
+            button{
+                width:100%;
+            }
+
+        }
+
+
+/* =====================================================
+   PAGE TITLE
+===================================================== */
+
+.page-title{
+
+    width:100%;
+    max-width:1100px;
+
+    margin:0 auto 25px auto;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    gap:10px;
+
+    font-size:28px;
+    font-weight:700;
+
+    color: var(--text-primary);
+
+    letter-spacing:.2px;
+}
+
+.page-title i{
+
+    color: var(--accent);
+
+    font-size:25px;
+
+}
+
+
+/* =====================================================
+   MAIN CARD
+===================================================== */
+
+.card{
+
+    width:100%;
+    max-width:1000px;
+
+    margin:0 auto 20px auto;
+
+    padding:24px;
+
+    background: var(--bg-card);
+
+    border:1px solid var(--border);
+
+    border-radius:18px;
+
+    box-shadow:
+        0 8px 25px var(--shadow-md);
+
+    transition:.25s;
+}
+
+.card:hover{
+
+    border-color: var(--accent-glow-2);
+
+}
+
+
+/* =====================================================
+   HEADINGS
+===================================================== */
+
+h2{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    margin-bottom:18px;
+
+    color: var(--text-primary);
+
+    font-size:21px;
+
+    font-weight:700;
+}
+
+h2 i{
+
+    color: var(--accent);
+
+    font-size:20px;
+}
+
+
+/* =====================================================
+   INPUTS
+===================================================== */
+
+input,
+select,
+textarea{
+
+    width:100%;
+
+    padding:13px 15px;
+
+    margin-bottom:10px;
+
+    border-radius:12px;
+
+    border:1px solid var(--border-3);
+
+    background: var(--bg-input);
+
+    color: var(--text-primary);
+
+    outline:none;
+
+    font-size:13px;
+
+    transition:.25s;
+}
+
+input::placeholder,
+textarea::placeholder{
+
+    color: var(--text-placeholder);
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+
+    border-color: var(--accent);
+
+    box-shadow:
+        0 0 0 3px var(--accent-glow);
+}
+
+
+/* =====================================================
+   PRIMARY BUTTON
+===================================================== */
+
+.primary-btn{
+
+    width:100%;
+
+    padding:13px 16px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--btn-grad-1),
+            var(--btn-grad-2)
+        );
+
+    color: white;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    box-shadow:
+        0 7px 18px var(--btn-shadow);
+
+    transition:.25s;
+}
+
+.primary-btn:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 10px 22px var(--btn-shadow-hover);
+}
+
+
+/* =====================================================
+   DOCTOR CARD
+===================================================== */
+
+.doctor-card{
+
+    position:relative;
+
+    width:100%;
+
+    padding:17px 18px;
+
+    margin-bottom:12px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:15px;
+
+    background: var(--bg-secondary);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:15px;
+
+    transition:.25s;
+
+    overflow:hidden;
+}
+
+.doctor-card:hover{
+
+    border-color: var(--accent-glow-3);
+
+    background: var(--bg-card-hover);
+
+    transform:translateY(-2px);
+
+}
+
+
+/* =====================================================
+   DOCTOR INFORMATION
+===================================================== */
+
+.doctor-name{
+
+    color: var(--text-primary);
+
+    font-size:16px;
+
+    font-weight:600;
+
+    margin-bottom:5px;
+}
+
+.doctor-special{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    padding:4px 9px;
+
+    border-radius:7px;
+
+    background: var(--accent-soft);
+
+    border:
+        1px solid var(--accent-border);
+
+    color: var(--accent);
+
+    font-size:11px;
+
+    font-weight:500;
+}
+
+
+/* =====================================================
+   ACTIONS
+===================================================== */
+
+.actions{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:7px;
+
+    flex-shrink:0;
+}
+
+.open-btn,
+.delete-btn{
+
+    border:none;
+
+    border-radius:10px;
+
+    padding:9px 13px;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.open-btn{
+
+    background: var(--bg-success);
+
+    border:
+        1px solid var(--border-success);
+
+    color: var(--text-success);
+}
+
+.open-btn:hover{
+
+    background: var(--bg-success-hover);
+
+    transform:translateY(-1px);
+}
+
+.delete-btn{
+
+    background: var(--bg-danger);
+
+    border:
+        1px solid var(--border-danger);
+
+    color: var(--text-danger);
+}
+
+.delete-btn:hover{
+
+    background: var(--bg-danger-hover);
+
+    transform:translateY(-1px);
+}
+
+
+/* =====================================================
+   EMPTY
+===================================================== */
+
+.empty{
+
+    padding:35px 20px;
+
+    text-align:center;
+
+    color: var(--text-secondary);
+
+    font-size:13px;
+}
+
+
+/* =====================================================
+   DOCTOR DETAILS
+===================================================== */
+
+.doctor-details{
+
+    width:100%;
+    max-width:1000px;
+
+    margin:0 auto 18px auto;
+
+    border:none;
+}
+
+
+/* =====================================================
+   SUMMARY
+===================================================== */
+
+.doctor-summary{
+
+    list-style:none;
+
+    cursor:pointer;
+
+    width:100%;
+
+    padding:14px 17px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:10px;
+
+    border-radius:13px;
+
+    background: var(--bg-card);
+
+    border:
+        1px solid var(--border);
+
+    color: var(--text-primary);
+
+    font-size:14px;
+
+    font-weight:600;
+
+    box-shadow:
+        0 5px 18px var(--shadow-sm);
+
+    transition:.25s;
+}
+
+.doctor-summary:hover{
+
+    border-color: var(--accent-glow-3);
+
+    background: var(--bg-card-hover-2);
+}
+
+.doctor-summary::-webkit-details-marker{
+
+    display:none;
+}
+
+
+/* =====================================================
+   ARROW
+===================================================== */
+
+.arrow{
+
+    color: var(--text-arrow);
+
+    font-size:13px;
+
+    transition:.25s;
+}
+
+.doctor-details[open]
+.arrow{
+
+    transform:rotate(180deg);
+
+    color: var(--accent);
+}
+
+
+/* =====================================================
+   DOCTOR FORM
+===================================================== */
+
+.doctor-form{
+
+    margin-top:10px;
+
+    padding:18px;
+
+    background: var(--bg-secondary);
+
+    border:
+        1px solid var(--border-2);
+
+    border-radius:14px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+}
+
+
+/* =====================================================
+   DIVIDER
+===================================================== */
+
+.dashboard-divider{
+
+    width:70%;
+
+    height:1px;
+
+    margin:25px auto;
+
+    position:relative;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            var(--accent-glow-4),
+            transparent
+        );
+}
+
+.dashboard-divider::after{
+
+    content:"";
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    width:6px;
+    height:6px;
+
+    transform:
+        translate(-50%,-50%);
+
+    border-radius:50%;
+
+    background: var(--accent);
+
+    box-shadow:
+        0 0 10px var(--accent-glow-5);
+}
+
+
+/* =====================================================
+   SCROLLBAR
+===================================================== */
+
+::-webkit-scrollbar{
+
+    width:7px;
+}
+
+::-webkit-scrollbar-track{
+
+    background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb{
+
+    background: var(--scrollbar-thumb);
+
+    border-radius:20px;
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background: var(--scrollbar-hover);
+}
+
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media(max-width:768px){
+
+    body{
+
+        padding:15px;
+
+        padding-bottom:90px;
+    }
+
+    .page-title{
+
+        font-size:22px;
+
+        margin-bottom:20px;
+    }
+
+    .card{
+
+        padding:18px;
+
+        border-radius:15px;
+    }
+
+    h2{
+
+        font-size:19px;
+    }
+
+    .doctor-card{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        padding:15px;
+    }
+
+    .doctor-card > div:first-child{
+
+        width:100%;
+    }
+
+    .actions{
+
+        width:100%;
+
+        display:flex;
+    }
+
+    .open-btn,
+    .delete-btn{
+
+        flex:1;
+
+        padding:10px;
+    }
+
+    .doctor-summary{
+
+        padding:13px 14px;
+
+        font-size:13px;
+    }
+
+    .doctor-form{
+
+        padding:15px;
+    }
+}
+
+
+/* =====================================================
+   VERY SMALL SCREENS
+===================================================== */
+
+@media(max-width:400px){
+
+    body{
+
+        padding:10px;
+
+        padding-bottom:85px;
+    }
+
+    .page-title{
+
+        font-size:20px;
+    }
+
+    .card{
+
+        padding:15px;
+    }
+
+    .doctor-name{
+
+        font-size:15px;
+    }
+
+    .open-btn,
+    .delete-btn{
+
+        font-size:11px;
+    }
+}

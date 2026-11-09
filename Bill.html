@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title data-i18n="208">Invoices Management</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/Bill.css">
+<link rel="stylesheet" href="css/notification.css">
+
+</head>
+
+<body>
+  <!-- FLOATING ICONS -->
+    <i class="fa-solid fa-tooth floating-icon icon1"></i>
+    <i class="fa-solid fa-heart-pulse floating-icon icon2"></i>
+    <i class="fa-solid fa-stethoscope floating-icon icon3"></i>
+
+<h1 class="page-title">
+    <i class="fa-solid fa-file-invoice-dollar"></i>
+    <span data-i18n="208">Invoices Management</span>
+</h1>
+
+
+<details class="modern-details invoice-form-details">
+
+    <summary class="modern-summary invoice-form-summary">
+
+        <div class="invoice-summary-left">
+
+            <span class="invoice-add-icon">
+                <i class="fa-solid fa-plus"></i>
+            </span>
+
+            <div class="invoice-summary-text">
+
+                <strong data-i18n="120">
+                    Add New Invoice
+                </strong>
+
+                <span data-i18n="121">
+                    Add New Invoice
+                </span>
+
+            </div>
+
+        </div>
+
+        <span class="invoice-summary-arrow">
+            <i class="fa-solid fa-chevron-down"></i>
+        </span>
+
+    </summary>
+
+
+    <div class="invoice-form-card">
+
+        <div class="invoice-form-header">
+
+            <div>
+
+                <span data-i18n="122" class="invoice-form-label">
+                    NEW INVOICE
+                </span>
+
+                <h3 data-i18n="123">
+                    Invoice Data
+                </h3>
+
+                <p data-i18n="124">
+                    Add invoice information and amount
+                </p>
+
+            </div>
+
+            <div class="invoice-form-header-icon">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+            </div>
+
+        </div>
+
+
+        <div class="invoice-form-grid">
+
+            <div class="invoice-field">
+
+                <label for="beneficiary">
+                    <i class="fa-solid fa-building"></i>
+
+                    <span data-i18n="125">Beneficiary</span>
+                </label>
+
+                <input
+                    id="beneficiary"
+                    type="text"
+                    data-i18n-placeholder="209"
+                    placeholder="Beneficiary name or person"
+                >
+
+            </div>
+
+
+            <div class="invoice-field">
+
+                <label for="reason">
+                    <i class="fa-solid fa-align-left"></i>
+
+                    <span data-i18n="126">Reason</span>
+                </label>
+
+                <input
+                    id="reason"
+                    type="text"
+                    data-i18n-placeholder="210"
+                    placeholder="Example: supplies or maintenance"
+                >
+
+            </div>
+
+
+            <div class="invoice-field invoice-amount-field">
+
+                <label for="amount">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+
+                    <span data-i18n="127">Amount Paid</span>
+                </label>
+
+                <div class="amount-input-wrapper">
+
+                    <input
+                        id="amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                    >
+
+                    <span>
+                        EGP
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="invoice-form-footer">
+
+            <div class="invoice-form-note">
+
+                <i class="fa-solid fa-shield-halved"></i>
+
+                <span data-i18n="128">The invoice will be added as a financial expense</span>
+
+            </div>
+
+
+            <button
+                class="save-btn invoice-save-btn"
+                onclick="saveBill()"
+            >
+
+                <i class="fa-solid fa-plus"></i>
+
+                <span data-i18n="129">
+                    Save Invoice
+                </span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</details>
+
+  <!-- فاصل  -->
+<div class="dashboard-divider"></div>
+
+<div id="monthlyBillsTotal" class="dashboard-card"></div>
+<!-- فاصل  -->
+<div class="dashboard-divider"></div>
+
+
+
+
+<div class="card bills-card">
+
+
+
+
+    <div class="search-box">
+
+    <input
+        type="text"
+        id="billSearch"
+        data-i18n-placeholder="211"
+        placeholder="Search beneficiary or date..."
+        oninput="loadBills()"
+    >
+
+</div>
+
+    <div id="billsContainer"></div>
+
+</div>
+
+<!-- =====================================================
+     DENTIX PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">Home</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">Visits</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">Add Patient</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">Patient Files</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">More</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    More
+                </h3>
+
+                <p data-i18n="103">
+                    Manage System
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        Invoices
+                    </strong>
+
+                    <span data-i18n="105">
+                        Manage Clinic Invoices
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        Storage
+                    </strong>
+
+                    <span data-i18n="107">
+                        Clinic Storage and Purchases
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        Labs
+                    </strong>
+
+                    <span data-i18n="109">
+                        Manage Labs and Prosthesis
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        Doctors
+                    </strong>
+
+                    <span data-i18n="111">
+                        Manage Doctors
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        Prints
+                    </strong>
+
+                    <span data-i18n="113">
+                        Print prescriptions, consents and instructions
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        Drugs and Doses
+                    </strong>
+
+                    <span data-i18n="115">
+                        Manage drugs and calculate doses
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        Reports
+                    </strong>
+
+                    <span data-i18n="117">
+                        Detailed Clinic Reports
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        Prices and Departments
+                    </strong>
+
+                    <span data-i18n="119">
+                        Price clinic services, prosthesis and add departments
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="billDetailsModal" class="modal-overlay">
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <h3>
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <span data-i18n="212">Invoice Details</span>
+            </h3>
+
+           <button
+    type="button"
+    class="bill-modal-close"
+    onclick="closeBillDetailsModal()"
+    aria-label="Close">
+
+    <i class="fa-solid fa-xmark"></i>
+
+</button>
+        </div>
+
+        <div
+            id="billDetailsContent"
+            class="bill-details-content">
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/confirm-modal.js"></script>
+<script src="js/Bill.js"></script>
+
+</body>
+</html>

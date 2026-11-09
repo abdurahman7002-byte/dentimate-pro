@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Dentix Pro - Advanced Drug Management System">
+
+    <title data-i18n="drugs_manager_title">Drugs Manager | Dentix Pro</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/drugs.css">
+    <link rel="stylesheet" href="css/notification.css">
+
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="page-header">
+            <h1 class="page-title">
+                <i class="fa-solid fa-pills"></i>
+                <span data-i18n="drugs_manager">Drugs Manager</span>
+            </h1>
+            <p class="page-subtitle" data-i18n="drugs_manager_subtitle">Manage your clinic drug database</p>
+        </header>
+
+        <!-- Add Drug Card -->
+        <section class="card drug-form-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fa-solid fa-plus-circle"></i>
+                </div>
+                <h2 class="card-title" data-i18n="add_new_drug">Add New Drug</h2>
+            </div>
+
+            <form id="drugForm" class="drug-form" onsubmit="event.preventDefault(); saveDrug();">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="drugName">
+                            <i class="fa-solid fa-tag"></i>
+                            <span data-i18n="drug_name_label">Drug Name</span>
+                        </label>
+                        <input type="text" id="drugName" data-i18n-placeholder="drug_name_placeholder" placeholder="e.g., Hibiotic 600mg susp" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <span data-i18n="category_label">Category</span>
+                        </label>
+                        <select id="category" required>
+                            <option value="" data-i18n="select_category">Select Category</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dosageForm">
+                            <i class="fa-solid fa-flask"></i>
+                            <span data-i18n="dosage_form_label">Dosage Form</span>
+                        </label>
+                        <select id="dosageForm" onchange="changeConcentrationPlaceholder()" required>
+                            <option value="" data-i18n="select_form">Select Form</option>
+                            <option value="Suspension" data-i18n="form_suspension">Suspension</option>
+                            <option value="Tablet" data-i18n="form_tablet">Tablet</option>
+                            <option value="Capsule" data-i18n="form_capsule">Capsule</option>
+                            <option value="Syrup" data-i18n="form_syrup">Syrup</option>
+                            <option value="Drops" data-i18n="form_drops">Drops</option>
+                            <option value="Injection" data-i18n="form_injection">Injection</option>
+                            <option value="Suppository" data-i18n="form_suppository">Suppository</option>
+                            <option value="Inhaler" data-i18n="form_inhaler">Inhaler</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="concentration">
+                            <i class="fa-solid fa-vial"></i>
+                            <span data-i18n="concentration_label">Concentration</span>
+                        </label>
+                        <input type="text" id="concentration" data-i18n-placeholder="concentration_placeholder" placeholder="Concentration per 5 ml">
+                    </div>
+
+                    <div class="form-row age-row">
+                        <div class="form-group">
+                            <label for="minAge">
+                                <i class="fa-solid fa-child"></i>
+                                <span data-i18n="min_age_label">Min Age</span>
+                            </label>
+                            <input type="number" id="minAge" min="0" max="120" data-i18n-placeholder="min_age_placeholder" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="maxAge">
+                                <i class="fa-solid fa-person-cane"></i>
+                                <span data-i18n="max_age_label">Max Age</span>
+                            </label>
+                            <input type="number" id="maxAge" min="0" max="120" data-i18n-placeholder="max_age_placeholder" placeholder="120">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mgPerKg">
+                            <i class="fa-solid fa-weight-scale"></i>
+                            <span data-i18n="mg_per_kg_label">mg/kg/day</span>
+                        </label>
+                        <input type="number" id="mgPerKg" step="0.01" min="0" data-i18n-placeholder="mg_per_kg_placeholder" placeholder="e.g., 15">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="frequency">
+                            <i class="fa-solid fa-clock"></i>
+                            <span data-i18n="frequency_label">Frequency / Day</span>
+                        </label>
+                        <input type="number" id="frequency" min="1" max="24" data-i18n-placeholder="frequency_placeholder" placeholder="e.g., 3">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="maxDose">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span data-i18n="max_dose_label">Max Daily Dose (mg)</span>
+                        </label>
+                        <input type="number" id="maxDose" min="0" data-i18n-placeholder="max_dose_placeholder" placeholder="e.g., 2000">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="duration">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <span data-i18n="duration_label">Duration (Days)</span>
+                        </label>
+                        <input type="number" id="duration" min="1" max="365" data-i18n-placeholder="duration_placeholder" placeholder="e.g., 7">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="notes">
+                        <i class="fa-solid fa-note-sticky"></i>
+                        <span data-i18n="clinical_notes_label">Clinical Notes</span>
+                    </label>
+                    <textarea id="notes" rows="3" data-i18n-placeholder="clinical_notes_placeholder" placeholder="Liver disease, kidney disease, drug interactions, pregnancy warnings..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="clearForm()">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span data-i18n="reset">Reset</span>
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save"></i>
+                        <span data-i18n="save_drug">Save Drug</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Drugs List Card -->
+        <section class="card drugs-list-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fa-solid fa-list-ul"></i>
+                </div>
+                <h2 class="card-title" data-i18n="drug_database">Drug Database</h2>
+                <span class="drug-count" id="drugCount" data-i18n="drugs_count">0 drugs</span>
+            </div>
+
+            <div class="search-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchInput" data-i18n-placeholder="search_drugs_placeholder" placeholder="Search drugs by name..." oninput="debounceLoadDrugs()">
+            </div>
+
+            <div id="drugsContainer" class="drugs-container">
+                <div class="loading-state">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    <p data-i18n="loading_drugs">Loading drugs...</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+
+<!-- =====================================================
+     DENTIX PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">الرئيسية</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">الزيارات</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">إضافة مريض</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">ملفات المرضى</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">المزيد</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    المزيد
+                </h3>
+
+                <p data-i18n="103">
+                    أدوات وإدارة النظام
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        الفواتير
+                    </strong>
+
+                    <span data-i18n="105">
+                        إدارة الفواتير
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        المخزون
+                    </strong>
+
+                    <span data-i18n="107">
+                        المخزون والمشتريات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        المعامل
+                    </strong>
+
+                    <span data-i18n="109">
+                        أعمال المعمل
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        الأطباء
+                    </strong>
+
+                    <span data-i18n="111">
+                        إدارة الأطباء
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        المطبوعات
+                    </strong>
+
+                    <span data-i18n="113">
+                        الوصفات والمطبوعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        إدارة الأدوية والجرعات
+                    </strong>
+
+                    <span data-i18n="115">
+                        إدارة الأدوية وحساب الجرعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        التقارير
+                    </strong>
+
+                    <span data-i18n="117">
+                        الإحصاءات والأرباح
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        التسعير
+                    </strong>
+
+                    <span data-i18n="119">
+                        إدارة أسعار الخدمات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/preferences.js"></script>
+    <script src="js/notification.js"></script>
+    <script src="js/confirm-modal.js"></script>
+    <script src="js/drugs.js"></script>
+</body>
+</html>

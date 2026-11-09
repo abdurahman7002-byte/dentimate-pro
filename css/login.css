@@ -1,0 +1,799 @@
+
+
+    .app-title{
+    width:100%;
+    text-align:center;
+    margin-top:25px;
+    margin-bottom:10px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+
+    font-size:42px;
+    font-weight:800;
+
+    background: linear-gradient(135deg,#4cc9f0,#80ffdb);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+
+    letter-spacing:1px;
+
+    animation: fadeUp 0.6s ease;
+}
+
+.app-title i{
+    font-size:38px;
+    color:#4cc9f0;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+
+    background:
+    radial-gradient(circle at top left,#1d3557 0%,transparent 25%),
+    radial-gradient(circle at bottom right,#2a9d8f 0%,transparent 25%),
+    #0b1120;
+
+    min-height:100vh;
+
+    display:flex;
+    flex-direction:column;
+
+    justify-content:flex-start;
+    align-items:center;
+
+    overflow-y:auto;
+
+    color:white;
+}
+
+/* LOGIN CARD */
+
+.login-card{
+
+    width:100%;
+    max-width:420px;
+
+    background:rgba(255,255,255,0.05);
+
+    backdrop-filter:blur(14px);
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    border-radius:30px;
+
+    padding:40px;
+
+    text-align:center;
+
+    box-shadow:
+    0 10px 40px rgba(0,0,0,0.4);
+
+    animation:fadeUp 0.7s ease;
+
+    position:relative;
+    z-index:2;
+     margin-top:30px; /* جديد */
+}
+
+@keyframes fadeUp{
+
+    from{
+        opacity:0;
+        transform:translateY(30px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}
+
+.hero-header{
+
+    text-align:center;
+
+    margin-bottom:35px;
+
+}
+
+.hero-logo{
+
+    width:90px;
+    height:90px;
+
+    margin:0 auto 20px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:28px;
+
+    background:
+    linear-gradient(
+        135deg,
+        #2563eb,
+        #06b6d4
+    );
+
+    box-shadow:
+    0 20px 40px rgba(37,99,235,.35);
+
+}
+
+.hero-logo i{
+
+    font-size:42px;
+    color:white;
+
+}
+
+.hero-header h1{
+
+    color:white;
+
+    font-size:38px;
+
+    font-weight:800;
+
+    margin-bottom:10px;
+
+    letter-spacing:.5px;
+
+}
+
+.hero-header p{
+
+    color:#94a3b8;
+
+    font-size:16px;
+
+}
+
+.login-card{
+
+    background:
+    rgba(255,255,255,.05);
+
+    border:
+    1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(20px);
+
+    border-radius:30px;
+
+    padding:40px;
+
+    text-align:center;
+
+}
+
+.card-logo{
+
+    width:80px;
+    height:80px;
+
+    margin:0 auto 20px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:22px;
+
+    background:
+    rgba(37,99,235,.15);
+
+    border:
+    1px solid rgba(37,99,235,.25);
+
+}
+
+.card-logo i{
+
+    font-size:34px;
+
+    color:#38bdf8;
+
+}
+
+.login-card h2{
+
+    color:white;
+
+    font-size:30px;
+
+    margin-bottom:10px;
+
+}
+
+.subtitle{
+
+    color:#94a3b8;
+
+    font-size:15px;
+
+    margin-bottom:30px;
+
+}
+
+.logo{
+
+    width:90px;
+    height:90px;
+
+    margin:auto;
+
+    border-radius:50%;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:linear-gradient(135deg,#00b4d8,#48cae4);
+
+    margin-bottom:25px;
+
+    box-shadow:
+    0 10px 25px rgba(0,180,216,0.35);
+
+    animation:pulse 2s infinite;
+}
+
+.logo i{
+
+    font-size:40px;
+    color:white;
+}
+
+@keyframes pulse{
+
+    0%{
+        transform:scale(1);
+    }
+
+    50%{
+        transform:scale(1.08);
+    }
+
+    100%{
+        transform:scale(1);
+    }
+
+}
+
+h2{
+
+    font-size:34px;
+
+    margin-bottom:10px;
+
+    background:linear-gradient(to right,#4cc9f0,#80ffdb);
+
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.subtitle{
+
+    color:#b8c1ec;
+
+    margin-bottom:30px;
+
+    font-size:15px;
+}
+
+/* INPUTS */
+
+.input-group{
+
+    position:relative;
+
+    margin-bottom:20px;
+}
+
+.input-group i{
+
+    position:absolute;
+
+    left:18px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    color:#80ffdb;
+}
+
+input{
+
+    width:100%;
+
+    padding:16px 16px 16px 50px;
+
+    border:none;
+    outline:none;
+
+    border-radius:16px;
+
+    background:#101826;
+
+    color:white;
+
+    font-size:15px;
+
+    transition:0.3s;
+}
+
+input:focus{
+
+    box-shadow:
+    0 0 0 3px rgba(72,202,228,0.35);
+
+    transform:translateY(-2px);
+}
+
+input::placeholder{
+    color:#94a3b8;
+}
+
+/* BUTTON */
+
+button{
+
+    width:100%;
+
+    border:none;
+
+    padding:16px;
+
+    border-radius:16px;
+
+    cursor:pointer;
+
+    font-size:16px;
+    font-weight:600;
+
+    color:white;
+
+    background:linear-gradient(135deg,#00b4d8,#48cae4);
+
+    box-shadow:
+    0 10px 25px rgba(0,180,216,0.35);
+
+    transition:0.3s ease;
+
+    position:relative;
+    overflow:hidden;
+}
+
+button::before{
+
+    content:'';
+
+    position:absolute;
+
+    top:0;
+    left:-100%;
+
+    width:100%;
+    height:100%;
+
+    background:rgba(255,255,255,0.15);
+
+    transition:0.5s;
+}
+
+button:hover::before{
+    left:100%;
+}
+
+button:hover{
+
+    transform:translateY(-3px) scale(1.02);
+}
+
+/* FLOATING ICONS */
+
+.floating-icon{
+
+    position:absolute;
+
+    color:rgba(255,255,255,0.06);
+
+    font-size:50px;
+
+    animation:float 6s ease-in-out infinite;
+
+    pointer-events:none;
+}
+
+.icon1{
+    top:10%;
+    left:8%;
+}
+
+.icon2{
+    bottom:10%;
+    right:8%;
+    animation-delay:2s;
+}
+
+.icon3{
+    top:50%;
+    right:15%;
+    animation-delay:1s;
+}
+
+@keyframes float{
+
+    0%{
+        transform:translateY(0px) rotate(0deg);
+    }
+
+    50%{
+        transform:translateY(-18px) rotate(8deg);
+    }
+
+    100%{
+        transform:translateY(0px) rotate(0deg);
+    }
+
+}
+
+/* MOBILE */
+
+@media(max-width:500px){
+
+    .login-card{
+        margin:20px;
+        padding:30px 24px;
+    }
+
+    h2{
+        font-size:28px;
+    }
+
+}
+
+/* toast  */
+.toast{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+
+    background:#1f2937;
+    color:white;
+
+    padding:14px 20px;
+    border-radius:12px;
+
+    font-size:16px;
+    font-weight:600;
+
+    box-shadow:0 10px 25px rgba(0,0,0,0.3);
+
+    opacity:0;
+    transform:translateY(20px);
+
+    transition:all 0.4s ease;
+
+    z-index:9999;
+}
+
+.toast.show{
+    opacity:1;
+    transform:translateY(0);
+}
+
+footer{
+
+    width:100%;
+
+    margin-top:80px;
+
+    padding:60px 30px;
+
+    background:
+    linear-gradient(
+        180deg,
+        #020617,
+        #0f172a
+    );
+
+    border-top:
+    1px solid rgba(255,255,255,.08);
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    justify-content:center;
+
+    gap:30px;
+
+}
+
+.footer-section{
+
+    flex:1;
+
+    min-width:280px;
+
+    max-width:420px;
+
+    padding:30px;
+
+    border-radius:24px;
+
+    background:
+    rgba(255,255,255,.04);
+
+    border:
+    1px solid rgba(255,255,255,.06);
+
+    backdrop-filter:blur(20px);
+
+    transition:.3s;
+
+}
+
+.footer-section:hover{
+
+    transform:
+    translateY(-5px);
+
+    border-color:
+    rgba(56,189,248,.25);
+
+    box-shadow:
+    0 20px 40px rgba(0,0,0,.25);
+
+}
+
+.footer-section h3{
+
+    color:white;
+
+    font-size:22px;
+
+    margin-bottom:20px;
+
+    font-weight:800;
+
+}
+
+.footer-section p{
+
+    color:#cbd5e1;
+
+    line-height:1.9;
+
+    font-size:15px;
+
+}
+
+.footer-section a{
+
+    color:#cbd5e1;
+
+    text-decoration:none;
+
+    transition:.25s;
+
+}
+
+.footer-section a:hover{
+
+    color:#38bdf8;
+
+}
+
+.logo{
+
+    width:110px;
+
+    border-radius:24px;
+
+    display:block;
+
+    margin:15px auto;
+
+    box-shadow:
+    0 15px 35px rgba(0,0,0,.3);
+
+}
+
+.whatsapp-contact{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:12px;
+
+    margin-top:20px;
+
+}
+
+.whatsapp-contact img{
+
+    width:40px;
+
+    height:40px;
+
+}
+
+.whatsapp-contact a{
+
+    font-weight:700;
+
+    color:#25D366;
+
+}
+
+.whatsapp-contact a:hover{
+
+    color:#4ade80;
+
+}
+
+#aboutme{
+
+    text-align:center;
+
+}
+
+#aboutme h3{
+
+    text-align:center;
+
+}
+
+#aboutme p{
+
+    text-align:center;
+
+    direction:rtl;
+
+}
+
+#contact\\ me{
+
+    text-align:center;
+
+}
+
+.footer-bottom{
+
+    width:100%;
+
+    margin-top:20px;
+
+    padding-top:25px;
+
+    border-top:
+    1px solid rgba(255,255,255,.08);
+
+    text-align:center;
+
+    color:#94a3b8;
+
+    font-size:14px;
+
+}
+
+@media(max-width:768px){
+
+    footer{
+
+        flex-direction:column;
+
+        padding:40px 20px;
+
+    }
+
+    .footer-section{
+
+        max-width:none;
+
+    }
+
+}
+
+.footer-section{
+
+    text-align:center;
+
+    flex-direction:column;
+
+}
+
+.footer-section h3{
+
+    margin-bottom:15px;
+
+}
+
+.footer-section p{
+
+    margin:8px 0;
+
+}
+
+.footer-bottom{
+
+    width:100%;
+
+    text-align:center;
+
+    margin-top:20px;
+
+    padding-top:20px;
+
+    border-top:
+    1px solid rgba(255,255,255,.08);
+
+    color:#94a3b8;
+
+    font-size:14px;
+
+}
+
+#contact-me{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+}
+
+.whatsapp-contact{
+
+    margin-top:15px;
+
+}
+
+.back-home-btn{
+
+    display:block;
+
+    width:220px;
+
+    margin:15px auto 0;
+
+    padding:14px;
+
+    border:none;
+
+    border-radius:14px;
+
+    font-size:16px;
+
+    font-weight:800;
+
+    cursor:pointer;
+
+    color:white;
+
+    background:
+    linear-gradient(
+        135deg,
+        #45524d,
+        #516861
+    );
+
+}

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="patients_title">Patients</title>
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet" href="css/patients.css">
+<link rel="stylesheet" href="css/notification.css">
+
+</head>
+
+<body>
+
+    <!-- FLOATING ICONS -->
+
+    <i class="fa-solid fa-tooth floating-icon icon1"></i>
+    <i class="fa-solid fa-user-doctor floating-icon icon2"></i>
+    <i class="fa-solid fa-heart-pulse floating-icon icon3"></i>
+
+<div class="container">
+
+     <h2>
+            <i class="fa-solid fa-user-plus"></i>
+            <span data-i18n="83">Add Patient</span>
+        </h2>
+
+    <div class="card">
+
+
+
+        <form id="patientForm">
+
+            <input 
+                type="text" 
+                id="name" 
+                data-i18n-placeholder="patient_name_placeholder"
+                placeholder="👤 Patient Name"
+            >
+
+            <input 
+                type="text" 
+                id="phone" 
+                data-i18n-placeholder="phone_placeholder"
+                placeholder="📞 Phone"
+            >
+
+            <select id="gender">
+                <option data-i18n="84">Male</option>
+                <option data-i18n="85">Female</option>
+            </select>
+
+            <input 
+                type="text" 
+                id="address" 
+                data-i18n-placeholder="address_placeholder"
+                placeholder="📍 Address"
+            >
+
+            <div>
+<h4 data-i18n="86">Birth Date</h4>
+
+            <input 
+                type="date" 
+                id="birth"
+                data-i18n-placeholder="birth_date_placeholder"
+                placeholder="Birth Date"
+            >
+
+            </div>
+
+
+<!-- =========================
+     MEDICAL HISTORY
+========================= -->
+
+
+    <textarea
+        id="medical"
+        data-i18n-placeholder="medical_history_placeholder"
+        placeholder="🩺 Medical History"
+    ></textarea>
+
+    <!-- QUICK MEDICAL CONDITIONS -->
+    <div class="history-suggestions">
+
+        <button type="button" onclick="addMedicalCondition('ضغط الدم')" data-i18n="blood_pressure">
+            ضغط الدم
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('السكري')" data-i18n="diabetes">
+            السكري
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('الربو')" data-i18n="asthma">
+            الربو
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('أمراض القلب')" data-i18n="heart_disease">
+            أمراض القلب
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('الحساسية')" data-i18n="allergies">
+            الحساسية
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('أمراض الكلى')" data-i18n="kidney_disease">
+            أمراض الكلى
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('أمراض الكبد')" data-i18n="liver_disease">
+            أمراض الكبد
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('مشاكل الغدة الدرقية')" data-i18n="thyroid">
+            الغدة الدرقية
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('سيولة الدم')" data-i18n="blood_thinners">
+            سيولة الدم
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('صرع')" data-i18n="epilepsy">
+            الصرع
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('حمل')" data-i18n="pregnancy">
+            الحمل
+        </button>
+
+        <button type="button" onclick="addMedicalCondition('لا يوجد تاريخ مرضي')" data-i18n="no_medical_history">
+            لا يوجد تاريخ مرضي
+        </button>
+
+    </div>
+
+
+            <textarea 
+                id="dental" 
+                data-i18n-placeholder="dental_history_placeholder"
+                placeholder="🦷 Dental History"
+            ></textarea>
+
+
+
+
+        </form>
+
+        <div class="buttons">
+
+            <button onclick="savePatient()" class="save-btn">
+
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span data-i18n="87">Save Patient</span>
+
+            </button>
+
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     DENTIX PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">الرئيسية</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">الزيارات</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">إضافة مريض</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">ملفات المرضى</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">المزيد</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    المزيد
+                </h3>
+
+                <p data-i18n="103">
+                    أدوات وإدارة النظام
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        الفواتير
+                    </strong>
+
+                    <span data-i18n="105">
+                        إدارة الفواتير
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        المخزون
+                    </strong>
+
+                    <span data-i18n="107">
+                        المخزون والمشتريات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        المعامل
+                    </strong>
+
+                    <span data-i18n="109">
+                        أعمال المعمل
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        الأطباء
+                    </strong>
+
+                    <span data-i18n="111">
+                        إدارة الأطباء
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        المطبوعات
+                    </strong>
+
+                    <span data-i18n="113">
+                        الوصفات والمطبوعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        إدارة الأدوية والجرعات
+                    </strong>
+
+                    <span data-i18n="115">
+                        إدارة الأدوية وحساب الجرعات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        التقارير
+                    </strong>
+
+                    <span data-i18n="117">
+                        الإحصاءات والأرباح
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        التسعير
+                    </strong>
+
+                    <span data-i18n="119">
+                        إدارة أسعار الخدمات
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script src="js/supabase.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/patients.js"></script>
+
+<!-- toast  -->
+ <div id="toast" class="toast"></div>
+
+</body>
+</html>

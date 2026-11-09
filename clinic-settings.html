@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="214">Clinic Page Settings | Dentix Pro</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/clinic-settings.css">
+<link rel="stylesheet" href="css/notification.css">
+
+
+</head>
+
+<body>
+
+<!-- ===== PAGE HEADER ===== -->
+<header class="page-header">
+    <h1>
+        <i class="fa-solid fa-globe"></i>
+        <span data-i18n="135">Clinic Page Settings</span>
+    </h1>
+    <p data-i18n="136">These information will appear to visitors of the public clinic page</p>
+</header>
+
+<div class="container">
+
+    <!-- ===== STATS BAR ===== -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-icon"><i class="fa-solid fa-link"></i></div>
+            <div>
+                <strong data-i18n="137" id="linkStatus">Not Published</strong>
+                <span data-i18n="138">Page Status</span>
+            </div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+            <div>
+                <strong id="daysActive">0</strong>
+                <span data-i18n="139">Working Days</span>
+            </div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-icon"><i class="fa-solid fa-images"></i></div>
+            <div>
+                <strong id="galleryCount">0</strong>
+                <span data-i18n="140">Published Photos</span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== SETTINGS FORM CARD ===== -->
+    <div class="settings-card">
+
+        <!-- CARD HEADER -->
+        <div class="card-header">
+            <div class="card-header-icon">
+                <i class="fa-solid fa-hospital"></i>
+            </div>
+            <div>
+                <h2 data-i18n="141">Clinic Information</h2>
+                <p data-i18n="142">Main clinic information that appears on the clinic page</p>
+            </div>
+        </div>
+
+
+        <!-- CLINIC NAME -->
+        <div class="form-group">
+            <label><i class="fa-solid fa-signature"></i> <span data-i18n="143">Clinic Name</span></label>
+            <input type="text" id="clinic_name" data-i18n-placeholder="215" placeholder="Example: Smile Specialized Clinic">
+        </div>
+
+
+        <!-- DESCRIPTION -->
+        <div class="form-group">
+            <label><i class="fa-solid fa-align-right"></i> <span data-i18n="144">Clinic Description</span></label>
+            <textarea id="clinic_description" rows="4" data-i18n-placeholder="216" placeholder="Write a brief about the clinic and services provided..."></textarea>
+        </div>
+
+
+        <!-- LOGO UPLOAD -->
+        <div class="form-group">
+            <label><i class="fa-solid fa-image"></i> <span data-i18n="145">Clinic Logo</span></label>
+            <div class="logo-upload-zone" onclick="document.getElementById('clinic_logo').click()">
+                <input type="file" id="clinic_logo" accept="image/*" style="display:none" onchange="previewLogo(this)">
+                <div class="logo-preview-wrapper" id="logoPreviewWrapper">
+                    <div class="logo-placeholder">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span data-i18n="146">Click to upload clinic logo</span>
+                        <small data-i18n="147">PNG with transparent background</small>
+                    </div>
+                </div>
+                <img id="logoPreview" class="logo-preview-img" style="display:none;">
+            </div>
+        </div>
+
+
+        <!-- CONTACT INFO ROW -->
+        <div class="form-row">
+            <div class="form-group">
+                <label><i class="fa-solid fa-phone"></i> <span data-i18n="148">Phone</span></label>
+                <input type="text" id="phone" data-i18n-placeholder="217" placeholder="01000000000">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-brands fa-whatsapp"></i> <span data-i18n="149">WhatsApp</span></label>
+                <input type="text" id="whatsapp" data-i18n-placeholder="217" placeholder="01000000000">
+            </div>
+        </div>
+
+
+        <!-- ADDRESS -->
+        <div class="form-group">
+            <label><i class="fa-solid fa-location-dot"></i> <span data-i18n="150">Address</span></label>
+            <input type="text" id="address" data-i18n-placeholder="218" placeholder="Full clinic address">
+        </div>
+
+
+        <!-- LOCATION BUTTON -->
+        <div class="form-group">
+            <label><i class="fa-solid fa-map-location-dot"></i> <span>Clinic Location on Map</span></label>
+            <button type="button" class="location-btn" onclick="getClinicLocation()">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span data-i18n="151">Auto-select Current Location</span>
+            </button>
+            <div class="location-hint" id="locationHint" style="display:none;">
+                <i class="fa-solid fa-circle-check"></i>
+                <span data-i18n="152">Location added successfully</span>
+            </div>
+        </div>
+
+        <input type="hidden" id="latitude">
+        <input type="hidden" id="longitude">
+
+
+        <!-- SOCIAL LINKS -->
+        <div class="section-divider">
+            <span data-i18n="153">Social Links</span>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label><i class="fa-brands fa-facebook"></i> <span data-i18n="154">Facebook</span></label>
+                <input type="text" id="facebook_url" data-i18n-placeholder="219" placeholder="https://facebook.com/...">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-brands fa-instagram"></i> <span data-i18n="155">Instagram</span></label>
+                <input type="text" id="instagram_url" data-i18n-placeholder="220" placeholder="https://instagram.com/...">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fa-solid fa-globe"></i> <span data-i18n="156">Website</span></label>
+            <input type="text" id="website_url" data-i18n-placeholder="221" placeholder="https://...">
+        </div>
+
+
+        <!-- GALLERY -->
+        <div class="section-divider">
+            <span data-i18n="157">Clinic Photos</span>
+        </div>
+
+        <div class="form-group">
+            <div class="gallery-upload-zone" onclick="document.getElementById('clinic_gallery').click()">
+                <input type="file" id="clinic_gallery" multiple accept="image/*" style="display:none" onchange="previewGallery(this)">
+                <div class="gallery-placeholder">
+                    <i class="fa-solid fa-images"></i>
+                    <span data-i18n="158">Click to choose clinic photos</span>
+                    <small data-i18n="224">(Ctrl + Click) You can choose multiple photos</small>
+                </div>
+            </div>
+            <div class="gallery-grid" id="galleryPreview"></div>
+        </div>
+
+
+        <!-- WORKING SCHEDULE -->
+        <div class="section-divider">
+            <span data-i18n="160">Working Days and Times</span>
+        </div>
+
+        <div class="schedule-container" id="workingScheduleContainer">
+            <!-- Days injected by JS -->
+        </div>
+
+
+        <!-- SAVE BUTTON -->
+        <div class="actions">
+            <button type="button" class="save-btn" onclick="saveClinicSettings()">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span data-i18n="161">Save Clinic Information</span>
+            </button>
+        </div>
+
+    </div>
+
+
+    <!-- ===== PUBLIC LINK CARD ===== -->
+    <div class="link-card">
+        <div class="link-card-icon">
+            <i class="fa-solid fa-share-nodes"></i>
+        </div>
+        <div class="link-card-body">
+            <h3 data-i18n="162">Clinic Page Link</h3>
+            <p data-i18n="163">Share this link with your patients</p>
+            <div class="link-box">
+                <input type="text" id="clinicPageLink" readonly>
+                <button type="button" class="btn-copy" onclick="copyClinicLink()">
+                    <i class="fa-regular fa-copy"></i>
+                    <span data-i18n="222">Copy</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== PREVIEW CARD ===== -->
+    <div class="preview-card" onclick="openPreviewModal()">
+        <div class="preview-card-content">
+            <div class="preview-icon">
+                <i class="fa-solid fa-eye"></i>
+            </div>
+            <div>
+                <h3 data-i18n="164">Preview Clinic Page</h3>
+                <p data-i18n="165">This is how the clinic page appears to visitors</p>
+            </div>
+        </div>
+        <div class="preview-arrow">
+            <i class="fa-solid fa-chevron-left"></i>
+        </div>
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     PREVIEW MODAL (Live Preview)
+===================================================== -->
+<div class="modal-overlay" id="previewModal">
+    <div class="modal-content preview-modal-content">
+
+        <button type="button" class="modal-close-float" onclick="closePreviewModal()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="preview-frame" id="previewFrame">
+            <!-- Injected by JS -->
+        </div>
+
+        <div class="preview-actions-bar">
+            <button type="button" class="btn-open-external" onclick="openLandingPage()">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <span data-i18n="166">Open in New Window</span>
+            </button>
+            <button type="button" class="btn-close-bar" onclick="closePreviewModal()">
+                <i class="fa-solid fa-xmark"></i>
+                <span data-i18n="167">Close</span>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =====================================================
+     DENTIX PRO — BOTTOM NAVIGATION
+===================================================== -->
+
+<nav class="navv-bottom-nav">
+
+    <!-- الرئيسية -->
+    <a
+        href="dashboard.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-house"></i>
+        <span data-i18n="97">Home</span>
+    </a>
+
+
+    <!-- الزيارات -->
+    <a
+        href="dashboard.html#appointmentssContainer"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-calendar-check"></i>
+        <span data-i18n="98">Visits</span>
+    </a>
+
+
+    <!-- إضافة مريض -->
+    <a
+        href="patients.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="99">Add Patient</span>
+    </a>
+
+
+    <!-- ملفات المرضى -->
+    <a
+        href="patients-files.html"
+        class="navv-item"
+    >
+        <i class="fa-solid fa-users"></i>
+        <span data-i18n="100">Patient Files</span>
+    </a>
+
+
+    <!-- =================================================
+         MOORE
+    ================================================= -->
+
+    <button
+        type="button"
+        class="navv-item moore-nav-btn"
+        id="moreNavBtn"
+        onclick="toggleMoreMenu()"
+    >
+        <i class="fa-solid fa-ellipsis"></i>
+        <span data-i18n="101">More</span>
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     MOORE MENU OVERLAY
+===================================================== -->
+
+<div
+    class="moore-menu-overlay"
+    id="moreMenuOverlay"
+    onclick="closeMoreMenu(event)"
+>
+
+
+    <!-- =================================================
+         BOTTOM SHEET
+    ================================================= -->
+
+    <div
+        class="moore-menu"
+        id="moreMenu"
+        onclick="event.stopPropagation()"
+    >
+
+
+        <!-- HANDLE -->
+        <div class="moore-menu-handle"></div>
+
+
+        <!-- HEADER -->
+        <div class="moore-menu-header">
+
+            <div>
+
+                <h3 data-i18n="102">
+                    More
+                </h3>
+
+                <p data-i18n="103">
+                    Manage System
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="moore-close-btn"
+                onclick="closeMoreMenu()"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             MENU GRID
+        ================================================= -->
+
+        <div class="moore-menu-grid">
+
+
+            <!-- الفواتير -->
+            <a
+                href="Bill.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon invoices">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="104">
+                        Invoices
+                    </strong>
+
+                    <span data-i18n="105">
+                        Manage Clinic Invoices
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المخزون -->
+            <a
+                href="storage.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon storage">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="106">
+                        Storage
+                    </strong>
+
+                    <span data-i18n="107">
+                        Clinic Storage and Purchases
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المعامل -->
+            <a
+                href="labs.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon labs">
+
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="108">
+                        Labs
+                    </strong>
+
+                    <span data-i18n="109">
+                        Manage Labs and Prosthesis
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- الأطباء -->
+            <a
+                href="doctors.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doctors">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="110">
+                        Doctors
+                    </strong>
+
+                    <span data-i18n="111">
+                        Manage Doctors
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- المطبوعات -->
+            <a
+                href="prints.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon prints">
+
+                    <i class="fa-solid fa-file-prescription"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="112">
+                        Prints
+                    </strong>
+
+                    <span data-i18n="113">
+                        Print prescriptions, consents and instructions
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- إدارة الأدوية والجرعات -->
+            <a
+                href="dose-calculator.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon doses">
+
+                    <i class="fa-solid fa-capsules"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="114">
+                        Drugs and Doses
+                    </strong>
+
+                    <span data-i18n="115">
+                        Manage drugs and calculate doses
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التقارير -->
+            <a
+                href="reports.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon reports">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="116">
+                        Reports
+                    </strong>
+
+                    <span data-i18n="117">
+                        Detailed Clinic Reports
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- التسعير -->
+            <a
+                href="control.html"
+                class="moore-menu-item"
+            >
+
+                <div class="moore-item-icon pricing">
+
+                    <i class="fa-solid fa-briefcase-medical"></i>
+
+                </div>
+
+                <div>
+
+                    <strong data-i18n="118">
+                        Prices and Departments
+                    </strong>
+
+                    <span data-i18n="119">
+                        Price clinic services, prosthesis and add departments
+                    </span>
+
+                </div>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/clinic-settings.js"></script>
+
+</body>
+</html>
