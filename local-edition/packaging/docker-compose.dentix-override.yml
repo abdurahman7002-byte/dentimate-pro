@@ -25,6 +25,15 @@ services:
       - "127.0.0.1:${KONG_HTTPS_PORT:-8443}:8443/tcp"
 
   supavisor:
+    # DISABLED by default (opt-in profile): the Dentix LAN app never uses the
+    # transaction pooler - nginx proxies to Kong; PostgREST/GoTrue/Storage/
+    # Realtime connect to db directly; no service depends_on supavisor, and
+    # the CI gates exercise none of its ports. Running it only widened the
+    # localhost surface the audit above closes. Evidence (CI runs 5-7,
+    # 2026-11-26): its in-container migrate/eval fail on the 2.10.1 image with
+    # no usable error output while every dependent-side probe passes.
+    # Enable with: docker compose ... --profile pooler up -d
+    profiles: ["pooler"]
     ports: !override
       - "127.0.0.1:${POSTGRES_PORT}:5432"
       - "127.0.0.1:${POOLER_PROXY_PORT_TRANSACTION}:6543"
