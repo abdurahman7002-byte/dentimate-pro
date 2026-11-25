@@ -64,12 +64,12 @@ jobs:
           openssl genrsa -out packaging/certs/lan-ca.key 2048 2>/dev/null
           openssl req -x509 -new -nodes -key packaging/certs/lan-ca.key -days 1 \
             -subj "/CN=Dentix CI throwaway CA" -out packaging/certs/lan-ca.crt
-          openssl req -newkey rsa:2048 -nodes -keyout packaging/certs/lan.key \
+          openssl req -newkey rsa:2048 -nodes -keyout packaging/certs/dentix.key \
             -subj "/CN=localhost" -out /tmp/lan.csr 2>/dev/null
           printf 'subjectAltName=DNS:localhost,IP:127.0.0.1\nextendedKeyUsage=serverAuth\n' > /tmp/san.ext
           openssl x509 -req -in /tmp/lan.csr -CA packaging/certs/lan-ca.crt \
             -CAkey packaging/certs/lan-ca.key -CAcreateserial -days 1 \
-            -extfile /tmp/san.ext -out packaging/certs/lan.crt 2>/dev/null
+            -extfile /tmp/san.ext -out packaging/certs/dentix.crt 2>/dev/null
           echo "NODE_EXTRA_CA_CERTS=$GITHUB_WORKSPACE/local-edition/packaging/certs/lan-ca.crt" >> "$GITHUB_ENV"
 
       - name: Boot stack
