@@ -205,8 +205,9 @@ jobs:
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'pool-roles-present='||count(*) from pg_roles where rolname in ('supabase_admin','pgbouncer','authenticator')" || true
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'pgbouncer-get_auth-exists='||count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='pgbouncer' and p.proname='get_auth'" || true
           # can supabase_admin actually log in to _supabase? (boolean only)
-          set -a; . ./.env.dentix; set +a
-          if PGPASSWORD="$POSTGRES_PASSWORD" $COMPOSE exec -T db psql -h localhost -U supabase_admin -d _supabase -tA -c "select 1" >/dev/null 2>&1; then
+          # extract the one value; never source the env file (compose tolerates non-KEY lines bash would execute)
+          PGP="$(grep '^POSTGRES_PASSWORD=' .env.dentix | head -1 | cut -d= -f2-)"
+          if PGPASSWORD="$PGP" $COMPOSE exec -T db psql -h localhost -U supabase_admin -d _supabase -tA -c "select 1" >/dev/null 2>&1; then
             echo "supabase_admin-login=ok"
           else
             echo "supabase_admin-login=fail"
