@@ -1,0 +1,200 @@
+name: docker-validation
+# Runs ONLY on pushes to the dedicated ci-validation branch. The workflow file
+# exists only on that branch (push-triggered runs include "workflows that are
+# not merged into the default branch" - GitHub events doc); main is never
+# touched, so the live GitHub Pages site (verified source: main / root) is never
+# republished. Covers the remaining gates with RUNTIME-GENERATED disposable
+# secrets and ephemeral synthetic fixtures only. No real credentials, no clinic
+# data. NO log/artifact uploads: diagnostics are allowlisted inline output only.
+on:
+  push:
+    branches: [ci-validation]
+
+env:
+  COMPOSE: docker compose -f docker-compose.yml -f docker-compose.pg17.yml -f docker-compose.kong.yml -f ../docker-compose.dentix-override.yml --env-file .env.dentix
+  # NO global insecure-TLS bypass anywhere in this run. The gate below generates a
+  # one-day throwaway CA, signs the localhost cert with proper SANs, and trusts
+  # the CA (NODE_EXTRA_CA_CERTS for node, --cacert for curl) - so TLS verification
+  # (chain + hostname) is actually exercised, not disabled.
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22   # native WebSocket for the realtime gate
+
+      - name: Generate disposable secrets and env
+        working-directory: local-edition/packaging/official
+        run: |
+          cp .env.example .env.dentix
+          JWT_SECRET=$(openssl rand -hex 32)
+          ANON_KEY=$(node ../../ci/mint-jwt.mjs "$JWT_SECRET" anon)
+          SERVICE_ROLE_KEY=$(node ../../ci/mint-jwt.mjs "$JWT_SECRET" service_role)
+          OWNER_PASSWORD=$(openssl rand -hex 12)
+          for V in "$JWT_SECRET" "$ANON_KEY" "$SERVICE_ROLE_KEY" "$OWNER_PASSWORD"; do echo "::add-mask::$V"; done
+          sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$JWT_SECRET|" .env.dentix
+          sed -i "s|^ANON_KEY=.*|ANON_KEY=$ANON_KEY|" .env.dentix
+          sed -i "s|^SERVICE_ROLE_KEY=.*|SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY|" .env.dentix
+          sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 16)|" .env.dentix
+          sed -i "s|^DASHBOARD_PASSWORD=.*|DASHBOARD_PASSWORD=$(openssl rand -hex 16)|" .env.dentix
+          sed -i "s|^SECRET_KEY_BASE=.*|SECRET_KEY_BASE=$(openssl rand -hex 32)|" .env.dentix
+          sed -i "s|^PG_META_CRYPTO_KEY=.*|PG_META_CRYPTO_KEY=$(openssl rand -hex 16)|" .env.dentix
+          sed -i "s|^LOGFLARE_API_KEY=.*|LOGFLARE_API_KEY=$(openssl rand -hex 16)|" .env.dentix
+          sed -i "s|^S3_PROTOCOL_ACCESS_KEY_ID=.*|S3_PROTOCOL_ACCESS_KEY_ID=$(openssl rand -hex 16)|" .env.dentix
+          sed -i "s|^S3_PROTOCOL_ACCESS_KEY_SECRET=.*|S3_PROTOCOL_ACCESS_KEY_SECRET=$(openssl rand -hex 32)|" .env.dentix
+          sed -i "s|^DISABLE_SIGNUP=.*|DISABLE_SIGNUP=true|" .env.dentix
+          echo "LAN_HOST=localhost" >> .env.dentix
+          { echo "ANON_KEY=$ANON_KEY"; echo "SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"; \
+            echo "JWT_SECRET=$JWT_SECRET"; echo "OWNER_PASSWORD=$OWNER_PASSWORD"; } >> "$GITHUB_ENV"
+
+      - name: Validate merged compose config
+        working-directory: local-edition/packaging/official
+        run: $COMPOSE config --quiet
+
+      - name: Build web root, throwaway CA-signed TLS cert (SAN), app config
+        working-directory: local-edition
+        run: |
+          printf 'window.DENTIX_CONFIG = { SUPABASE_URL: "https://localhost", SUPABASE_ANON_KEY: "%s" };\n' "$ANON_KEY" > js/config.local.js
+          sh packaging/build-web.sh
+          mkdir -p packaging/certs
+          # one-day throwaway CA + server cert with real SANs; TLS verification stays ON
+          openssl genrsa -out packaging/certs/lan-ca.key 2048 2>/dev/null
+          openssl req -x509 -new -nodes -key packaging/certs/lan-ca.key -days 1 \
+            -subj "/CN=Dentix CI throwaway CA" -out packaging/certs/lan-ca.crt
+          openssl req -newkey rsa:2048 -nodes -keyout packaging/certs/lan.key \
+            -subj "/CN=localhost" -out /tmp/lan.csr 2>/dev/null
+          printf 'subjectAltName=DNS:localhost,IP:127.0.0.1\nextendedKeyUsage=serverAuth\n' > /tmp/san.ext
+          openssl x509 -req -in /tmp/lan.csr -CA packaging/certs/lan-ca.crt \
+            -CAkey packaging/certs/lan-ca.key -CAcreateserial -days 1 \
+            -extfile /tmp/san.ext -out packaging/certs/lan.crt 2>/dev/null
+          echo "NODE_EXTRA_CA_CERTS=$GITHUB_WORKSPACE/local-edition/packaging/certs/lan-ca.crt" >> "$GITHUB_ENV"
+
+      - name: Boot stack
+        working-directory: local-edition/packaging/official
+        run: $COMPOSE up -d --wait
+
+      - name: Post-boot storage objects
+        working-directory: local-edition/packaging/official
+        run: $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < ../post-boot-storage.sql
+
+      - name: Bootstrap first owner (loopback endpoint via container exec)
+        working-directory: local-edition/packaging/official
+        run: |
+          printf 'ci-owner@clinic.local\n%s\n%s\n' "$OWNER_PASSWORD" "$OWNER_PASSWORD" | \
+            $COMPOSE exec -T provision node bootstrap-owner.mjs
+
+      - name: Authenticated smoke (login, employee provision, RLS/storage negatives, revoke)
+        working-directory: local-edition
+        env:
+          BASE: https://localhost
+          OWNER_EMAIL: ci-owner@clinic.local
+        run: node ci/smoke.mjs
+
+      - name: "Realtime gate (dual subscription - owner event + same-clinic denial)"
+        working-directory: local-edition/packaging/official
+        env:
+          BASE: https://localhost
+          BASE_WSS: wss://localhost
+          OWNER_EMAIL: ci-owner@clinic.local
+        run: |
+          # enable the publication for the smoke table (self-host publications start empty)
+          $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c \
+            "do \$\$ begin if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and tablename='patients') then alter publication supabase_realtime add table public.patients; end if; end \$\$;"
+          node ../../ci/realtime-check.mjs
+
+      - name: Backup + ISOLATED restore gate (restored storage service download + hash)
+        working-directory: local-edition/packaging/official
+        env:
+          BASE: https://localhost
+          OWNER_EMAIL: ci-owner@clinic.local
+        run: |
+          set -e
+          mkdir -p /tmp/backup-gate
+          # consistent capture: stack is quiesced (CI, no concurrent writes);
+          # manifest = dump hash + per-file object hashes + row counts
+          $COMPOSE exec -T db pg_dump -U postgres -d postgres -Fc > /tmp/backup-gate/dump.fc
+          sha256sum /tmp/backup-gate/dump.fc > /tmp/backup-gate/manifest.txt
+          cp -r volumes/storage /tmp/backup-gate/storage-copy
+          (cd /tmp/backup-gate/storage-copy && find . -type f -exec sha256sum {} +) >> /tmp/backup-gate/manifest.txt
+          $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -tA \
+            -c "select 'patients='||count(*) from public.patients" > /tmp/backup-gate/expected.txt
+          $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -tA \
+            -c "select 'objects='||count(*) from storage.objects" >> /tmp/backup-gate/expected.txt
+          # object content file: file backend stores objects as <objpath>/<uuid>
+          OBJ_FILE=$(find /tmp/backup-gate/storage-copy -type f -path '*ci-smoke.bin*' | head -1)
+          test -n "$OBJ_FILE"
+          OBJ_SHA=$(sha256sum "$OBJ_FILE" | cut -d' ' -f1)
+          echo "object under test: $OBJ_FILE sha256=$OBJ_SHA"
+
+          # ISOLATED restore environment: scratch network + fresh containers of the
+          # exact packaged images - never touches the running stack
+          docker network create dentix-restore-net
+          docker run -d --name dentix-restore-db --network dentix-restore-net \
+            -e POSTGRES_PASSWORD=tmp-only supabase/postgres:17.6.1.136
+          for i in $(seq 1 40); do docker exec dentix-restore-db pg_isready -U postgres && break || sleep 2; done
+          # the image's init creates the standard roles; give the two roles the
+          # restore-stack services use a known password for this drill only
+          docker exec dentix-restore-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c \
+            "alter role authenticator with password 'tmp-only'; alter role supabase_storage_admin with password 'tmp-only';"
+          # restore into a FRESH empty database (avoids conflicts with the
+          # schemas the image pre-initializes in the postgres db)
+          docker exec dentix-restore-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "create database restore_verify;"
+          docker exec -i dentix-restore-db pg_restore -U postgres -d restore_verify --exit-on-error < /tmp/backup-gate/dump.fc
+
+          docker run -d --name dentix-restore-rest --network dentix-restore-net \
+            -e PGRST_DB_URI=postgres://authenticator:tmp-only@dentix-restore-db:5432/restore_verify \
+            -e PGRST_DB_SCHEMAS=public,storage -e PGRST_DB_ANON_ROLE=anon \
+            -e PGRST_JWT_SECRET="$JWT_SECRET" postgrest/postgrest:v14.18
+          docker run -d --name dentix-restore-storage --network dentix-restore-net \
+            -p 127.0.0.1:5099:5000 \
+            -e ANON_KEY="$ANON_KEY" -e SERVICE_KEY="$SERVICE_ROLE_KEY" \
+            -e AUTH_JWT_SECRET="$JWT_SECRET" \
+            -e POSTGREST_URL=http://dentix-restore-rest:3000 \
+            -e DATABASE_URL=postgres://supabase_storage_admin:tmp-only@dentix-restore-db:5432/restore_verify \
+            -e FILE_SIZE_LIMIT=52428800 -e STORAGE_BACKEND=file \
+            -e GLOBAL_S3_BUCKET=stub -e TENANT_ID=stub -e REGION=stub \
+            -e REQUEST_ALLOW_X_FORWARDED_PATH=true \
+            -v /tmp/backup-gate/storage-copy:/var/lib/storage \
+            supabase/storage-api:v1.98.6
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:5099/status >/dev/null && break || sleep 2; done
+          curl -sf http://127.0.0.1:5099/status >/dev/null
+
+          # restored row counts MUST equal backup-time counts
+          docker exec dentix-restore-db psql -U postgres -d restore_verify -v ON_ERROR_STOP=1 -tA \
+            -c "select 'patients='||count(*) from public.patients" > /tmp/backup-gate/restored.txt
+          docker exec dentix-restore-db psql -U postgres -d restore_verify -v ON_ERROR_STOP=1 -tA \
+            -c "select 'objects='||count(*) from storage.objects" >> /tmp/backup-gate/restored.txt
+          diff /tmp/backup-gate/expected.txt /tmp/backup-gate/restored.txt
+
+          # AUTHENTICATED download from the RESTORED storage service + hash match.
+          # The owner JWT validates against the same runtime JWT_SECRET; the
+          # restored DB supplies the clinic/permission rows behind has_perm.
+          TOKEN=$(curl -fsS --cacert "$NODE_EXTRA_CA_CERTS" "$BASE/auth/v1/token?grant_type=password" -H "apikey: $ANON_KEY" \
+            -H 'content-type: application/json' -d "{\"email\":\"$OWNER_EMAIL\",\"password\":\"$OWNER_PASSWORD\"}" \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const t=JSON.parse(d).access_token;if(!t)process.exit(1);console.log(t)})")
+          test -n "$TOKEN"
+          REL=$(docker exec dentix-restore-db psql -U postgres -d restore_verify -tA \
+            -c "select name from storage.objects where bucket_id='patient-files' order by created_at desc limit 1")
+          test -n "$REL"
+          curl -fsS -H "apikey: $ANON_KEY" -H "Authorization: Bearer $TOKEN" \
+            "http://127.0.0.1:5099/object/patient-files/$REL" -o /tmp/backup-gate/restored-object.bin
+          RESTORED_SHA=$(sha256sum /tmp/backup-gate/restored-object.bin | cut -d' ' -f1)
+          echo "restored-object sha256=$RESTORED_SHA"
+          test "$RESTORED_SHA" = "$OBJ_SHA"
+
+          docker rm -f dentix-restore-storage dentix-restore-rest dentix-restore-db
+          docker network rm dentix-restore-net
+
+      - name: Allowlisted diagnostics on failure (no artifact uploads)
+        if: failure()
+        working-directory: local-edition/packaging/official
+        # Prints only fixed allowlisted lines (service names/status, one HTTP status code).
+        # || true is intentional here only: this step gates nothing and must not mask
+        # the real failure above it. No || true anywhere in gating steps.
+        run: |
+          $COMPOSE ps || true
+          $COMPOSE ps --format '{{.Name}} {{.Status}}' || true
+          curl -s --cacert "$NODE_EXTRA_CA_CERTS" -o /dev/null -w 'https root status: %{http_code}\n' https://localhost/ || true

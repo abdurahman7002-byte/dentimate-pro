@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إدارة الموظفين</title>
+
+<link rel="stylesheet" href="vendor/all.min.css">
+<link href="vendor/fonts-cairo-400-600-700-800.css" rel="stylesheet">
+<link rel="stylesheet" href="css/employees.css">
+</head>
+
+<body>
+
+<div class="demo-banner" id="demoBanner">
+  <i class="fa-solid fa-triangle-exclamation"></i>
+  وضع تجريبي: جداول الموظفين لم تُنشأ بعد في قاعدة البيانات - البيانات المعروضة وهمية ولن تُحفظ
+</div>
+
+<h1 class="page-title"><i class="fa-solid fa-users-gear"></i> إدارة الموظفين</h1>
+
+<div class="card">
+  <h2><i class="fa-solid fa-user-plus"></i> <span id="formTitle">إضافة موظف جديد</span></h2>
+  <div class="form-grid">
+    <input type="text" id="empName" placeholder="اسم الموظف">
+    <input type="email" id="empEmail" placeholder="البريد الإلكتروني">
+  </div>
+  <div class="hint">
+    <i class="fa-solid fa-circle-info"></i>
+    إنشاء حساب الدخول وكلمة المرور يتم من أداة الإدارة على الجهاز الأساسي بعد حفظ الموظف هنا - لا تُجمع كلمات المرور في هذه الصفحة.
+  </div>
+
+  <h2 style="margin-top:18px;"><i class="fa-solid fa-shield-halved"></i> الصلاحيات</h2>
+  <table class="perm-table">
+    <thead>
+      <tr>
+        <th>الصفحة</th>
+        <th>عرض</th>
+        <th>إضافة</th>
+        <th>تعديل</th>
+        <th>حذف</th>
+      </tr>
+    </thead>
+    <tbody id="permBody"></tbody>
+  </table>
+
+  <div class="form-actions">
+    <button class="btn" onclick="saveEmployee()"><i class="fa-solid fa-floppy-disk"></i> حفظ الموظف</button>
+    <button class="btn-ghost" onclick="resetForm()"><i class="fa-solid fa-rotate-left"></i> تفريغ</button>
+  </div>
+  <div class="hint">
+    <i class="fa-solid fa-circle-info"></i>
+    «عرض» تسمح بفتح الصفحة ورؤية البيانات. من غير «عرض» لن تظهر الصفحة للموظف أصلًا.
+    الحذف صلاحية حساسة، والأفضل تبقى للمالك فقط.
+  </div>
+</div>
+
+<div class="card">
+  <h2><i class="fa-solid fa-users"></i> الموظفون الحاليون</h2>
+  <div id="empListWrap"></div>
+  <div class="hint">
+    <i class="fa-solid fa-lightbulb"></i>
+    بدل حذف الموظف نهائيًا، الأفضل «تعطيل» حسابه - يمنع الدخول فورًا ويحافظ على سجل العمليات اللي اتعملت باسمه.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="vendor/supabase-js@2.js"></script>
+<script src="js/config.local.js"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script>window.PAGE_KEY = "employees";</script>
+<script src="js/page-guard.js"></script>
+<script src="js/employees.js"></script>
+</body>
+</html>

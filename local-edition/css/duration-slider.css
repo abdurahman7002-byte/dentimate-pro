@@ -1,0 +1,94 @@
+/* =====================================================
+   VISIT DURATION SLIDER — SHARED COMPONENT
+   ===================================================== */
+.visit-duration-slider-wrap {
+    margin: 14px 0 22px;
+    padding: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+}
+
+.visit-duration-slider-wrap label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #cbd5e1;
+    font-size: 14px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.visit-duration-slider-wrap label span {
+    color: #60a5fa;
+    font-size: 13px;
+    font-weight: 700;
+    background: rgba(96,165,250,0.12);
+    padding: 3px 10px;
+    border-radius: 8px;
+}
+
+/* The track */
+.visit-duration-slider-wrap input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: #1e293b;
+    border-radius: 999px;
+    outline: none;
+    cursor: pointer;
+    direction: ltr; /* slider always LTR so math is simple */
+}
+
+/* Webkit thumb */
+.visit-duration-slider-wrap input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #60a5fa;
+    border: 3px solid #162033;
+    box-shadow: 0 0 0 4px rgba(96,165,250,0.25);
+    cursor: grab;
+    transition: transform .1s;
+}
+
+.visit-duration-slider-wrap input[type="range"]::-webkit-slider-thumb:active {
+    transform: scale(1.15);
+    cursor: grabbing;
+}
+
+/* Firefox thumb */
+.visit-duration-slider-wrap input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #60a5fa;
+    border: 3px solid #162033;
+    box-shadow: 0 0 0 4px rgba(96,165,250,0.25);
+    cursor: grab;
+}
+
+.visit-duration-slider-wrap input[type="range"]::-moz-range-thumb:active {
+    transform: scale(1.15);
+    cursor: grabbing;
+}
+
+/* Ticks row */
+.visit-duration-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 0 4px;
+    color: #64748b;
+    font-size: 11px;
+    direction: ltr;
+}
+
+/* Readonly end-time styling */
+input[readonly].visit-end-readonly {
+    opacity: 0.85;
+    cursor: not-allowed;
+}

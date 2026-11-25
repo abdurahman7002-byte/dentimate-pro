@@ -1,0 +1,1074 @@
+/* =========================================================
+   DENTIX PRO — LABS
+   ULTRA MODERN GLASS UI
+   Theme-Aware (Dark / Light)
+   ========================================================= */
+
+
+/* =========================================================
+   VARIABLES — DARK THEME (default)
+   ========================================================= */
+
+:root,
+[data-theme="dark"] {
+
+    /* Core backgrounds */
+    --bg-primary:     #0b0f19;
+    --bg-secondary:   #111827;
+    --body-bg:        #0b1120;
+    --body-gradient-1:#1d3557;
+    --body-gradient-2:#2a9d8f;
+
+    /* Card & glass */
+    --bg-card:        rgba(17,24,39,.65);
+    --bg-glass:       rgba(255,255,255,.03);
+    --card-shadow:    rgba(0,0,0,.4);
+    --card-shadow-hover: rgba(0,0,0,.45);
+    --card-inset:     rgba(255,255,255,.04);
+    --card-inset-hover: rgba(255,255,255,.05);
+    --card-glow-hover: rgba(59,130,246,.06);
+
+    /* Borders */
+    --border-subtle:  rgba(148,163,184,.08);
+    --border-hover:   rgba(96,165,250,.25);
+    --input-border:   rgba(148,163,184,.10);
+    --input-border-hover: rgba(148,163,184,.16);
+    --input-inset:    rgba(255,255,255,.03);
+    --form-border:    rgba(255,255,255,.06);
+
+    /* Text */
+    --text-primary:   #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted:     #64748b;
+    --title-gradient-1:#f8fafc;
+    --title-gradient-2:#94a3b8;
+
+    /* Accents */
+    --accent-blue:    #3b82f6;
+    --accent-cyan:    #06b6d4;
+    --accent-green:   #34d399;
+    --accent-red:     #f87171;
+    --icon-color:     #60a5fa;
+    --arrow-color:    #60a5fa;
+    --divider-dot:    #38bdf8;
+
+    /* Glows */
+    --glow-blue:      rgba(59,130,246,.15);
+    --glow-green:     rgba(52,211,153,.12);
+    --glow-blue-soft: rgba(59,130,246,.06);
+
+    /* Input backgrounds */
+    --input-bg:       rgba(255,255,255,.04);
+    --input-bg-hover: rgba(255,255,255,.055);
+    --input-bg-focus: rgba(15,23,42,.8);
+
+    /* Form */
+    --form-bg:        rgba(2,6,23,.35);
+
+    /* Doctor card */
+    --doctor-bg-1:    rgba(255,255,255,.05);
+    --doctor-bg-2:    rgba(255,255,255,.02);
+    --doctor-border:  rgba(255,255,255,.06);
+    --doctor-shadow:  rgba(0,0,0,.20);
+    --doctor-hover-bg-1: rgba(59,130,246,.07);
+    --doctor-hover-bg-2: rgba(255,255,255,.03);
+    --doctor-hover-border: rgba(96,165,250,.22);
+    --doctor-shadow-hover: rgba(0,0,0,.30);
+    --doctor-accent-glow: rgba(59,130,246,.45);
+
+    /* Lab summary */
+    --lab-bg-1:       rgba(59,130,246,.12);
+    --lab-bg-2:       rgba(6,182,212,.08);
+    --lab-border:     rgba(96,165,250,.16);
+    --lab-shadow:     rgba(0,0,0,.20);
+    --lab-hover-bg-1: rgba(59,130,246,.17);
+    --lab-hover-bg-2: rgba(6,182,212,.11);
+    --lab-hover-border: rgba(96,165,250,.28);
+    --lab-shadow-hover: rgba(0,0,0,.28);
+
+    /* Icon box */
+    --icon-bg-1:      rgba(59,130,246,.15);
+    --icon-bg-2:      rgba(6,182,212,.08);
+    --icon-border:    rgba(96,165,250,.18);
+
+    /* Buttons */
+    --primary-border: rgba(96,165,250,.20);
+    --primary-border-hover: rgba(96,165,250,.4);
+    --primary-shadow: rgba(59,130,246,.20);
+    --primary-shadow-hover: rgba(59,130,246,.30);
+    --primary-glow-hover: rgba(6,182,212,.08);
+
+    /* Open button */
+    --open-text:      #86efac;
+    --open-text-hover:#bbf7d0;
+    --open-bg-1:      rgba(16,185,129,.12);
+    --open-bg-2:      rgba(52,211,153,.05);
+    --open-border:    rgba(52,211,153,.18);
+    --open-hover-bg-1:rgba(16,185,129,.20);
+    --open-hover-bg-2:rgba(52,211,153,.08);
+    --open-hover-border: rgba(52,211,153,.35);
+    --open-shadow:    rgba(16,185,129,.15);
+
+    /* Delete button */
+    --delete-text:    #fca5a5;
+    --delete-text-hover:#fecaca;
+    --delete-bg-1:    rgba(239,68,68,.10);
+    --delete-bg-2:    rgba(239,68,68,.04);
+    --delete-border:  rgba(239,68,68,.18);
+    --delete-hover-bg-1:rgba(239,68,68,.18);
+    --delete-hover-bg-2:rgba(239,68,68,.07);
+    --delete-hover-border: rgba(248,113,113,.35);
+    --delete-shadow:  rgba(239,68,68,.15);
+
+    /* Arrow */
+    --arrow-bg:       rgba(255,255,255,.05);
+    --arrow-bg-hover: rgba(59,130,246,.10);
+
+    /* Floating icons */
+    --floating-icon:  rgba(255,255,255,0.07);
+
+    /* Divider */
+    --divider-line-1: rgba(96,165,250,.45);
+    --divider-line-2: rgba(6,182,212,.45);
+    --divider-dot-glow: rgba(56,189,248,.8);
+
+    /* Scrollbar */
+    --scrollbar:      rgba(148,163,184,.20);
+    --scrollbar-hover:rgba(148,163,184,.35);
+
+    /* Selection */
+    --selection-bg:   rgba(59,130,246,.30);
+
+    /* Radius & transitions */
+    --radius-sm:      12px;
+    --radius-md:      16px;
+    --radius-lg:      20px;
+    --radius-xl:      24px;
+
+    --transition-fast:.2s cubic-bezier(.4,0,.2,1);
+    --transition-base:.3s cubic-bezier(.4,0,.2,1);
+}
+
+
+/* =========================================================
+   VARIABLES — LIGHT THEME
+   ========================================================= */
+
+[data-theme="light"] {
+
+    /* Core backgrounds */
+    --bg-primary:     #f8fafc;
+    --bg-secondary:   #f1f5f9;
+    --body-bg:        #f0f4f8;
+    --body-gradient-1:#dbeafe;
+    --body-gradient-2:#d1fae5;
+
+    /* Card & glass */
+    --bg-card:        rgba(255,255,255,.85);
+    --bg-glass:       rgba(0,0,0,.02);
+    --card-shadow:    rgba(0,0,0,.08);
+    --card-shadow-hover: rgba(0,0,0,.12);
+    --card-inset:     rgba(0,0,0,.03);
+    --card-inset-hover: rgba(0,0,0,.04);
+    --card-glow-hover: rgba(59,130,246,.08);
+
+    /* Borders */
+    --border-subtle:  rgba(148,163,184,.15);
+    --border-hover:   rgba(96,165,250,.35);
+    --input-border:   rgba(148,163,184,.25);
+    --input-border-hover: rgba(148,163,184,.40);
+    --input-inset:    rgba(0,0,0,.02);
+    --form-border:    rgba(0,0,0,.08);
+
+    /* Text */
+    --text-primary:   #0f172a;
+    --text-secondary: #475569;
+    --text-muted:     #94a3b8;
+    --title-gradient-1:#0f172a;
+    --title-gradient-2:#475569;
+
+    /* Accents */
+    --accent-blue:    #2563eb;
+    --accent-cyan:    #0891b2;
+    --accent-green:   #059669;
+    --accent-red:     #dc2626;
+    --icon-color:     #3b82f6;
+    --arrow-color:    #3b82f6;
+    --divider-dot:    #0ea5e9;
+
+    /* Glows */
+    --glow-blue:      rgba(59,130,246,.12);
+    --glow-green:     rgba(52,211,153,.10);
+    --glow-blue-soft: rgba(59,130,246,.08);
+
+    /* Input backgrounds */
+    --input-bg:       rgba(0,0,0,.03);
+    --input-bg-hover: rgba(0,0,0,.05);
+    --input-bg-focus: rgba(255,255,255,.95);
+
+    /* Form */
+    --form-bg:        rgba(241,245,249,.7);
+
+    /* Doctor card */
+    --doctor-bg-1:    rgba(255,255,255,.70);
+    --doctor-bg-2:    rgba(255,255,255,.50);
+    --doctor-border:  rgba(0,0,0,.08);
+    --doctor-shadow:  rgba(0,0,0,.08);
+    --doctor-hover-bg-1: rgba(59,130,246,.08);
+    --doctor-hover-bg-2: rgba(255,255,255,.60);
+    --doctor-hover-border: rgba(96,165,250,.30);
+    --doctor-shadow-hover: rgba(0,0,0,.12);
+    --doctor-accent-glow: rgba(59,130,246,.35);
+
+    /* Lab summary */
+    --lab-bg-1:       rgba(59,130,246,.10);
+    --lab-bg-2:       rgba(6,182,212,.06);
+    --lab-border:     rgba(96,165,250,.25);
+    --lab-shadow:     rgba(0,0,0,.08);
+    --lab-hover-bg-1: rgba(59,130,246,.15);
+    --lab-hover-bg-2: rgba(6,182,212,.10);
+    --lab-hover-border: rgba(96,165,250,.40);
+    --lab-shadow-hover: rgba(0,0,0,.12);
+
+    /* Icon box */
+    --icon-bg-1:      rgba(59,130,246,.10);
+    --icon-bg-2:      rgba(6,182,212,.05);
+    --icon-border:    rgba(96,165,250,.25);
+
+    /* Buttons */
+    --primary-border: rgba(59,130,246,.30);
+    --primary-border-hover: rgba(59,130,246,.50);
+    --primary-shadow: rgba(59,130,246,.15);
+    --primary-shadow-hover: rgba(59,130,246,.25);
+    --primary-glow-hover: rgba(6,182,212,.06);
+
+    /* Open button */
+    --open-text:      #059669;
+    --open-text-hover:#047857;
+    --open-bg-1:      rgba(16,185,129,.10);
+    --open-bg-2:      rgba(52,211,153,.03);
+    --open-border:    rgba(52,211,153,.25);
+    --open-hover-bg-1:rgba(16,185,129,.18);
+    --open-hover-bg-2:rgba(52,211,153,.06);
+    --open-hover-border: rgba(52,211,153,.40);
+    --open-shadow:    rgba(16,185,129,.12);
+
+    /* Delete button */
+    --delete-text:    #dc2626;
+    --delete-text-hover:#b91c1c;
+    --delete-bg-1:    rgba(239,68,68,.08);
+    --delete-bg-2:    rgba(239,68,68,.03);
+    --delete-border:  rgba(239,68,68,.25);
+    --delete-hover-bg-1:rgba(239,68,68,.15);
+    --delete-hover-bg-2:rgba(239,68,68,.05);
+    --delete-hover-border: rgba(248,113,113,.40);
+    --delete-shadow:  rgba(239,68,68,.12);
+
+    /* Arrow */
+    --arrow-bg:       rgba(0,0,0,.04);
+    --arrow-bg-hover: rgba(59,130,246,.12);
+
+    /* Floating icons */
+    --floating-icon:  rgba(0,0,0,0.05);
+
+    /* Divider */
+    --divider-line-1: rgba(59,130,246,.35);
+    --divider-line-2: rgba(6,182,212,.35);
+    --divider-dot-glow: rgba(14,165,233,.6);
+
+    /* Scrollbar */
+    --scrollbar:      rgba(100,116,139,.25);
+    --scrollbar-hover:rgba(100,116,139,.40);
+
+    /* Selection */
+    --selection-bg:   rgba(59,130,246,.20);
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family:
+        'Inter',
+        'Segoe UI',
+        system-ui,
+        -apple-system,
+        sans-serif;
+}
+
+
+/* =========================================================
+   BODY
+   ========================================================= */
+
+body {
+    background:
+        radial-gradient(circle at top left, var(--body-gradient-1) 0%, transparent 25%),
+        radial-gradient(circle at bottom right, var(--body-gradient-2) 0%, transparent 25%),
+        var(--body-bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 30px;
+    padding-bottom: 90px;
+    overflow-x: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+}
+
+
+/* =========================================================
+   FLOATING ICONS
+   ========================================================= */
+
+.floating-icon {
+    position: fixed;
+    color: var(--floating-icon);
+    font-size: 45px;
+    animation: float 6s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.icon1 { top: 10%; left: 5%; }
+.icon2 { bottom: 12%; right: 7%; animation-delay: 2s; }
+.icon3 { top: 50%; right: 15%; animation-delay: 1s; }
+
+@keyframes float {
+    0%   { transform: translateY(0px) rotate(0deg); }
+    50%  { transform: translateY(-18px) rotate(8deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+}
+
+
+/* =========================================================
+   PAGE TITLE
+   ========================================================= */
+
+.page-title {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 32px;
+    letter-spacing: -.5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-primary);
+    background:
+        linear-gradient(
+            135deg,
+            var(--title-gradient-1) 0%,
+            var(--title-gradient-2) 100%
+        );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+
+/* =========================================================
+   GENERAL CARD
+   ========================================================= */
+
+.card {
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 28px;
+    padding: 32px;
+    border-radius: var(--radius-xl);
+    background: var(--bg-card);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border-subtle);
+    box-shadow:
+        0 20px 60px var(--card-shadow),
+        inset 0 1px 0 var(--card-inset);
+    transition: var(--transition-base);
+    overflow: hidden;
+}
+
+
+/* LEFT ACCENT */
+
+.card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background:
+        linear-gradient(
+            180deg,
+            var(--accent-blue),
+            var(--accent-cyan),
+            var(--accent-green)
+        );
+    border-radius: 4px 0 0 4px;
+}
+
+
+/* GLOW */
+
+.card::after {
+    content: "";
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 300px;
+    height: 300px;
+    background:
+        radial-gradient(
+            circle,
+            var(--glow-blue),
+            transparent 70%
+        );
+    pointer-events: none;
+}
+
+.card:hover {
+    border-color: var(--border-hover);
+    box-shadow:
+        0 25px 70px var(--card-shadow-hover),
+        0 0 40px var(--card-glow-hover),
+        inset 0 1px 0 var(--card-inset-hover);
+}
+
+
+/* =========================================================
+   CARD TITLE
+   ========================================================= */
+
+.card h3 {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.card h3 i {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background:
+        linear-gradient(
+            135deg,
+            var(--icon-bg-1),
+            var(--icon-bg-2)
+        );
+    border: 1px solid var(--icon-border);
+    color: var(--icon-color);
+    font-size: 17px;
+    box-shadow:
+        0 8px 25px var(--glow-blue);
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+
+input {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin-top: 12px;
+    padding: 15px 18px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    transition: var(--transition-base);
+    box-shadow:
+        inset 0 1px 0 var(--input-inset);
+}
+
+input::placeholder {
+    color: var(--text-muted);
+}
+
+input:hover {
+    background: var(--input-bg-hover);
+    border-color: var(--input-border-hover);
+}
+
+input:focus {
+    border-color: var(--accent-blue);
+    background: var(--input-bg-focus);
+    box-shadow:
+        0 0 0 4px var(--glow-blue),
+        0 8px 30px var(--card-shadow);
+}
+
+
+/* =========================================================
+   BUTTON BASE
+   ========================================================= */
+
+.btn {
+    margin-top: 18px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    outline: none;
+    transition: var(--transition-base);
+}
+
+
+/* =========================================================
+   PRIMARY BUTTON
+   ========================================================= */
+
+.primary {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 15px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--primary-border);
+    background:
+        linear-gradient(
+            135deg,
+            rgba(59,130,246,.85),
+            rgba(6,182,212,.85)
+        );
+    color: white;
+    font-size: 14px;
+    box-shadow:
+        0 10px 30px var(--primary-shadow);
+}
+
+.primary:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-border-hover);
+    box-shadow:
+        0 15px 35px var(--primary-shadow-hover),
+        0 0 25px var(--primary-glow-hover);
+}
+
+.primary:active {
+    transform: scale(.98);
+}
+
+
+/* =========================================================
+   LABS CONTAINER
+   ========================================================= */
+
+#labsContainer {
+    width: 100%;
+    max-width: 1200px;
+    margin: 28px auto 0;
+}
+
+
+/* =========================================================
+   DOCTOR CARD
+   ========================================================= */
+
+.doctor-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    width: 100%;
+    margin-bottom: 14px;
+    padding: 20px 22px;
+    border-radius: var(--radius-lg);
+    background:
+        linear-gradient(
+            135deg,
+            var(--doctor-bg-1),
+            var(--doctor-bg-2)
+        );
+    border: 1px solid var(--doctor-border);
+    box-shadow:
+        0 10px 35px var(--doctor-shadow);
+    transition: var(--transition-base);
+    overflow: hidden;
+}
+
+
+/* ACCENT */
+
+.doctor-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 16px;
+    bottom: 16px;
+    width: 3px;
+    border-radius: 0 4px 4px 0;
+    background:
+        linear-gradient(
+            to bottom,
+            var(--accent-blue),
+            var(--accent-cyan)
+        );
+    opacity: .65;
+    transition: var(--transition-base);
+}
+
+.doctor-card:hover {
+    transform:
+        translateY(-3px)
+        translateX(-2px);
+    border-color: var(--doctor-hover-border);
+    background:
+        linear-gradient(
+            135deg,
+            var(--doctor-hover-bg-1),
+            var(--doctor-hover-bg-2)
+        );
+    box-shadow:
+        0 18px 45px var(--doctor-shadow-hover),
+        0 0 25px var(--glow-blue-soft);
+}
+
+.doctor-card:hover::before {
+    opacity: 1;
+    box-shadow:
+        0 0 12px var(--doctor-accent-glow);
+}
+
+
+/* =========================================================
+   DOCTOR NAME
+   ========================================================= */
+
+.doctor-name {
+    min-width: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.actions button {
+    min-height: 40px;
+    padding: 0 15px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: var(--transition-fast);
+}
+
+
+/* =========================================================
+   OPEN BUTTON
+   ========================================================= */
+
+.open-btn {
+    color: var(--open-text);
+    background:
+        linear-gradient(
+            135deg,
+            var(--open-bg-1),
+            var(--open-bg-2)
+        );
+    border-color: var(--open-border) !important;
+}
+
+.open-btn:hover {
+    transform: translateY(-2px);
+    color: var(--open-text-hover);
+    background:
+        linear-gradient(
+            135deg,
+            var(--open-hover-bg-1),
+            var(--open-hover-bg-2)
+        );
+    border-color: var(--open-hover-border) !important;
+    box-shadow:
+        0 8px 24px var(--open-shadow);
+}
+
+
+/* =========================================================
+   DELETE BUTTON
+   ========================================================= */
+
+.delete-btn {
+    color: var(--delete-text);
+    background:
+        linear-gradient(
+            135deg,
+            var(--delete-bg-1),
+            var(--delete-bg-2)
+        );
+    border-color: var(--delete-border) !important;
+}
+
+.delete-btn:hover {
+    transform: translateY(-2px);
+    color: var(--delete-text-hover);
+    background:
+        linear-gradient(
+            135deg,
+            var(--delete-hover-bg-1),
+            var(--delete-hover-bg-2)
+        );
+    border-color: var(--delete-hover-border) !important;
+    box-shadow:
+        0 8px 24px var(--delete-shadow);
+}
+
+
+/* =========================================================
+   LAB DETAILS
+   ========================================================= */
+
+.lab-details {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 20px;
+    border: none;
+}
+
+
+/* =========================================================
+   LAB SUMMARY
+   ========================================================= */
+
+.lab-summary {
+    position: relative;
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    padding: 18px 22px;
+    border-radius: var(--radius-lg);
+    background:
+        linear-gradient(
+            135deg,
+            var(--lab-bg-1),
+            var(--lab-bg-2)
+        );
+    border: 1px solid var(--lab-border);
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 800;
+    box-shadow:
+        0 10px 35px var(--lab-shadow);
+    transition: var(--transition-base);
+    overflow: hidden;
+}
+
+.lab-summary::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background:
+        linear-gradient(
+            180deg,
+            var(--accent-blue),
+            var(--accent-cyan)
+        );
+}
+
+.lab-summary:hover {
+    transform: translateY(-2px);
+    background:
+        linear-gradient(
+            135deg,
+            var(--lab-hover-bg-1),
+            var(--lab-hover-bg-2)
+        );
+    border-color: var(--lab-hover-border);
+    box-shadow:
+        0 15px 40px var(--lab-shadow-hover),
+        0 0 25px var(--glow-blue-soft);
+}
+
+.lab-summary::-webkit-details-marker {
+    display: none;
+}
+
+
+/* =========================================================
+   ARROW
+   ========================================================= */
+
+.arrow {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--arrow-bg);
+    color: var(--text-secondary);
+    transition: var(--transition-base);
+}
+
+.lab-summary:hover .arrow {
+    color: var(--arrow-color);
+    background: var(--arrow-bg-hover);
+}
+
+.lab-details[open] .arrow {
+    transform: rotate(180deg);
+    color: var(--arrow-color);
+}
+
+
+/* =========================================================
+   LAB FORM
+   ========================================================= */
+
+.lab-form {
+    position: relative;
+    margin-top: 12px;
+    padding: 22px;
+    background: var(--form-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--form-border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+
+/* =========================================================
+   DASHBOARD DIVIDER
+   ========================================================= */
+
+.dashboard-divider {
+    position: relative;
+    height: 1px;
+    width: 70%;
+    margin: 30px auto;
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            var(--divider-line-1),
+            var(--divider-line-2),
+            transparent
+        );
+}
+
+.dashboard-divider::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform:
+        translate(-50%,-50%);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--divider-dot);
+    box-shadow:
+        0 0 12px var(--divider-dot-glow);
+}
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-hover);
+}
+
+
+/* =========================================================
+   SELECTION
+   ========================================================= */
+
+::selection {
+    background: var(--selection-bg);
+    color: var(--text-primary);
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media(max-width:768px) {
+
+    body {
+        padding: 16px;
+        padding-bottom: 90px;
+    }
+
+    .page-title {
+        font-size: 26px;
+        margin-bottom: 24px;
+    }
+
+    .card {
+        padding: 24px;
+        border-radius: 20px;
+    }
+
+    .card h3 {
+        font-size: 17px;
+    }
+
+    .doctor-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 18px;
+    }
+
+    .doctor-name {
+        font-size: 15px;
+        white-space: normal;
+    }
+
+    .actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .actions button {
+        width: 100%;
+        padding: 0 10px;
+    }
+
+    .lab-summary {
+        padding: 16px 18px;
+        font-size: 14px;
+    }
+
+    .lab-form {
+        padding: 16px;
+    }
+
+    .dashboard-divider {
+        width: 85%;
+        margin: 24px auto;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media(max-width:480px) {
+
+    body {
+        padding: 12px;
+        padding-bottom: 88px;
+    }
+
+    .page-title {
+        font-size: 23px;
+        gap: 8px;
+    }
+
+    .card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .card h3 i {
+        width: 38px;
+        height: 38px;
+        font-size: 15px;
+    }
+
+    input {
+        padding: 14px;
+        font-size: 13px;
+    }
+
+    .doctor-card {
+        padding: 15px;
+        border-radius: 17px;
+    }
+
+    .actions {
+        grid-template-columns: 1fr;
+    }
+
+    .lab-summary {
+        border-radius: 16px;
+        padding: 14px 15px;
+    }
+
+    .arrow {
+        width: 30px;
+        height: 30px;
+    }
+
+    .bottom-nav {
+        height: 68px;
+    }
+
+    .nav-item {
+        font-size: 9px;
+    }
+
+    .nav-item i {
+        font-size: 18px;
+    }
+}
