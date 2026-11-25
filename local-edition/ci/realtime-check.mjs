@@ -18,7 +18,7 @@ if (!owner) fail('owner login');
 
 // zero-permission employee for the denial check
 const empRes = await fetch(`${BASE}/rest/v1/employees`, { method: 'POST', headers: { ...H(owner), Prefer: 'return=representation' },
-    body: JSON.stringify({ full_name: 'CI RT Employee', email: 'ci-rt@clinic.local', phone: '000', role: 'staff' }) });
+    body: JSON.stringify({ full_name: 'CI RT Employee', email: 'ci-rt@clinic.local' }) });
 const emp = (await empRes.json().catch(() => []))[0];
 if (!empRes.ok || !emp || !emp.id) fail('employee create ' + empRes.status);
 const prov = await fetch(`${BASE}/provision`, { method: 'POST', headers: H(owner), body: JSON.stringify({ employee_id: emp.id }) });

@@ -30,6 +30,11 @@ Prerequisite: Docker Engine + Compose v2.27+ (for !override tags), ~4 GB free RA
 Init-order note: zz10-zz40 must not reference the storage schema; post-boot-storage.sql
 is idempotent and re-runnable.
 
+Pooler note: the supavisor connection pooler is DISABLED by default in the dentix
+override (opt-in compose profile "pooler"). The app and provision server connect via
+Kong/PostgREST only; no app component uses pooler ports 5432/6543. Do not publish or
+document those ports for the clinic install.
+
 Status: NOT YET RUN. This is the narrow environment need for the remaining gates
 (merged config, boot, realtime, TLS-terminated stack, compose-level backup,
 exact-image PG17 retest).
