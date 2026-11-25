@@ -212,19 +212,31 @@ jobs:
           else
             echo "supabase_admin-login=fail"
           fi
+          # supavisor-container self-checks: fixed atoms only (set|missing, ok|fail, integer)
+          MC=0
+          $COMPOSE run --rm --no-deps -T supavisor /bin/sh -c 'test -x /app/bin/migrate' >/dev/null 2>&1 || MC=$?
+          if [ "$MC" = "0" ]; then echo "supavisor-migrate-binary=present"; else echo "supavisor-migrate-binary=missing"; fi
+          R="$($COMPOSE run --rm --no-deps -T supavisor /app/bin/supavisor eval 'IO.write(if System.get_env("DATABASE_URL") in [nil, ""], do: "missing", else: "set")' 2>/dev/null | tr -d '\r' | tail -1 || true)"
+          if [ -z "$R" ]; then R="probe-failed"; fi
+          echo "supavisor-env-database-url=$R"
+          R="$($COMPOSE run --rm --no-deps -T supavisor /app/bin/supavisor eval 'IO.write(elem(:inet.gethostbyname(~c"db"), 0))' 2>/dev/null | tr -d '\r' | tail -1 || true)"
+          if [ -z "$R" ]; then R="probe-failed"; fi
+          echo "supavisor-dns-db=$R"
+          R="$($COMPOSE run --rm --no-deps -T supavisor /app/bin/supavisor eval 'case :gen_tcp.connect(~c"db", 5432, [:binary, active: false], 5000) do {:ok, s} -> :gen_tcp.close(s); IO.write("ok"); {:error, _} -> IO.write("fail") end' 2>/dev/null | tr -d '\r' | tail -1 || true)"
+          if [ -z "$R" ]; then R="probe-failed"; fi
+          echo "supavisor-tcp-db-5432=$R"
           # trisect the supavisor command chain (booleans + class labels only; raw output stays in runner files)
-          if $COMPOSE run --rm --no-deps -T supavisor /app/bin/migrate >/tmp/mig.out 2>&1; then
-            echo "supavisor-migrate=ok"
-          else
-            echo "supavisor-migrate=fail"
-          fi
+          MC=0
+          $COMPOSE run --rm --no-deps -T supavisor /app/bin/migrate >/tmp/mig.out 2>&1 || MC=$?
+          echo "supavisor-migrate-exit=$MC"
+          if [ "$MC" = "0" ]; then echo "supavisor-migrate=ok"; else echo "supavisor-migrate=fail"; fi
           if $COMPOSE run --rm --no-deps -T supavisor /bin/sh -c '/app/bin/migrate >/dev/null 2>&1; /app/bin/supavisor eval "$(cat /etc/pooler/pooler.exs)"' >/dev/null 2>&1; then
             echo "supavisor-tenant-eval=ok"
           else
             echo "supavisor-tenant-eval=fail"
           fi
           # class-label mapping over the private migrate output + container log; only labels/tokens are echoed
-          SLOG="$(cat /tmp/mig.out 2>/dev/null; $COMPOSE logs supavisor 2>&1 || true)"
+          SLOG="$( { cat /tmp/mig.out 2>/dev/null; $COMPOSE logs supavisor 2>&1 || true; } | sed 's/\x1b\[[0-9;]*[A-Za-z]//g' )"
           CLASS="unclassified"
           case "$SLOG" in
             *"_supabase"*"does not exist"*) CLASS="db-missing-_supabase";;
@@ -249,7 +261,7 @@ jobs:
           esac
           echo "supavisor-failure-class=$CLASS"
           # bare exception-class token only (identifier shape, no message text)
-          TOKEN="$(printf '%s' "$SLOG" | grep -oE '\*\* \([A-Z][A-Za-z0-9_.]+' | head -1 | cut -d'(' -f2)"
+          TOKEN="$(printf '%s' "$SLOG" | grep -oE '\*\* \([A-Z][A-Za-z0-9_.]+' | head -1 | cut -d'(' -f2 || true)"
           if [ -z "$TOKEN" ]; then TOKEN="none"; fi
           echo "supavisor-exception-token=$TOKEN"
           rm -f /tmp/mig.out
