@@ -204,17 +204,40 @@ jobs:
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'db-_supabase-exists='||count(*) from pg_database where datname='_supabase'" || echo 'db-probe-unavailable'
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'pool-roles-present='||count(*) from pg_roles where rolname in ('supabase_admin','pgbouncer','authenticator')" || true
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'pgbouncer-get_auth-exists='||count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='pgbouncer' and p.proname='get_auth'" || true
+          # can supabase_admin actually log in to _supabase? (boolean only)
+          set -a; . ./.env.dentix; set +a
+          if PGPASSWORD="$POSTGRES_PASSWORD" $COMPOSE exec -T db psql -h localhost -U supabase_admin -d _supabase -tA -c "select 1" >/dev/null 2>&1; then
+            echo "supabase_admin-login=ok"
+          else
+            echo "supabase_admin-login=fail"
+          fi
+          # trisect the supavisor command chain: migrate alone, tenant-seed eval alone (booleans only)
+          if $COMPOSE run --rm --no-deps -T supavisor /app/bin/migrate >/dev/null 2>&1; then
+            echo "supavisor-migrate=ok"
+          else
+            echo "supavisor-migrate=fail"
+          fi
+          if $COMPOSE run --rm --no-deps -T supavisor /bin/sh -c '/app/bin/migrate >/dev/null 2>&1; /app/bin/supavisor eval "$(cat /etc/pooler/pooler.exs)"' >/dev/null 2>&1; then
+            echo "supavisor-tenant-eval=ok"
+          else
+            echo "supavisor-tenant-eval=fail"
+          fi
           # known error-class label mapping for the observed boot blocker; raw lines stay in the runner
           SLOG="$($COMPOSE logs supavisor 2>&1 || true)"
           CLASS="unclassified"
           case "$SLOG" in
-            *"_supabase"*"does not exist"*|*"does not exist"*"_supabase"*) CLASS="db-missing-_supabase";;
+            *"_supabase"*"does not exist"*) CLASS="db-missing-_supabase";;
             *"password authentication failed"*"supabase_admin"*) CLASS="db-auth-failed-supabase_admin";;
             *"password authentication failed"*"pgbouncer"*) CLASS="db-auth-failed-pgbouncer";;
             *"onnection refused"*) CLASS="db-connection-refused";;
-            *"timeout"*") CLASS="db-connection-timeout";;
+            *"imed out"*|*"timeout"*) CLASS="db-connection-timeout";;
             *"get_auth"*"does not exist"*) CLASS="pooler-auth-query-missing";;
             *"VAULT_ENC_KEY"*|*"SECRET_KEY_BASE"*|*"API_JWT_SECRET"*) CLASS="missing-required-env";;
-            *"relation "_"*" does not exist"*) CLASS="migration-schema-missing";;
+            *"DBConnection.ConnectionError"*) CLASS="db-driver-connection-error";;
+            *"Postgrex.Error"*) CLASS="db-query-error";;
+            *"ArgumentError"*) CLASS="config-argument-error";;
+            *"CaseClauseError"*) CLASS="config-case-error";;
+            *"KeyError"*) CLASS="missing-config-key";;
+            *"RuntimeError"*) CLASS="runtime-boot-error";;
           esac
           echo "supavisor-failure-class=$CLASS"
