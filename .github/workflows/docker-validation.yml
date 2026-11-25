@@ -191,10 +191,30 @@ jobs:
       - name: Allowlisted diagnostics on failure (no artifact uploads)
         if: failure()
         working-directory: local-edition/packaging/official
-        # Prints only fixed allowlisted lines (service names/status, one HTTP status code).
+        # Prints ONLY: service name+status pairs, one HTTP status code, fixed
+        # boolean/count probes, and one enumerated error-class label. Raw container
+        # log lines are never printed (truncation is not redaction); the label is
+        # derived privately inside the runner and only the label is echoed.
         # || true is intentional here only: this step gates nothing and must not mask
         # the real failure above it. No || true anywhere in gating steps.
         run: |
-          $COMPOSE ps || true
           $COMPOSE ps --format '{{.Name}} {{.Status}}' || true
           curl -s --cacert "$NODE_EXTRA_CA_CERTS" -o /dev/null -w 'https root status: %{http_code}\n' https://localhost/ || true
+          # fixed probes: enumerated counts only, no environment values
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'db-_supabase-exists='||count(*) from pg_database where datname='_supabase'" || echo 'db-probe-unavailable'
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'pool-roles-present='||count(*) from pg_roles where rolname in ('supabase_admin','pgbouncer','authenticator')" || true
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'pgbouncer-get_auth-exists='||count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='pgbouncer' and p.proname='get_auth'" || true
+          # known error-class label mapping for the observed boot blocker; raw lines stay in the runner
+          SLOG="$($COMPOSE logs supavisor 2>&1 || true)"
+          CLASS="unclassified"
+          case "$SLOG" in
+            *"_supabase"*"does not exist"*|*"does not exist"*"_supabase"*) CLASS="db-missing-_supabase";;
+            *"password authentication failed"*"supabase_admin"*) CLASS="db-auth-failed-supabase_admin";;
+            *"password authentication failed"*"pgbouncer"*) CLASS="db-auth-failed-pgbouncer";;
+            *"onnection refused"*) CLASS="db-connection-refused";;
+            *"timeout"*") CLASS="db-connection-timeout";;
+            *"get_auth"*"does not exist"*) CLASS="pooler-auth-query-missing";;
+            *"VAULT_ENC_KEY"*|*"SECRET_KEY_BASE"*|*"API_JWT_SECRET"*) CLASS="missing-required-env";;
+            *"relation "_"*" does not exist"*) CLASS="migration-schema-missing";;
+          esac
+          echo "supavisor-failure-class=$CLASS"
