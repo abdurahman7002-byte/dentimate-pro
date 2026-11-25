@@ -5,7 +5,9 @@
 //   while provably alive (join ack + heartbeat replies) and the insert provably
 //   succeeded (201). A broken subscription is never read as a denial.
 // Needs: BASE, BASE_WSS, ANON_KEY, OWNER_EMAIL, OWNER_PASSWORD.
-const { BASE, BASE_WSS, ANON_KEY, OWNER_EMAIL, OWNER_PASSWORD } = process.env;
+// SERVICE_ROLE_KEY (optional): third control subscription that bypasses RLS -
+// discriminates "delivery broken" from "RLS filtered the owner's event".
+const { BASE, BASE_WSS, ANON_KEY, OWNER_EMAIL, OWNER_PASSWORD, SERVICE_ROLE_KEY } = process.env;
 const H = (t) => ({ apikey: ANON_KEY, Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' });
 const login = async (email, password) => {
     const r = await fetch(`${BASE}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
@@ -28,7 +30,7 @@ const empTok = await login('ci-rt@clinic.local', provBody.password);
 if (!empTok) fail('employee login');
 
 const topic = 'realtime:public:patients_rt_gate';
-const state = { owner: { joined: false, event: false, heartbeat: false }, employee: { joined: false, event: false, heartbeat: false } };
+const state = { owner: { joined: false, event: false, heartbeat: false }, employee: { joined: false, event: false, heartbeat: false }, service: { joined: false, event: false, heartbeat: false } };
 let inserted = false;
 
 const open = (token, label) => {
@@ -65,12 +67,20 @@ const open = (token, label) => {
 };
 open(owner, 'owner');
 open(empTok, 'employee');
+if (SERVICE_ROLE_KEY) open(SERVICE_ROLE_KEY, 'service');
 
 // settle window: owner event must arrive; employee must stay silent while alive
 setTimeout(() => {
     if (!state.owner.joined || !state.employee.joined) fail('a subscription never established: ' + JSON.stringify(state));
     if (!inserted) fail('control insert never ran');
-    if (!state.owner.event) fail('owner received no event (owner-err=' + (state.owner.err || 'none') + ',emp-err=' + (state.employee.err || 'none') + ')');
+    if (!state.owner.event) {
+        const ctrl = SERVICE_ROLE_KEY
+            ? (state.service.event ? 'service-control=event-received'
+                : state.service.joined ? 'service-control=joined-no-event'
+                : 'service-control=not-joined(err=' + (state.service.err || 'none') + ')')
+            : 'service-control=not-run';
+        fail('owner received no event (owner-err=' + (state.owner.err || 'none') + ',emp-err=' + (state.employee.err || 'none') + ',' + ctrl + ')');
+    }
     if (!state.employee.heartbeat) fail('employee subscription liveness unproven - cannot read silence as denial');
     if (state.employee.event) fail('zero-permission employee RECEIVED an event (filtering broken)');
     console.log('PASS realtime (same-clinic filtering): owner event received; zero-perm employee alive (join+heartbeat) and received nothing');
