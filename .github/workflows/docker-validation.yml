@@ -212,56 +212,25 @@ jobs:
           else
             echo "supabase_admin-login=fail"
           fi
-          # supavisor-container self-checks: fixed atoms only (set|missing, ok|fail, integer)
-          MC=0
-          $COMPOSE run --rm --no-deps -T supavisor /bin/sh -c 'test -x /app/bin/migrate' >/dev/null 2>&1 || MC=$?
-          if [ "$MC" = "0" ]; then echo "supavisor-migrate-binary=present"; else echo "supavisor-migrate-binary=missing"; fi
-          R="$($COMPOSE run --rm --no-deps -T supavisor /app/bin/supavisor eval 'IO.write(if System.get_env("DATABASE_URL") in [nil, ""], do: "missing", else: "set")' 2>/dev/null | tr -d '\r' | tail -1 || true)"
-          if [ -z "$R" ]; then R="probe-failed"; fi
-          echo "supavisor-env-database-url=$R"
-          R="$($COMPOSE run --rm --no-deps -T supavisor /app/bin/supavisor eval 'IO.write(elem(:inet.gethostbyname(~c"db"), 0))' 2>/dev/null | tr -d '\r' | tail -1 || true)"
-          if [ -z "$R" ]; then R="probe-failed"; fi
-          echo "supavisor-dns-db=$R"
-          R="$($COMPOSE run --rm --no-deps -T supavisor /app/bin/supavisor eval 'case :gen_tcp.connect(~c"db", 5432, [:binary, active: false], 5000) do {:ok, s} -> :gen_tcp.close(s); IO.write("ok"); {:error, _} -> IO.write("fail") end' 2>/dev/null | tr -d '\r' | tail -1 || true)"
-          if [ -z "$R" ]; then R="probe-failed"; fi
-          echo "supavisor-tcp-db-5432=$R"
-          # trisect the supavisor command chain (booleans + class labels only; raw output stays in runner files)
-          MC=0
-          $COMPOSE run --rm --no-deps -T supavisor /app/bin/migrate >/tmp/mig.out 2>&1 || MC=$?
-          echo "supavisor-migrate-exit=$MC"
-          if [ "$MC" = "0" ]; then echo "supavisor-migrate=ok"; else echo "supavisor-migrate=fail"; fi
-          if $COMPOSE run --rm --no-deps -T supavisor /bin/sh -c '/app/bin/migrate >/dev/null 2>&1; /app/bin/supavisor eval "$(cat /etc/pooler/pooler.exs)"' >/dev/null 2>&1; then
-            echo "supavisor-tenant-eval=ok"
-          else
-            echo "supavisor-tenant-eval=fail"
-          fi
-          # class-label mapping over the private migrate output + container log; only labels/tokens are echoed
-          SLOG="$( { cat /tmp/mig.out 2>/dev/null; $COMPOSE logs supavisor 2>&1 || true; } | sed 's/\x1b\[[0-9;]*[A-Za-z]//g' )"
-          CLASS="unclassified"
-          case "$SLOG" in
-            *"_supabase"*"does not exist"*) CLASS="db-missing-_supabase";;
-            *"password authentication failed"*"supabase_admin"*) CLASS="db-auth-failed-supabase_admin";;
-            *"password authentication failed"*"pgbouncer"*) CLASS="db-auth-failed-pgbouncer";;
-            *"onnection refused"*) CLASS="db-connection-refused";;
-            *"imed out"*|*"timeout"*) CLASS="db-connection-timeout";;
-            *"get_auth"*"does not exist"*) CLASS="pooler-auth-query-missing";;
-            *"VAULT_ENC_KEY"*|*"SECRET_KEY_BASE"*|*"API_JWT_SECRET"*) CLASS="missing-required-env";;
-            *"insufficient_privilege"*|*"permission denied"*) CLASS="db-insufficient-privilege";;
-            *"not found"*|*"no such file"*) CLASS="missing-binary-or-file";;
-            *"invalid_connect_args"*) CLASS="db-invalid-connect-args";;
-            *"DBConnection.ConnectionError"*) CLASS="db-driver-connection-error";;
-            *"Postgrex.Error"*) CLASS="db-query-error";;
-            *"ArgumentError"*) CLASS="config-argument-error";;
-            *"MatchError"*) CLASS="config-match-error";;
-            *"CaseClauseError"*) CLASS="config-case-error";;
-            *"KeyError"*) CLASS="missing-config-key";;
-            *"UndefinedFunctionError"*) CLASS="missing-function";;
-            *"ErlangError"*) CLASS="erlang-runtime-error";;
-            *"RuntimeError"*) CLASS="runtime-boot-error";;
+          # realtime delivery probes: booleans/counts/enumerated labels only
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-publication-patients='||count(*) from pg_publication_tables where pubname='supabase_realtime' and tablename='patients'" || true
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-replication-slots='||count(*) from pg_replication_slots" || true
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-active-replication-slots='||count(*) from pg_replication_slots where active" || true
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-wal-senders='||count(*) from pg_stat_replication" || true
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-wal-level='||setting from pg_settings where name='wal_level'" || true
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-tenants='||count(*) from _realtime.tenants" 2>/dev/null || echo 'rt-tenants=probe-failed'
+          # realtime container log: derived class label only; raw lines stay private in-runner
+          RLOG="$($COMPOSE logs realtime 2>&1 | sed 's/\x1b\[[0-9;]*[A-Za-z]//g' || true)"
+          RCLASS="no-error-lines"
+          case "$RLOG" in
+            *"password authentication failed"*) RCLASS="db-auth-failed";;
+            *"onnection refused"*) RCLASS="db-connection-refused";;
+            *"insufficient_privilege"*|*"permission denied"*) RCLASS="db-permission-denied";;
+            *"publication"*"does not exist"*) RCLASS="publication-missing";;
+            *"enant"*"not found"*) RCLASS="tenant-not-found";;
+            *"wal_level"*) RCLASS="wal-level-error";;
+            *"eplication"*"lot"*) RCLASS="replication-slot-issue";;
+            *"igration"*) RCLASS="migration-issue";;
+            *"rror"*|*"xception"*) RCLASS="unclassified-error-present";;
           esac
-          echo "supavisor-failure-class=$CLASS"
-          # bare exception-class token only (identifier shape, no message text)
-          TOKEN="$(printf '%s' "$SLOG" | grep -oE '\*\* \([A-Z][A-Za-z0-9_.]+' | head -1 | cut -d'(' -f2 || true)"
-          if [ -z "$TOKEN" ]; then TOKEN="none"; fi
-          echo "supavisor-exception-token=$TOKEN"
-          rm -f /tmp/mig.out
+          echo "realtime-log-class=$RCLASS"

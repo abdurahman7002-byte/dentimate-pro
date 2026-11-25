@@ -45,6 +45,13 @@ const open = (token, label) => {
             ws.send(JSON.stringify({ ref: hbRef, topic: 'phoenix', event: 'heartbeat', payload: {} }));
         }
         if (m.ref === hbRef && m.event === 'phx_reply') state[label].heartbeat = true;
+        // channel-level errors: map to a fixed label, never print raw payload text
+        if (m.event === 'phx_reply' && m.payload && m.payload.status === 'error') {
+            const s = JSON.stringify(m.payload);
+            state[label].err = /permission|unauthorized|authorization/i.test(s) ? 'permission'
+                : /publication/i.test(s) ? 'publication'
+                : /tenant/i.test(s) ? 'tenant' : 'other';
+        }
         if (m.event === 'postgres_changes') state[label].event = true;
         if (state.owner.joined && state.employee.joined && !inserted) {
             inserted = true;
@@ -63,7 +70,7 @@ open(empTok, 'employee');
 setTimeout(() => {
     if (!state.owner.joined || !state.employee.joined) fail('a subscription never established: ' + JSON.stringify(state));
     if (!inserted) fail('control insert never ran');
-    if (!state.owner.event) fail('owner received no event');
+    if (!state.owner.event) fail('owner received no event (owner-err=' + (state.owner.err || 'none') + ',emp-err=' + (state.employee.err || 'none') + ')');
     if (!state.employee.heartbeat) fail('employee subscription liveness unproven - cannot read silence as denial');
     if (state.employee.event) fail('zero-permission employee RECEIVED an event (filtering broken)');
     console.log('PASS realtime (same-clinic filtering): owner event received; zero-perm employee alive (join+heartbeat) and received nothing');
