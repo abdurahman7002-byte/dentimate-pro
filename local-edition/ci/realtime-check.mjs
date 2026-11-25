@@ -31,7 +31,21 @@ if (!empTok) fail('employee login');
 
 const topic = 'realtime:public:patients_rt_gate';
 const state = { owner: { joined: false, event: false, heartbeat: false }, employee: { joined: false, event: false, heartbeat: false }, service: { joined: false, event: false, heartbeat: false } };
-let inserted = false;
+let inserts = 0;
+const MAX_INSERTS = 6;
+// retry inserts: a join ack can precede server-side WAL subscription activation,
+// so a single insert can race it and be permanently missed. Bounded retries
+// both probe that race and keep the employee denial assertion honest across
+// multiple committed rows.
+const insertOnce = async () => {
+    if (state.owner.event || inserts >= MAX_INSERTS) return;
+    inserts++;
+    const ins = await fetch(`${BASE}/rest/v1/patients`, { method: 'POST', headers: { ...H(owner), Prefer: 'return=minimal' },
+        body: JSON.stringify({ full_name: 'rt gate patient ' + inserts }) });
+    if (!ins.ok) fail('control insert failed: HTTP ' + ins.status);
+    setTimeout(insertOnce, 4000);
+};
+let insertStarted = false;
 
 const open = (token, label) => {
     const ws = new WebSocket(`${BASE_WSS}/realtime/v1/websocket?apikey=${ANON_KEY}&vsn=1.0.0`);
@@ -55,11 +69,9 @@ const open = (token, label) => {
                 : /tenant/i.test(s) ? 'tenant' : 'other';
         }
         if (m.event === 'postgres_changes') state[label].event = true;
-        if (state.owner.joined && state.employee.joined && !inserted) {
-            inserted = true;
-            const ins = await fetch(`${BASE}/rest/v1/patients`, { method: 'POST', headers: { ...H(owner), Prefer: 'return=minimal' },
-                body: JSON.stringify({ full_name: 'rt gate patient' }) });
-            if (!ins.ok) fail('control insert failed: HTTP ' + ins.status);
+        if (state.owner.joined && state.employee.joined && !insertStarted) {
+            insertStarted = true;
+            setTimeout(insertOnce, 4000);
         }
     };
     ws.onerror = () => fail(label + ' ws error');
@@ -72,17 +84,17 @@ if (SERVICE_ROLE_KEY) open(SERVICE_ROLE_KEY, 'service');
 // settle window: owner event must arrive; employee must stay silent while alive
 setTimeout(() => {
     if (!state.owner.joined || !state.employee.joined) fail('a subscription never established: ' + JSON.stringify(state));
-    if (!inserted) fail('control insert never ran');
+    if (inserts === 0) fail('control insert never ran');
     if (!state.owner.event) {
         const ctrl = SERVICE_ROLE_KEY
             ? (state.service.event ? 'service-control=event-received'
                 : state.service.joined ? 'service-control=joined-no-event'
                 : 'service-control=not-joined(err=' + (state.service.err || 'none') + ')')
             : 'service-control=not-run';
-        fail('owner received no event (owner-err=' + (state.owner.err || 'none') + ',emp-err=' + (state.employee.err || 'none') + ',' + ctrl + ')');
+        fail('owner received no event across ' + inserts + ' inserts (owner-err=' + (state.owner.err || 'none') + ',emp-err=' + (state.employee.err || 'none') + ',' + ctrl + ')');
     }
     if (!state.employee.heartbeat) fail('employee subscription liveness unproven - cannot read silence as denial');
     if (state.employee.event) fail('zero-permission employee RECEIVED an event (filtering broken)');
     console.log('PASS realtime (same-clinic filtering): owner event received; zero-perm employee alive (join+heartbeat) and received nothing');
     process.exit(0);
-}, 20000);
+}, 45000);
