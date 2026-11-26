@@ -14,3 +14,5 @@ GRANT USAGE ON SCHEMA public, extensions TO anon, authenticated, service_role;
 GRANT ALL ON SCHEMA public TO supabase_auth_admin;
 ALTER ROLE supabase_auth_admin SET search_path = auth;
 GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+-- storage-api sets the caller's role per request (SET ROLE anon/authenticated/service_role)
+GRANT anon, authenticated, service_role TO supabase_storage_admin;
