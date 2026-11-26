@@ -1,4 +1,5 @@
 -- synthetic demo data (fake people) for screenshots only; never shipped in the zip
+set session_replication_role = replica; -- demo seeding as superuser: skip tenant-link triggers (they need a signed-in user)
 insert into public.patients (full_name, phone, gender, address, birth_date, medical_history, dental_history, user_id) values
  ('Omar Hassan','0100000101','male','Cairo, Nasr City','1990-04-12','No chronic conditions','Scaling 2024',:'owner'),
  ('Salma Adel','0100000102','female','Giza, Dokki','1996-09-03','Penicillin allergy','Filling lower right molar',:'owner'),

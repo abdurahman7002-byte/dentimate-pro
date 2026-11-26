@@ -47,7 +47,7 @@ jobs:
             Push-Location C:\uitest
             Set-Content -Path package.json -Value '{"type":"module"}' -Encoding ASCII
             & npm.cmd i playwright-core --no-audit --no-fund 2>&1 | Out-Null
-            $env:OWNER_EM = $em; $env:OWNER_PW = $pw; $env:SHOTS = 'C:\shots'; $env:LAUNCHER_LOG = "$R\data\logs\start.log"
+            $env:OWNER_EM = $em; $env:OWNER_PW = $pw; $env:SHOTS = 'C:\shots'; $env:FULL = '1'; $env:LAUNCHER_LOG = "$R\data\logs\start.log"
             Note 'screens' ((& node screens.mjs 2>&1 | Out-String) -replace '[\r\n"]',' ')
             Pop-Location
             & "$R\scripts\stop.ps1" 2>&1 | Out-Null
