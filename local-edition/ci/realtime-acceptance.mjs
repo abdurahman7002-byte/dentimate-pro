@@ -153,9 +153,26 @@ if (!resynced) fail('resync', 'change committed during outage not recovered by c
 console.log('resync-outage-change=recovered');
 console.log(`outage-event-replayed=${state.events.has(duringOutage) ? 1 : 0}`);
 
-const afterRejoin = await insertNotification('postrejoin');
-await waitFor(() => state.events.has(afterRejoin), 30000, 'reconnect', 'post-rejoin single change delivery');
+// post-rejoin activation: replication restarts lazily when the rejoined
+// channel subscribes, and the stream takes time (upstream retries on a
+// hardcoded 5s..5min rand_exp backoff), so - exactly like the initial
+// subscribe - a single change cannot be asserted before the stream is
+// active. Bounded sentinels measure the gap the shipped catch-up fetch
+// covers; a single live change is asserted once the stream is active.
+let prSentinels = 0, prActive = false, prFirstAt = 0;
+for (let i = 0; i < 150 && !prActive; i++) {
+    const t = await insertNotification('postrejoin-sentinel');
+    prSentinels++;
+    await new Promise(r => setTimeout(r, 1000));
+    prActive = [...state.events].some(x => x.includes('postrejoin-sentinel'));
+    if (prActive && !prFirstAt) prFirstAt = Date.now();
+}
+if (!prActive) fail('reconnect', `no event across ${prSentinels} post-rejoin sentinels (status=${state.lastStatus})`);
+console.log(`post-rejoin-sentinels=${prSentinels}`);
+console.log(`post-rejoin-activation-s=${Math.round((prFirstAt - tRestart) / 1000)}`);
+const afterActive = await insertNotification('postrejoin');
+await waitFor(() => state.events.has(afterActive), 10000, 'reconnect', 'post-rejoin single change delivery once active');
 console.log('post-rejoin-single=received');
 
-console.log(`PASS realtime-acceptance (activation=${sentinels} sentinels, steady-state 1/1, rejoin+resync ok, post-rejoin 1/1)`);
+console.log(`PASS realtime-acceptance (activation=${sentinels} sentinels, steady-state 1/1, rejoin+resync ok, post-rejoin activation=${prSentinels} sentinels, post-rejoin 1/1)`);
 process.exit(0);
