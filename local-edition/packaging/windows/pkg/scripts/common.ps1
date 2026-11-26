@@ -61,6 +61,7 @@ function Run-Quiet([string]$exe, [string[]]$argv, [string]$logName, [int]$second
     $q = @($argv | ForEach-Object { if ($_ -match '\s' -and $_ -notmatch '^"') { '"' + $_ + '"' } else { $_ } })
     $p = Start-Process -FilePath $exe -ArgumentList $q -WindowStyle Hidden -PassThru `
         -RedirectStandardOutput (Join-Path $Logs "$logName.out.log") -RedirectStandardError (Join-Path $Logs "$logName.err.log")
+    $null = $p.Handle
     if (-not $p.WaitForExit($seconds * 1000)) { try { $p.Kill() } catch {}; return -999 }
     return $p.ExitCode
 }

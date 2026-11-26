@@ -83,6 +83,7 @@ jobs:
             function RunPs($script, $extra, $secs) {
               $o = "$env:TEMP\run-$([guid]::NewGuid().ToString('N')).log"
               $p = Start-Process -FilePath powershell.exe -ArgumentList (@('-NoProfile','-ExecutionPolicy','Bypass','-File',$script) + $extra) -RedirectStandardOutput $o -RedirectStandardError "$o.err" -PassThru -WindowStyle Hidden
+              $null = $p.Handle
               if (-not $p.WaitForExit($secs * 1000)) { try { $p.Kill() } catch {}; $script:lastRc = 'timeout' } else { $script:lastRc = $p.ExitCode }
               $script:lastOut = ((Get-Content $o -Tail 4 -ErrorAction SilentlyContinue) -join ' | ') + ' ERR: ' + ((Get-Content "$o.err" -Tail 3 -ErrorAction SilentlyContinue) -join ' | ')
             }
@@ -151,7 +152,7 @@ jobs:
             Note 'EXCEPTION' (("$_" -replace '[\r\n"]',' ').Substring(0, [Math]::Min(300, "$_".Length)))
           } finally {
             Write-Host "::notice title=smoke-summary::$($notes -join ' ')"
-            Get-ChildItem C:\clinic-test\dentimate-offline\data\logs -Filter *.err.log -ErrorAction SilentlyContinue | ForEach-Object {
+            Get-ChildItem C:\clinic-test\dentimate-offline\data\logs -Filter *.log -ErrorAction SilentlyContinue | ForEach-Object {
               $tail = (Get-Content $_.FullName -Tail 3 -ErrorAction SilentlyContinue) -join ' ' -replace '[\r\n"]',' '
               if ($tail) { Write-Host "::notice title=log-$($_.BaseName)::$($tail.Substring(0,[Math]::Min(300,$tail.Length)))" }
             }
