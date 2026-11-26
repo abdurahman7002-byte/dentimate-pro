@@ -298,6 +298,16 @@ jobs:
               echo "$C-missing-object=${MTOK:-none}"
               SQLSTATE="$(printf '%s' "$CLOG" | grep -oE '"code": ?"[0-9A-Z]{5}"' | head -1 | grep -oE '[0-9A-Z]{5}' || true)"
               echo "$C-sqlstate=${SQLSTATE:-none}"
+              if [ "$C" = "dentix-restore-storage" ]; then
+                # bisect startup phase (booleans over fixed literals from storage-api source)
+                printf '%s' "$CLOG" | grep -qF '[Queue] Started' && echo "$C-queue-started=1" || echo "$C-queue-started=0"
+                printf '%s' "$CLOG" | grep -qF 'startupError' && echo "$C-main-error=1" || echo "$C-main-error=0"
+                printf '%s' "$CLOG" | grep -qF 'serverStartError' && echo "$C-listen-error=1" || echo "$C-listen-error=0"
+                printf '%s' "$CLOG" | grep -qF 'Started Successfully' && echo "$C-started-ok=1" || echo "$C-started-ok=0"
+                # bare errno identifiers only (EADDRINUSE, EAI_AGAIN, ...) - never message text
+                ERRNO="$(printf '%s' "$CLOG" | grep -oE '"(code|errno|syscall)": ?"[A-Za-z_]+"' | grep -oE '[A-Z][A-Z_]{3,}' | sort -u | head -3 | paste -sd, || true)"
+                echo "$C-errno=${ERRNO:-none}"
+              fi
             done
             # direct restore-db probes while leftovers persist (counts/booleans only)
             docker ps -a --format '{{.Names}}' | grep -q '^dentix-restore-db$' && {
