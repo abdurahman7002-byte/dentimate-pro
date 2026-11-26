@@ -16,7 +16,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: dentimate-offline-win-ci
-          run-id: 45838697703
+          run-id: 45845364518
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: C:\dl
       - name: Start package, seed synthetic data, take screenshots
@@ -39,8 +39,8 @@ jobs:
             $env:PGPASSWORD = $sec.pg_superuser
             $psql = "$R\runtime\pgsql\bin\psql.exe"
             $owner = (& $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -tAc "select id from auth.users limit 1").Trim()
-            & $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -v ON_ERROR_STOP=1 -v "owner=$owner" -q -f "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg\uitest\seed.sql" 2>&1 | Out-Null
-            Note 'seed-rc' $LASTEXITCODE
+            $seedOut = & $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -v "owner=$owner" -q -f "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg\uitest\seed.sql" 2>&1 | Out-String
+            Note 'seed-errors' (($seedOut -replace '[\r\n"]',' ').Substring(0, [Math]::Min(500, $seedOut.Length)))
             Note 'patients' (& $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -tAc "select count(*) from public.patients").Trim()
             New-Item -ItemType Directory -Force C:\uitest | Out-Null
             Copy-Item "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg\uitest\screens.mjs" C:\uitest\ -Force

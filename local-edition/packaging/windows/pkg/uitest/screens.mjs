@@ -10,7 +10,7 @@ const page = await ctx.newPage();
 const labels = {};
 async function shot(name) {
   await page.waitForTimeout(3500);
-  await page.screenshot({ path: `${dir}/${name}.png` });
+  await page.screenshot({ path: `${dir}/${name}.png`, fullPage: process.env.FULL === '1' });
   labels[name] = await page.evaluate(() => ({
     title: document.title,
     headings: [...document.querySelectorAll('h1,h2,h3')].map(e => e.innerText.trim()).filter(Boolean).slice(0, 25),
