@@ -25,6 +25,10 @@ let notificationRealtimeRetries = 0;
 // emit both CHANNEL_ERROR and TIMED_OUT before removal, and each event would
 // otherwise stack another timer that resubscribes over a healthy channel
 let notificationRealtimeRetryTimer = null;
+// Set false on every (re)subscribe, true on the first live event after it.
+let notificationStreamActive = false;
+// Bounded catch-up interval that runs until the stream proves active.
+let notificationCatchUpTimer = null;
 let notificationToastContainer = null;
 let notificationInitialized = false;
 let notificationRefreshInterval = null;
@@ -1209,6 +1213,7 @@ async function startNotificationRealtime() {
     }
 
     const channelName = "notifications-" + userId + "-" + Date.now();
+    notificationStreamActive = false;
 
     notificationRealtimeChannel = supabaseClient
         .channel(channelName)
@@ -1219,6 +1224,8 @@ async function startNotificationRealtime() {
             filter: `user_id=eq.${userId}`
         }, async payload => {
             console.log("🔔 REALTIME INSERT:", payload.new);
+            notificationStreamActive = true;
+            if (notificationCatchUpTimer) { clearInterval(notificationCatchUpTimer); notificationCatchUpTimer = null; }
             showNotificationToast(payload.new);
             addNotificationToList(payload.new);
             updateNotificationCountRealtime();
@@ -1230,6 +1237,8 @@ async function startNotificationRealtime() {
             filter: `user_id=eq.${userId}`
         }, async payload => {
             console.log("🔄 REALTIME UPDATE:", payload.new);
+            notificationStreamActive = true;
+            if (notificationCatchUpTimer) { clearInterval(notificationCatchUpTimer); notificationCatchUpTimer = null; }
             updateNotificationInList(payload.new);
             updateNotificationCountRealtime();
         })
@@ -1239,6 +1248,8 @@ async function startNotificationRealtime() {
             table: "notifications"
         }, async payload => {
             console.log("🗑️ REALTIME DELETE:", payload.old);
+            notificationStreamActive = true;
+            if (notificationCatchUpTimer) { clearInterval(notificationCatchUpTimer); notificationCatchUpTimer = null; }
             removeNotificationFromList(payload.old.id);
             updateNotificationCountRealtime();
         })
@@ -1248,12 +1259,25 @@ async function startNotificationRealtime() {
                 console.log("✅ Notification Realtime CONNECTED");
                 notificationRealtimeRetries = 0;
                 catchUpNotifications(userId);
-                // Trailing passes close the activation-gap race: the immediate
-                // fetch can finish before the server-side WAL subscription
-                // starts streaming, so a commit landing in between is missed
-                // by both. These re-fetch after the observed lag window.
-                setTimeout(() => catchUpNotifications(userId), 5000);
-                setTimeout(() => catchUpNotifications(userId), 15000);
+                // The stream activates only when server-side replication
+                // starts streaming, which can take minutes after a realtime
+                // restart (upstream retries on a hardcoded 5s..5min backoff).
+                // Rows committed between the last fixed trailing pass and
+                // activation would be missed by both the stream and the
+                // fetches, so keep catching up every 5s until the first live
+                // event proves the stream active. Bounded at 3 minutes;
+                // cancelled on the first live event and on teardown/logout.
+                if (notificationCatchUpTimer) clearInterval(notificationCatchUpTimer);
+                let catchUpTicks = 0;
+                notificationCatchUpTimer = setInterval(() => {
+                    catchUpTicks++;
+                    if (notificationStreamActive || catchUpTicks > 36) {
+                        clearInterval(notificationCatchUpTimer);
+                        notificationCatchUpTimer = null;
+                        return;
+                    }
+                    catchUpNotifications(userId);
+                }, 5000);
             }
             if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
                 notificationRealtimeRetries++;
@@ -1393,6 +1417,10 @@ async function stopNotificationRealtime() {
     if (notificationRealtimeRetryTimer) {
         clearTimeout(notificationRealtimeRetryTimer);
         notificationRealtimeRetryTimer = null;
+    }
+    if (notificationCatchUpTimer) {
+        clearInterval(notificationCatchUpTimer);
+        notificationCatchUpTimer = null;
     }
     notificationRealtimeRetries = 0;
     if (notificationRealtimeChannel) {

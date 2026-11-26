@@ -99,10 +99,11 @@ const waitFor = async (cond, ms, stage, what) => {
 await waitFor(() => state.subscribedCount >= 1, 20000, 'subscribe', 'initial SUBSCRIBED');
 
 // phase 1: activation lag (bounded sentinels, 1/s, stop at first event).
-// The lag is measured explicitly: it is the interval the shipped trailing
-// catch-up passes (+5s, +15s) must bracket, so it is gated against 15s.
+// The shipped app now catches up every 5s after (re)SUBSCRIBED until the
+// first live event proves the stream active (3-minute cap), so the measured
+// lag is gated against that coverage window, not the old fixed 15s bracket.
 let sentinels = 0, activated = false, firstEventAt = 0;
-for (let i = 0; i < 15 && !activated; i++) {
+for (let i = 0; i < 120 && !activated; i++) {
     const t = await insertNotification('sentinel');
     sentinels++;
     await new Promise(r => setTimeout(r, 1000));
@@ -113,8 +114,8 @@ if (!activated) fail('activation', `no event across ${sentinels} sentinel insert
 const lagMs = firstEventAt - state.tSubscribed;
 console.log(`activation-sentinels=${sentinels}`);
 console.log(`activation-lag-ms=${lagMs}`);
-if (lagMs > 15000) fail('activation', `activation-lag-ms=${lagMs} exceeds the shipped trailing catch-up bracket (15s) - bounded recovery would not cover it`);
-console.log('activation-within-trailing-bracket=1');
+if (lagMs > 180000) fail('activation', `activation-lag-ms=${lagMs} exceeds the shipped bounded catch-up coverage (3 min) - recovery would not cover it`);
+console.log('activation-within-catchup-coverage=1');
 
 // phase 2: steady-state single change, no retry
 const single = await insertNotification('single');
