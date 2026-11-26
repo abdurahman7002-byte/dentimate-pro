@@ -85,7 +85,7 @@ if ((Wait-Http 'http://127.0.0.1:3000/' 40) -ne '200') { throw 'Data service did
 # Storage (files)
 New-Item -ItemType Directory -Force -Path $StoreDir | Out-Null
 $stEnv = @{
-    DATABASE_URL = "postgres://supabase_storage_admin:$($S.svc_db)@127.0.0.1:$PgPort/postgres"
+    DATABASE_URL = "postgres://supabase_storage_admin:$($S.svc_db)@127.0.0.1:$PgPort/postgres"; DATABASE_POOL_URL = ''
     ANON_KEY = $S.anon_key; SERVICE_KEY = $S.service_key; AUTH_JWT_SECRET = $S.jwt_secret; PGRST_JWT_SECRET = $S.jwt_secret
     POSTGREST_URL = 'http://127.0.0.1:3000'
     SERVER_PORT = '5000'; SERVER_HOST = '127.0.0.1'; PORT = '5000'
@@ -95,8 +95,8 @@ $stEnv = @{
     REQUEST_ALLOW_X_FORWARDED_PATH = 'true'; STORAGE_PUBLIC_URL = "https://localhost:$HttpsPort"
     S3_PROTOCOL_ACCESS_KEY_ID = $S.s3_key; S3_PROTOCOL_ACCESS_KEY_SECRET = $S.s3_secret
 }
-Start-Svc 'storage' $Node @('dist/start/server.js') $stEnv (Join-Path $Rt 'storage') | Out-Null
-if ((Wait-Http 'http://127.0.0.1:5000/status' 90) -ne '200') { throw 'File service did not start (see data\logs\storage.err.log)' }
+$stProc = Start-Svc 'storage' $Node @('dist/start/server.js') $stEnv (Join-Path $Rt 'storage')
+if ((Wait-Http 'http://127.0.0.1:5000/status' 90) -ne '200') { throw "File service did not start (exited=$($stProc.HasExited); see data\logs\storage.err.log)" }
 if ($first) {
     Say 'First run: creating file folders and rules...'
     Invoke-Psql -file (Join-Path $Sql 'zz40-storage.sql')
