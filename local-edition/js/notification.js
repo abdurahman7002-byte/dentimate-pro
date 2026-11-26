@@ -1173,6 +1173,24 @@ async function catchUpNotifications(userId) {
     }
 }
 
+// A WebSocket whose upgrade lands while realtime is mid-boot can hang in
+// CONNECTING forever (TCP accepted, no response). supabase-js connect() then
+// refuses to dial a new socket (isConnecting()) and every resubscribe rides
+// the dead one - the client never recovers even after the server is healthy
+// (observed: a fresh handshake got 101 while the client socket stayed
+// 'connecting'). Dropping the stuck socket lets the next subscribe() dial a
+// fresh one.
+async function resetStuckRealtimeSocket() {
+    try {
+        if (supabaseClient.realtime.connectionState() !== "open") {
+            await supabaseClient.realtime.disconnect();
+        }
+    }
+    catch (e) {
+        console.warn("Realtime socket reset failed:", e);
+    }
+}
+
 async function startNotificationRealtime() {
     const userId = await getUserId();
     if (!userId) {
@@ -1242,9 +1260,10 @@ async function startNotificationRealtime() {
                 const delay = notificationRealtimeRetries <= 5 ? Math.min(5000 * notificationRealtimeRetries, 25000) : 30000;
                 console.warn(`🔁 Notification realtime ${status} - resubscribe attempt ${notificationRealtimeRetries} in ${delay}ms`);
                 if (notificationRealtimeRetryTimer) clearTimeout(notificationRealtimeRetryTimer);
-                const myTimer = setTimeout(() => {
+                const myTimer = setTimeout(async () => {
                     if (notificationRealtimeRetryTimer !== myTimer) return; // superseded or cleared on teardown
                     notificationRealtimeRetryTimer = null;
+                    await resetStuckRealtimeSocket();
                     startNotificationRealtime();
                 }, delay);
                 notificationRealtimeRetryTimer = myTimer;
@@ -1291,6 +1310,7 @@ function subscribeSourceChannel(table, userId, assign) {
                 const myTimer = setTimeout(async () => {
                     if (sourceRealtimeRetryTimers[table] !== myTimer) return; // superseded or cleared on teardown
                     sourceRealtimeRetryTimers[table] = null;
+                    await resetStuckRealtimeSocket();
                     try { await supabaseClient.removeChannel(ch); } catch (e) {}
                     assign(subscribeSourceChannel(table, userId, assign));
                 }, delay);

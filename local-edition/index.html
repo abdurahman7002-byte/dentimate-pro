@@ -228,7 +228,16 @@ function showToast(message){
 
 <script>
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
+  // Registration can fail (unsupported context, storage policy) without any
+  // impact on the app itself - never let it surface as an uncaught error.
+  try {
+    navigator.serviceWorker.register("service-worker.js").catch(() => {
+      console.warn("Service worker registration skipped");
+    });
+  }
+  catch (e) {
+    console.warn("Service worker registration skipped");
+  }
 }
 </script>
 <!-- toast  -->

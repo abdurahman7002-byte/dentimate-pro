@@ -74,7 +74,14 @@ function subscribe() {
                 let sock = 'unknown';
                 try { sock = sb.realtime.connectionState(); } catch (_) {}
                 console.log(`resubscribe-retry=${state.retries} delay-ms=${delay} socket=${sock}`);
-                setTimeout(async () => { try { await sb.removeChannel(channel); } catch (_) {} subscribe(); }, delay);
+                // mirrors notification.js resetStuckRealtimeSocket(): a socket
+                // stuck 'connecting' never heals on its own (supabase-js
+                // connect() no-ops while isConnecting()), so drop it first
+                setTimeout(async () => {
+                    try { if (sb.realtime.connectionState() !== 'open') await sb.realtime.disconnect(); } catch (_) {}
+                    try { await sb.removeChannel(channel); } catch (_) {}
+                    subscribe();
+                }, delay);
             }
         });
 }
