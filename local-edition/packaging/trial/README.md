@@ -84,8 +84,11 @@ What this is NOT:
   never leave it.
 - Signup is disabled; only the owner you create can provision accounts.
 - The owner can change their own email/password inside the app (employees
-  page, account card, current password required). A password change revokes
-  all sessions immediately (refresh layer); a forgotten owner password is
+  page, account card, current password required). A password change logs
+  out every session at once (GoTrue revokes them atomically with the
+  password update; a one-hour stateless-JWT residual on REST/storage paths
+  is documented in the install runbook as a security limitation); a
+  forgotten owner password is
   recovered from the codespace shell with
   `docker compose ... exec -T provision node reset-owner.mjs` (loopback-only
   endpoint - shell access is the authority, same trust as the DB volume).

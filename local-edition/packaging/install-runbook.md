@@ -168,10 +168,15 @@ Employee accounts are still created/reset only by the owner from the same page.
 
 Two different things, kept distinct on purpose:
 - SELF-EDIT (in-app, above): for an owner who knows their current password.
-  A password change revokes every session immediately at the refresh layer -
-  everyone, including the owner who made the change, logs in again. An access
-  token already issued stays valid until its expiry (JWT_EXPIRY, 3600s
-  default); that is the JWT model's bound, not a hidden backdoor.
+  A password change logs the owner out of every session at once (GoTrue
+  revokes all sessions atomically with the password update); everyone,
+  including the owner who made the change, logs in again. SECURITY
+  LIMITATION, stated plainly: on the stateless REST/storage API paths an
+  already-issued access token stays valid until its expiry (JWT_EXPIRY,
+  3600s default). That is a one-hour residual window, NOT immediate full
+  revocation - the price of stateless JWT verification. The
+  re-authenticating paths (account management) reject the old token
+  immediately (verified in CI as invalid_session).
 - FORGOTTEN owner password (recovery): run on the clinic machine itself -
   host shell access is the authority, same trust as the database volume:
 

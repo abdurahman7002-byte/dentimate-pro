@@ -136,13 +136,19 @@ if (c1.ok) {
     const claims = JSON.parse(Buffer.from(String(oldTok).split('.')[1], 'base64url').toString('utf8'));
     const remaining = claims.exp - Math.floor(Date.now() / 1000);
     check('old access token: remaining lifetime within JWT_EXPIRY bound (<=3600s)', remaining > 0 && remaining <= 3600, 'remaining-s=' + remaining);
-    // a privileged CHANGE with the old token must be impossible without
-    // re-authentication: /account with an empty body may only refuse
-    // (400 current_password_required = session alive but change denied;
-    //  401 invalid_session = session dead). 200 is never acceptable.
-    const staleAcc = await fetch(ACC, { method: 'POST', headers: AH(oldTok), body: '{}' });
+    // a privileged CHANGE with the old token must be refused as invalid_session:
+    // an OTHERWISE VALID controlled payload (correct current password, valid
+    // new password) isolates the refusal to session validity, not request
+    // shape. The fresh-token revert below passes the same path as the
+    // positive control.
+    const TMP_PW2 = 'tmp2-' + crypto.randomUUID();
+    const staleAcc = await fetch(ACC, { method: 'POST', headers: AH(oldTok), body: JSON.stringify({ current_password: TMP_PW, new_password: TMP_PW2 }) });
     const staleLabel = await accDetail(staleAcc);
-    check('old access token: /account allows no privileged change (400/401 only)', staleAcc.status === 400 || staleAcc.status === 401, staleLabel);
+    check('old access token: valid privileged change REFUSED as invalid_session', staleAcc.status === 401 && staleLabel.includes('invalid_session'), staleLabel);
+    if (staleAcc.ok) {
+        // unexpected: the change went through - restore the password now
+        await fetch(ACC, { method: 'POST', headers: AH(oldTok), body: JSON.stringify({ current_password: TMP_PW2, new_password: TMP_PW }) });
+    }
     const stale = await fetch(`${BASE}/rest/v1/employees?select=id&limit=1`, { headers: AH(oldTok) });
     console.log(`old-token-after-password-change: account=${staleLabel} rest-read-accepted=${stale.ok} (stateless JWT; lifetime bound asserted; refresh revoked)`);
     owner = await login(OWNER_EMAIL, TMP_PW);

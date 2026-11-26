@@ -112,17 +112,14 @@ async function setAuthUserPassword(id, password) {
     const r = await fetch(`${GOTRUE}/admin/users/${id}`, { method: 'PUT', headers: svcHeaders, body: JSON.stringify({ password }) });
     return r.ok;
 }
-async function revokeUserSessions(id) {
-    // After a password change every existing session (including the one that
-    // made the change) must lose its authority; the owner logs in again with
-    // the new password. Send an empty JSON body: Content-Type: application/json
-    // with NO body makes gotrue fail the request (empty-body parse error).
-    let r = await fetch(`${GOTRUE}/admin/users/${id}/logout`, { method: 'POST', headers: svcHeaders, body: '{}' });
-    if (r.ok || r.status === 204) return true;
-    // fallback: the sessions collection endpoint (version-dependent)
-    r = await fetch(`${GOTRUE}/admin/users/${id}/sessions`, { method: 'DELETE', headers: svcHeaders });
-    return r.ok || r.status === 204;
-}
+// Session revocation on password change needs NO separate call: verified
+// against the pinned gotrue v2.198.0 source (internal/api/admin.go ->
+// adminUserUpdate -> models/user.go UpdatePassword(tx, nil) -> models.Logout):
+// an admin password update atomically logs the user out of ALL sessions in the
+// same transaction ("log out user from all sessions to ensure reauthentication
+// after password change"). Measured in CI: the pre-change access token is
+// rejected (invalid_session) and the refresh token is dead immediately.
+// v2.198.0 has NO /admin/users/{id}/logout or /admin/users/{id}/sessions route.
 async function setAuthUserEmail(id, email) {
     const r = await fetch(`${GOTRUE}/admin/users/${id}`, { method: 'PUT', headers: svcHeaders,
         body: JSON.stringify({ email, email_confirm: true }) });
@@ -248,9 +245,7 @@ const server = http.createServer(async (req, res) => {
                 if (!await setAuthUserPassword(user.id, newPassword)) {
                     return json(res, 502, { error: newEmail ? 'تم تحديث البريد وتعذرت كلمة المرور' : 'تعذر تحديث كلمة المرور', reason: 'password_update_failed' });
                 }
-                if (!await revokeUserSessions(user.id)) {
-                    return json(res, 502, { error: 'تم تحديث كلمة المرور وتعذر إنهاء الجلسات - سجّل الدخول بكلمة المرور الجديدة', reason: 'session_revoke_failed' });
-                }
+                // revocation is atomic with the password update (see note above)
             }
             return json(res, 200, { ok: true, email_changed: !!(newEmail && newEmail !== user.email), password_changed: !!newPassword });
         }
@@ -316,7 +311,7 @@ const bootServer = http.createServer(async (req, res) => {
             if (!user) return json(res, 404, { error: 'لا يوجد حساب بهذا البريد', reason: 'no_such_account' });
             if (!await isClinicAdmin(user.id)) return json(res, 403, { error: 'هذا الحساب ليس حساب مالك', reason: 'owner_only' });
             if (!await setAuthUserPassword(user.id, password)) return json(res, 502, { error: 'تعذر تحديث كلمة المرور', reason: 'password_update_failed' });
-            if (!await revokeUserSessions(user.id)) return json(res, 502, { error: 'تم تحديث كلمة المرور وتعذر إنهاء الجلسات', reason: 'session_revoke_failed' });
+            // sessions are already revoked atomically by the password update itself
             return json(res, 200, { ok: true, email }); // password never echoed
         }
         let body = {};
