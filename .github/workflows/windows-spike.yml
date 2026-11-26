@@ -82,7 +82,7 @@ jobs:
             $PSQL -v ON_ERROR_STOP=1 -f local-edition/packaging/init/$f.sql >/c/spike/$f.log 2>&1 && say "stage2-$f=1" || { echo "::error title=stage2::$f failed: $(grep -i -m3 -E 'error' /c/spike/$f.log | cut -c1-220 | tr '\n' ' ')"; exit 1; }
           done
           say "stage2-public-tables=$($PSQL -tAc "select count(*) from pg_tables where schemaname='public'")"
-          $PSQL -c "grant select, insert, update, delete on all tables in schema public to authenticated; grant usage on all sequences in schema public to authenticated; grant execute on all functions in schema public to anon, authenticated;" >/dev/null && say "stage2-grants=1"
+          $PSQL -c "grant select, insert, update, delete on all tables in schema public to authenticated; grant usage on all sequences in schema public to authenticated; grant execute on all functions in schema public to anon, authenticated; grant all on all tables in schema public to service_role; grant all on all sequences in schema public to service_role; grant execute on all functions in schema public to service_role;" >/dev/null && say "stage2-grants=1"
       - name: Stage 2b - PostgREST Windows release + authenticated query
         run: |
           say(){ echo "$1"; echo "::notice title=spike::$1"; }
