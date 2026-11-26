@@ -191,6 +191,7 @@ jobs:
             -e POSTGREST_URL=http://dentix-restore-rest:3000 \
             -e DATABASE_URL=postgres://supabase_storage_admin:tmp-only@dentix-restore-db:5432/restore_verify \
             -e FILE_SIZE_LIMIT=52428800 -e STORAGE_BACKEND=file \
+            -e FILE_STORAGE_BACKEND_PATH=/var/lib/storage \
             -e GLOBAL_S3_BUCKET=stub -e TENANT_ID=stub -e REGION=stub \
             -e REQUEST_ALLOW_X_FORWARDED_PATH=true \
             -v /tmp/backup-gate/storage-copy:/var/lib/storage \
