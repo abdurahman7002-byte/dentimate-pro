@@ -378,3 +378,36 @@ function showPasswordOnce(email, password, isReset) {
         d.remove();
     };
 }
+
+/* =========================================================
+   OWNER ACCOUNT (owner only)
+   Edit the owner's OWN login email/password. The server
+   re-authenticates the CURRENT password against GoTrue before
+   applying anything; secrets travel only over the app origin
+   and are never shown back. Empty field = no change.
+   ========================================================= */
+async function saveOwnerAccount() {
+    const newEmail = (document.getElementById('accNewEmail').value || '').trim();
+    const p1 = document.getElementById('accNewPassword').value || '';
+    const p2 = document.getElementById('accNewPassword2').value || '';
+    const current = document.getElementById('accCurrentPassword').value || '';
+    if (!newEmail && !p1) { toast('لا يوجد تغيير - املأ البريد الجديد أو كلمة المرور الجديدة'); return; }
+    if (p1 && p1.length < 8) { toast('كلمة المرور الجديدة قصيرة - ٨ أحرف على الأقل'); return; }
+    if (p1 !== p2) { toast('تأكيد كلمة المرور الجديدة غير مطابق'); return; }
+    if (!current) { toast('أدخل كلمة المرور الحالية للتأكد من هويتك'); return; }
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { toast('سجّل الدخول أولًا'); return; }
+    try {
+        const r = await fetch(`${window.DENTIX_SUPABASE_URL}/account`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ current_password: current, new_email: newEmail || undefined, new_password: p1 || undefined })
+        });
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) { toast(body.error || 'تعذر تحديث الحساب'); return; }
+        ['accNewEmail', 'accNewPassword', 'accNewPassword2', 'accCurrentPassword'].forEach(id => { document.getElementById(id).value = ''; });
+        let msg = 'تم تحديث الحساب';
+        if (body.email_changed) msg += ' - استخدم البريد الجديد عند تسجيل الدخول القادم';
+        toast(msg);
+    } catch (e) { toast('خدمة الحساب غير متاحة'); }
+}

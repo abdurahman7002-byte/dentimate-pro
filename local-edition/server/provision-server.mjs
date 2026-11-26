@@ -4,9 +4,12 @@
    never logs). Owner-only operations, enforced here:
      POST /provision        { employee_id } -> create login account
      POST /reset-password   { employee_id } -> new password for employee
+     POST /account          { current_password, new_email?, new_password? }
+                            -> owner edits their OWN login (current password
+                            re-authenticated against GoTrue first)
      POST /bootstrap-owner  { email, password } -> ONE-TIME first owner
    TWO LISTENERS (container-networking safe):
-   - MAIN listener 0.0.0.0:9090 serves /provision + /reset-password only,
+   - MAIN listener 0.0.0.0:9090 serves /provision + /reset-password + /account,
      so nginx (a separate container) can proxy them over the docker network.
    - BOOTSTRAP listener 127.0.0.1:9091 serves /bootstrap-owner ONLY.
      Container loopback is unreachable from other containers and the LAN;
@@ -98,8 +101,19 @@ async function clearBootstrapMark(id) {
     await fetch(`${GOTRUE}/admin/users/${id}`, { method: 'PUT', headers: svcHeaders,
         body: JSON.stringify({ app_metadata: { dentix_bootstrap: null } }) }).catch(() => {});
 }
+async function verifyUserPassword(email, password) {
+    const r = await fetch(`${GOTRUE}/token?grant_type=password`, { method: 'POST',
+        headers: { 'apikey': SVC, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }) });
+    return r.ok;
+}
 async function setAuthUserPassword(id, password) {
     const r = await fetch(`${GOTRUE}/admin/users/${id}`, { method: 'PUT', headers: svcHeaders, body: JSON.stringify({ password }) });
+    return r.ok;
+}
+async function setAuthUserEmail(id, email) {
+    const r = await fetch(`${GOTRUE}/admin/users/${id}`, { method: 'PUT', headers: svcHeaders,
+        body: JSON.stringify({ email, email_confirm: true }) });
     return r.ok;
 }
 async function linkEmployee(employeeId, authUserId) {
@@ -173,7 +187,7 @@ const server = http.createServer(async (req, res) => {
     try {
         const action = req.url.replace(/\/+$/, '');
         // bootstrap lives ONLY on the loopback listener below
-        if (req.method !== 'POST' || !['/provision', '/reset-password'].includes(action)) {
+        if (req.method !== 'POST' || !['/provision', '/reset-password', '/account'].includes(action)) {
             return json(res, 404, { error: 'not found' });
         }
         const ip = req.socket.remoteAddress || 'unknown';
@@ -192,7 +206,7 @@ const server = http.createServer(async (req, res) => {
             }));
         } catch { return json(res, 400, { error: 'body غير صالح' }); }
         const employeeId = body && body.employee_id;
-        if (!employeeId || typeof employeeId !== 'string') return json(res, 400, { error: 'employee_id مطلوب' });
+        if (action !== '/account' && (!employeeId || typeof employeeId !== 'string')) return json(res, 400, { error: 'employee_id مطلوب' });
         const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
         if (!token) return json(res, 401, { error: 'مطلوب تسجيل دخول المالك' });
 
@@ -200,6 +214,29 @@ const server = http.createServer(async (req, res) => {
         if (!user) return json(res, 401, { error: 'جلسة غير صالحة' });
         if (!rateOk('uid:' + user.id, 10)) return json(res, 429, { error: 'محاولات كثيرة - انتظر دقيقة' });
         if (!await isClinicAdmin(user.id)) return json(res, 403, { error: 'هذه العملية للمالك فقط' });
+
+        if (action === '/account') {
+            // Owner edits their OWN login: identity is proven with the CURRENT
+            // password (real re-authentication against GoTrue), then the change
+            // is applied with the service key. Secrets are never echoed back.
+            const current = body && body.current_password;
+            const newEmail = body && typeof body.new_email === 'string' ? body.new_email.trim() : '';
+            const newPassword = body && typeof body.new_password === 'string' ? body.new_password : '';
+            if (!current || typeof current !== 'string') return json(res, 400, { error: 'كلمة المرور الحالية مطلوبة' });
+            if (!newEmail && !newPassword) return json(res, 400, { error: 'لا يوجد تغيير مطلوب' });
+            if (newEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newEmail)) return json(res, 400, { error: 'صيغة البريد غير صالحة' });
+            if (newPassword && newPassword.length < 8) return json(res, 400, { error: 'كلمة المرور الجديدة قصيرة - ٨ أحرف على الأقل' });
+            if (!await verifyUserPassword(user.email, current)) return json(res, 401, { error: 'كلمة المرور الحالية غير صحيحة' });
+            if (newEmail && newEmail !== user.email) {
+                const dup = await findAuthUserByEmail(newEmail);
+                if (dup) return json(res, 409, { error: 'يوجد حساب بهذا البريد بالفعل' });
+                if (!await setAuthUserEmail(user.id, newEmail)) return json(res, 502, { error: 'تعذر تحديث البريد - لم يتغير شيء' });
+            }
+            if (newPassword && !await setAuthUserPassword(user.id, newPassword)) {
+                return json(res, 502, { error: newEmail ? 'تم تحديث البريد وتعذرت كلمة المرور' : 'تعذر تحديث كلمة المرور' });
+            }
+            return json(res, 200, { ok: true, email_changed: !!(newEmail && newEmail !== user.email), password_changed: !!newPassword });
+        }
 
         const emp = await getEmployee(employeeId);
         if (!emp) return json(res, 404, { error: 'الموظف غير موجود' });
@@ -228,7 +265,7 @@ const server = http.createServer(async (req, res) => {
     }
 });
 // MAIN listener: reachable by nginx over the docker network (container-safe).
-server.listen(PORT, '0.0.0.0', () => console.log(`provision-server on ${PORT} (provision/reset-password)`));
+server.listen(PORT, '0.0.0.0', () => console.log(`provision-server on ${PORT} (provision/reset-password/account)`));
 
 // BOOTSTRAP listener: loopback ONLY - unreachable from other containers,
 // the LAN and nginx; callable only from inside this container/host.

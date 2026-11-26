@@ -91,7 +91,43 @@ const a2 = await fetch(`${BASE}/storage/v1/object/patient-files/${objPath}`, { h
 const a2bytes = new Uint8Array(await a2.arrayBuffer());
 check('granted employee: storage download byte-exact (access proven before revoke)', a2.ok && a2bytes.length === bytes.length && a2bytes.every((b, i) => b === bytes[i]), String(a2.status));
 
-// ---- stage 3: deactivate, assert the PATCH and the state change, then deny SAME token ----
+// ---- stage 3: owner account self-edit (identity-verified), full round trip ----
+// Runs while the employee token is still valid (for the owner-only denial).
+// Changes are always reverted, so later steps keep the original owner creds.
+const ACC = `${BASE}/account`;
+const AH = (tok) => ({ apikey: ANON_KEY, Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' });
+const TMP_PW = 'tmp-' + crypto.randomUUID();
+const TMP_EMAIL = 'ci-owner-alias@clinic.local';
+
+const e1 = await fetch(ACC, { method: 'POST', headers: AH(empTok), body: JSON.stringify({ current_password: 'fixture', new_password: 'x'.repeat(10) }) });
+check('employee token: /account DENIED (owner only)', e1.status === 403, String(e1.status));
+
+const w1 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: 'wrong-fixture-password', new_password: TMP_PW }) });
+check('wrong current password: change REFUSED (identity check works)', w1.status === 401, String(w1.status));
+
+const c1 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: OWNER_PASSWORD, new_password: TMP_PW }) });
+check('owner: password change ACCEPTED with correct current password', c1.ok, String(c1.status));
+if (c1.ok) {
+    const lp = !!(await login(OWNER_EMAIL, TMP_PW));
+    check('login with NEW password works', lp, 'login-failed');
+    const c2 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: TMP_PW, new_password: OWNER_PASSWORD }) });
+    check('password reverted to original', c2.ok, String(c2.status));
+    const lp2 = !!(await login(OWNER_EMAIL, OWNER_PASSWORD));
+    check('login with ORIGINAL password works again', lp2, 'login-failed');
+}
+
+const c3 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: OWNER_PASSWORD, new_email: TMP_EMAIL }) });
+check('owner: email change ACCEPTED with correct current password', c3.ok, String(c3.status));
+if (c3.ok) {
+    const le = !!(await login(TMP_EMAIL, OWNER_PASSWORD));
+    check('login with NEW email works', le, 'login-failed');
+    const c4 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: OWNER_PASSWORD, new_email: OWNER_EMAIL }) });
+    check('email reverted to original', c4.ok, String(c4.status));
+    const le2 = !!(await login(OWNER_EMAIL, OWNER_PASSWORD));
+    check('login with ORIGINAL email works again', le2, 'login-failed');
+}
+
+// ---- stage 4: deactivate, assert the PATCH and the state change, then deny SAME token ----
 const patch = await fetch(`${BASE}/rest/v1/employees?id=eq.${emp.id}`, { method: 'PATCH', headers: { ...H(owner), Prefer: 'return=representation' }, body: JSON.stringify({ active: false }) });
 const patched = await patch.json().catch(() => null);
 check('deactivation PATCH succeeded', patch.ok, String(patch.status));

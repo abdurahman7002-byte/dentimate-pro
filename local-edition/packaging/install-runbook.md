@@ -159,6 +159,13 @@ Create the first owner account (prompts for email + password on stdin):
 printf '<owner-email>\n<password>\n<password>\n' | $COMPOSE exec -T provision node bootstrap-owner.mjs
 ```
 
+There are NO default or shared credentials: the owner chooses their own email
+and password in this one-time step (it refuses to run once an owner exists).
+Afterwards the owner can change their own login email and/or password from
+the app itself (employees page, "حساب المالك" card); the change requires the
+current password, which the server re-authenticates before applying anything.
+Employee accounts are still created/reset only by the owner from the same page.
+
 Open `https://<LAN_HOST>` from a clinic device, log in as the owner, create a
 patient, upload a file, and confirm a notification appears.
 

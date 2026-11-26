@@ -57,6 +57,24 @@
 </div>
 
 <div class="card">
+  <h2><i class="fa-solid fa-user-gear"></i> حساب المالك</h2>
+  <div class="form-grid">
+    <input type="email" id="accNewEmail" placeholder="بريد جديد (اختياري)">
+    <input type="password" id="accNewPassword" placeholder="كلمة مرور جديدة (اختيارية) - ٨ أحرف على الأقل" autocomplete="new-password">
+    <input type="password" id="accNewPassword2" placeholder="تأكيد كلمة المرور الجديدة" autocomplete="new-password">
+    <input type="password" id="accCurrentPassword" placeholder="كلمة المرور الحالية (إلزامية لأي تغيير)" autocomplete="current-password">
+  </div>
+  <div class="form-actions">
+    <button class="btn" onclick="saveOwnerAccount()"><i class="fa-solid fa-floppy-disk"></i> حفظ تغييرات الحساب</button>
+  </div>
+  <div class="hint">
+    <i class="fa-solid fa-circle-info"></i>
+    اترك الحقل فارغًا إن لم ترد تغييره. يُطلب إدخال كلمة المرور الحالية للتأكد من هويتك قبل أي تغيير.
+    بعد تغيير البريد، استخدم البريد الجديد عند تسجيل الدخول القادم.
+  </div>
+</div>
+
+<div class="card">
   <h2><i class="fa-solid fa-users"></i> الموظفون الحاليون</h2>
   <div id="empListWrap"></div>
   <div class="hint">
