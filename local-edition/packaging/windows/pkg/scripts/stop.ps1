@@ -11,7 +11,7 @@ function Stop-All {
         Remove-Item $pf -Force -ErrorAction SilentlyContinue
     }
     if (Test-Path (Join-Path $Data 'pgdata\postmaster.pid')) {
-        & (Join-Path $Pg 'pg_ctl.exe') -D (Join-Path $Data 'pgdata') -m fast -w stop | Out-Null
+        [void](Run-Quiet (Join-Path $Pg 'pg_ctl.exe') @('-D', (Join-Path $Data 'pgdata'), '-m', 'fast', '-w', 'stop') 'pgctl-stop' 120)
     }
 }
 if ($MyInvocation.InvocationName -ne '.') { Stop-All; Write-Host 'Clinic system stopped.' }

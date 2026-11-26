@@ -97,7 +97,7 @@ jobs:
             Note 'first-start-seconds' ([int]((Get-Date) - $t0).TotalSeconds)
             Note 'start-tail' (($lastOut -replace '[\r\n"]',' '))
             Note 'index-http' (Http 'https://localhost:8443/index.html' @())
-            Note 'config-origin-based' ([int]((& curl.exe -s -k --ssl-no-revoke https://localhost:8443/js/config.local.js) -match 'window.location.origin'))
+            Note 'config-origin-based' ([int]((((& curl.exe -s -k --ssl-no-revoke https://localhost:8443/js/config.local.js) | Out-String)) -match 'window.location.origin'))
             Note 'server-dir-http' (Http 'https://localhost:8443/server/provision-server.mjs' @())
             # owner bootstrap through the repo script (piped, synthetic)
             $em = "owner-$([guid]::NewGuid().ToString('N').Substring(0,6))@example.test"; $pw = "Own-$([guid]::NewGuid().ToString('N'))"

@@ -1,5 +1,5 @@
 # Shared paths and helpers. Dot-sourced by start/stop/backup scripts.
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Continue'
 $Script:Root   = Split-Path -Parent $PSScriptRoot
 $Script:Rt     = Join-Path $Root 'runtime'
 $Script:Data   = Join-Path $Root 'data'
@@ -54,4 +54,13 @@ function Start-Svc([string]$name, [string]$exe, [string[]]$argv, [hashtable]$env
     }
     Add-Content -Path (Join-Path $Data 'pids.txt') -Value ("{0} {1}" -f $name, $p.Id)
     return $p
+}
+
+# Run a program with output sent to a file (never a pipe), so services it spawns cannot keep us waiting.
+function Run-Quiet([string]$exe, [string[]]$argv, [string]$logName, [int]$seconds = 180) {
+    $q = @($argv | ForEach-Object { if ($_ -match '\s' -and $_ -notmatch '^"') { '"' + $_ + '"' } else { $_ } })
+    $p = Start-Process -FilePath $exe -ArgumentList $q -WindowStyle Hidden -PassThru `
+        -RedirectStandardOutput (Join-Path $Logs "$logName.out.log") -RedirectStandardError (Join-Path $Logs "$logName.err.log")
+    if (-not $p.WaitForExit($seconds * 1000)) { try { $p.Kill() } catch {}; return -999 }
+    return $p.ExitCode
 }

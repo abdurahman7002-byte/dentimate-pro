@@ -32,12 +32,12 @@ if (-not (Test-Path (Join-Path $PgData 'PG_VERSION'))) {
     Say 'First run: creating the database...'
     $pw = Join-Path $Data 'pw.tmp'
     Set-Content -Path $pw -Value $S.pg_superuser -Encoding ASCII -NoNewline
-    & (Join-Path $Pg 'initdb.exe') -D $PgData -U postgres -E UTF8 --auth=scram-sha-256 "--pwfile=$pw" | Out-Null
+    $rc = Run-Quiet (Join-Path $Pg 'initdb.exe') @('-D', $PgData, '-U', 'postgres', '-E', 'UTF8', '--auth=scram-sha-256', "--pwfile=$pw") 'initdb' 240
     Remove-Item $pw -Force
-    if ($LASTEXITCODE -ne 0) { throw 'initdb failed' }
+    if ($rc -ne 0) { throw 'initdb failed (see data\logs\initdb.err.log)' }
 }
-& (Join-Path $Pg 'pg_ctl.exe') -D $PgData -o "-p $PgPort -c listen_addresses=127.0.0.1" -l (Join-Path $Logs 'postgres.log') -w start | Out-Null
-if ($LASTEXITCODE -ne 0) { throw 'Postgres did not start (see data\logs\postgres.log)' }
+$rc = Run-Quiet (Join-Path $Pg 'pg_ctl.exe') @('-D', $PgData, '-o', "-p $PgPort -c listen_addresses=127.0.0.1", '-l', (Join-Path $Logs 'postgres.log'), '-w', 'start') 'pgctl-start' 120
+if ($rc -ne 0) { throw 'Postgres did not start (see data\logs\postgres.log)' }
 
 $authEnv = @{
     GOTRUE_DB_DRIVER = 'postgres'
