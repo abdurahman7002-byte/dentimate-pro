@@ -6070,6 +6070,35 @@ async function openClinicPage() {
 9. INIT
 ========================= */
 
+/* Owner-only: reveal the employees entry in the More menu. The item is
+   hidden by default and stays hidden on any error; page-guard on
+   employees.html remains the real access control. */
+async function revealEmployeesMenuForOwner(){
+
+    try {
+
+        const el = document.getElementById("employeesMenuItem");
+
+        if(!el) return;
+
+        const { data, error } =
+            await supabaseClient.rpc("is_admin");
+
+        if(!error && data === true){
+
+            el.style.display = "";
+
+        }
+
+    } catch (_) {
+
+        /* stay hidden */
+
+    }
+
+}
+
+
 async function initDashboard(){
 
     const { data } =
@@ -6086,6 +6115,9 @@ async function initDashboard(){
 
 
     await initUser();
+
+
+    revealEmployeesMenuForOwner();
 
 
     loadDepartmentsDropdown();

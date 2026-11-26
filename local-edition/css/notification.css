@@ -907,6 +907,11 @@
     background: rgba(var(--rgb-amber), .1);
 }
 
+.moore-item-icon.employees {
+    color: #34d399;
+    background: rgba(52, 211, 153, .1);
+}
+
 
 /* =========================================================
    BODY LOCK

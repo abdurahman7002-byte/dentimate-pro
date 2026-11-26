@@ -25,6 +25,16 @@ await page.click('button:has-text("Login")');
 await page.waitForURL('**/dashboard.html', { timeout: 20000 }).catch(() => fail('login', 'no navigation to dashboard.html'));
 ok('login=ok');
 
+// owner-only nav entry: present in the More menu, hidden by default,
+// revealed only when is_admin() confirms the owner
+await page.waitForSelector('#employeesMenuItem', { state: 'attached', timeout: 10000 }).catch(() => fail('nav', 'employees menu item missing'));
+const navShown = await page.waitForFunction(() => {
+    const el = document.getElementById('employeesMenuItem');
+    return el && el.getAttribute('href') === 'employees.html' && getComputedStyle(el).display !== 'none';
+}, { timeout: 10000 }).then(() => true).catch(() => false);
+if (!navShown) fail('nav', 'employees menu item not revealed for owner');
+ok('employees-nav-owner=ok');
+
 // 2. the account card exists on the employees page with all four fields
 await page.goto(BASE + '/employees.html', { waitUntil: 'domcontentloaded' });
 for (const id of ['#accNewEmail', '#accNewPassword', '#accNewPassword2', '#accCurrentPassword']) {
