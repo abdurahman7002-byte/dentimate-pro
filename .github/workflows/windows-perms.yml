@@ -9,6 +9,8 @@ on:
       - '.github/workflows/windows-perms.yml'
       - 'local-edition/packaging/windows/pkg/uitest/perms*'
       - 'local-edition/js/supabase.js'
+      - 'local-edition/pricing.html'
+      - 'local-edition/patients.html'
 jobs:
   perms:
     runs-on: windows-latest
@@ -51,7 +53,7 @@ jobs:
             $env:OWNER_EM = $em; $env:OWNER_PW = $pw
             $env:PHASE = 'before'
             Note 'before' ((& node perms.mjs 2>&1 | Out-String) -replace '[\r\n"]',' ')
-            Copy-Item "$env:GITHUB_WORKSPACE\local-edition\js\supabase.js" "$R\app\web\js\supabase.js" -Force
+            foreach ($f in 'js\supabase.js','js\preferences.js','pricing.html','patients.html') { Copy-Item "$env:GITHUB_WORKSPACE\local-edition\$f" "$R\app\web\$f" -Force }
             Start-Sleep -Seconds 61
             $env:PHASE = 'after'
             Note 'after' ((& node perms.mjs 2>&1 | Out-String) -replace '[\r\n"]',' ')
