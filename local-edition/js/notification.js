@@ -21,6 +21,10 @@ let notificationsCatchUpSince = new Date().toISOString();
 // Every successful (re-)SUBSCRIBED resets the counter and runs the catch-up
 // fetch, so changes committed during the outage still surface.
 let notificationRealtimeRetries = 0;
+// exactly one pending resubscribe timer per subscription: a dying channel can
+// emit both CHANNEL_ERROR and TIMED_OUT before removal, and each event would
+// otherwise stack another timer that resubscribes over a healthy channel
+let notificationRealtimeRetryTimer = null;
 let notificationToastContainer = null;
 let notificationInitialized = false;
 let notificationRefreshInterval = null;
@@ -1237,7 +1241,13 @@ async function startNotificationRealtime() {
                 notificationRealtimeRetries++;
                 const delay = notificationRealtimeRetries <= 5 ? Math.min(5000 * notificationRealtimeRetries, 25000) : 30000;
                 console.warn(`🔁 Notification realtime ${status} - resubscribe attempt ${notificationRealtimeRetries} in ${delay}ms`);
-                setTimeout(() => { startNotificationRealtime(); }, delay);
+                if (notificationRealtimeRetryTimer) clearTimeout(notificationRealtimeRetryTimer);
+                const myTimer = setTimeout(() => {
+                    if (notificationRealtimeRetryTimer !== myTimer) return; // superseded or cleared on teardown
+                    notificationRealtimeRetryTimer = null;
+                    startNotificationRealtime();
+                }, delay);
+                notificationRealtimeRetryTimer = myTimer;
             }
             if (status === "CHANNEL_ERROR") console.error("❌ Notification Realtime CHANNEL ERROR");
             if (status === "TIMED_OUT") console.error("⏱️ Notification Realtime TIMED OUT");
@@ -1256,6 +1266,8 @@ async function startNotificationRealtime() {
 // minutes, so retries ramp 5..25s then continue every 30s while the page is
 // open instead of leaving these subscriptions dead until the next page load.
 const sourceRealtimeRetries = { patient_visits: 0, lab_works: 0, inventory_items: 0 };
+// one pending resubscribe timer per table, same reasoning as the notifications channel
+const sourceRealtimeRetryTimers = { patient_visits: null, lab_works: null, inventory_items: null };
 
 function subscribeSourceChannel(table, userId, assign) {
     const ch = supabaseClient
@@ -1275,10 +1287,14 @@ function subscribeSourceChannel(table, userId, assign) {
                 sourceRealtimeRetries[table]++;
                 const delay = sourceRealtimeRetries[table] <= 5 ? Math.min(5000 * sourceRealtimeRetries[table], 25000) : 30000;
                 console.warn(`🔁 ${table} realtime ${status} - resubscribe attempt ${sourceRealtimeRetries[table]} in ${delay}ms`);
-                setTimeout(async () => {
+                if (sourceRealtimeRetryTimers[table]) clearTimeout(sourceRealtimeRetryTimers[table]);
+                const myTimer = setTimeout(async () => {
+                    if (sourceRealtimeRetryTimers[table] !== myTimer) return; // superseded or cleared on teardown
+                    sourceRealtimeRetryTimers[table] = null;
                     try { await supabaseClient.removeChannel(ch); } catch (e) {}
                     assign(subscribeSourceChannel(table, userId, assign));
                 }, delay);
+                sourceRealtimeRetryTimers[table] = myTimer;
             }
         });
     return ch;
@@ -1311,6 +1327,13 @@ async function startSourceRealtime() {
 }
 
 async function stopSourceRealtime() {
+    for (const table of Object.keys(sourceRealtimeRetryTimers)) {
+        if (sourceRealtimeRetryTimers[table]) {
+            clearTimeout(sourceRealtimeRetryTimers[table]);
+            sourceRealtimeRetryTimers[table] = null;
+        }
+        sourceRealtimeRetries[table] = 0;
+    }
     if (visitsRealtimeChannel) {
         try { await supabaseClient.removeChannel(visitsRealtimeChannel); } catch(e){}
         visitsRealtimeChannel = null;
@@ -1347,6 +1370,11 @@ async function initNotifications() {
 }
 
 async function stopNotificationRealtime() {
+    if (notificationRealtimeRetryTimer) {
+        clearTimeout(notificationRealtimeRetryTimer);
+        notificationRealtimeRetryTimer = null;
+    }
+    notificationRealtimeRetries = 0;
     if (notificationRealtimeChannel) {
         try {
             await supabaseClient.removeChannel(notificationRealtimeChannel);
