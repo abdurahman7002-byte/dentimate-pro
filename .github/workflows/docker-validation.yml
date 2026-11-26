@@ -145,6 +145,31 @@ jobs:
       # must not keep independent validation unobserved. It first RECREATES
       # the realtime container (fresh container = fresh replication state),
       # which also answers whether force-recreate heals the restart fault.
+      - name: WS handshake probe (restarted realtime, status codes only)
+        if: failure()
+        working-directory: local-edition/deploy
+        run: |
+          set +e
+          # After the reconnect-gate failure the realtime container is the
+          # RESTARTED one (the smoke step below force-recreates it). The
+          # client evidence: socket stuck 'connecting' = the WS upgrade never
+          # completes, while plain HTTP answers (direct 200, Kong 404 from
+          # realtime). Localize: does the upgrade hang at the app, or only on
+          # the Kong path? Status codes and curl exit codes only.
+          ANON_KEY="$(grep -m1 '^ANON_KEY=' .env | cut -d= -f2-)"
+          RT_IP="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$($COMPOSE ps -q realtime)")"
+          H1='Connection: Upgrade'
+          H2='Upgrade: websocket'
+          H3='Sec-WebSocket-Version: 13'
+          H4='Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ=='
+          code=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 8             -H "$H1" -H "$H2" -H "$H3" -H "$H4"             "https://localhost:8443/realtime/v1/websocket?apikey=$ANON_KEY&vsn=1.0.0")
+          echo "rt-ws-kong-code=$code rc=$?"
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 8             -H "$H1" -H "$H2" -H "$H3" -H "$H4"             "http://$RT_IP:4000/realtime/v1/websocket?apikey=$ANON_KEY&vsn=1.0.0")
+          echo "rt-ws-direct-code=$code rc=$?"
+          # healthy = 101 with rc=28 (curl times out holding the open socket);
+          # wedged = 000 rc=28 (no response) or a quick 4xx/5xx
+          exit 0
+
       - name: UI acceptance smoke (fixture-only, always runs)
         if: always()
         working-directory: local-edition/packaging/official
