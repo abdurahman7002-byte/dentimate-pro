@@ -37,9 +37,12 @@ function Invoke-Psql([string]$sql, [string]$file, [hashtable]$vars) {
     $env:PGPASSWORD = $s.pg_superuser
     $a = @('-h','127.0.0.1','-p',"$PgPort",'-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-q')
     if ($vars) { foreach ($k in $vars.Keys) { $a += @('-v', "$k=$($vars[$k])") } }
-    if ($file) { $a += @('-f', $file) } else { $a += @('-c', $sql) }
+    $tmp = $null
+    if ($file) { $a += @('-f', $file) } else { $tmp = Join-Path $Data 'tmp.sql'; Set-Content -Path $tmp -Value $sql -Encoding ASCII; $a += @('-f', $tmp) }
     & (Join-Path $Pg 'psql.exe') @a
-    if ($LASTEXITCODE -ne 0) { throw "psql failed ($file$sql)" }
+    $rc = $LASTEXITCODE
+    if ($tmp) { Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
+    if ($rc -ne 0) { throw "psql failed ($file$sql)" }
 }
 function Start-Svc([string]$name, [string]$exe, [string[]]$argv, [hashtable]$envv, [string]$cwd) {
     foreach ($k in $envv.Keys) { Set-Item -Path "Env:$k" -Value ([string]$envv[$k]) }
