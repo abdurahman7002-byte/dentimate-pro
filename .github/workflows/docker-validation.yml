@@ -290,13 +290,22 @@ jobs:
                 *"rror"*|*"xception"*) CCLASS="unclassified-error-present";;
               esac
               echo "$C-log-class=$CCLASS"
-              # bare identifier tokens only (error class name, missing relation/db
-              # name) - fixed-shape system identifiers, never message text
-              ETOK="$(printf '%s' "$CLOG" | grep -oE '[A-Za-z]*Error' | head -1 || true)"
-              echo "$C-error-token=${ETOK:-none}"
+              # bare identifier tokens only (error class names, missing relation/db
+              # name, SQLSTATE) - fixed-shape system identifiers, never message text
+              ETOKS="$(printf '%s' "$CLOG" | grep -oE '[A-Za-z]*Error' | sort -u | head -3 | paste -sd, || true)"
+              echo "$C-error-tokens=${ETOKS:-none}"
               MTOK="$(printf '%s' "$CLOG" | grep -oE '(relation|database|role|schema) "[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?" does not exist' | head -1 || true)"
               echo "$C-missing-object=${MTOK:-none}"
+              SQLSTATE="$(printf '%s' "$CLOG" | grep -oE '"code": ?"[0-9A-Z]{5}"' | head -1 | grep -oE '[0-9A-Z]{5}' || true)"
+              echo "$C-sqlstate=${SQLSTATE:-none}"
             done
+            # direct restore-db probes while leftovers persist (counts/booleans only)
+            docker ps -a --format '{{.Names}}' | grep -q '^dentix-restore-db$' && {
+              docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d restore_verify -tA                 -c "select 'restore-storage-migrations='||count(*) from storage.migrations" 2>/dev/null || echo 'restore-storage-migrations=probe-failed'
+              docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d restore_verify -tA                 -c "select 'restore-storage-buckets='||count(*) from storage.buckets" 2>/dev/null || echo 'restore-storage-buckets=probe-failed'
+              if docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_storage_admin -d restore_verify -tA                 -c "select 1" >/dev/null 2>&1; then echo "restore-storage-admin-login=ok"; else echo "restore-storage-admin-login=fail"; fi
+              if docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U authenticator -d restore_verify -tA                 -c "select 1" >/dev/null 2>&1; then echo "restore-authenticator-login=ok"; else echo "restore-authenticator-login=fail"; fi
+            }
             docker rm -f dentix-restore-storage dentix-restore-rest dentix-restore-db >/dev/null 2>&1 || true
             docker network rm dentix-restore-net >/dev/null 2>&1 || true
           fi
