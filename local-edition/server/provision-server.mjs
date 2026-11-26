@@ -200,10 +200,10 @@ const server = http.createServer(async (req, res) => {
             return json(res, 404, { error: 'not found' });
         }
         const ip = req.socket.remoteAddress || 'unknown';
-        if (!rateOk('ip:' + ip, 30)) return json(res, 429, { error: 'محاولات كثيرة - انتظر دقيقة' });
+        if (!rateOk('ip:' + ip, 30)) return json(res, 429, { error: 'محاولات كثيرة - انتظر دقيقة', reason: 'rate_limited' });
         // same-origin guard: browsers send Origin; reject anything but the app origin
         const origin = req.headers.origin;
-        if (origin && origin !== ALLOWED_ORIGIN) return json(res, 403, { error: 'مصدر غير مسموح' });
+        if (origin && origin !== ALLOWED_ORIGIN) return json(res, 403, { error: 'مصدر غير مسموح', reason: 'origin_denied' });
 
 
         let body = {};
@@ -213,16 +213,16 @@ const server = http.createServer(async (req, res) => {
                 req.on('data', c => { d += c; if (d.length > 2048) { no(new Error('too large')); req.destroy(); } });
                 req.on('end', () => ok(d)); req.on('error', no);
             }));
-        } catch { return json(res, 400, { error: 'body غير صالح' }); }
+        } catch { return json(res, 400, { error: 'body غير صالح', reason: 'bad_body' }); }
         const employeeId = body && body.employee_id;
         if (action !== '/account' && (!employeeId || typeof employeeId !== 'string')) return json(res, 400, { error: 'employee_id مطلوب' });
         const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-        if (!token) return json(res, 401, { error: 'مطلوب تسجيل دخول المالك' });
+        if (!token) return json(res, 401, { error: 'مطلوب تسجيل دخول المالك', reason: 'missing_token' });
 
         const user = await callerUser(token);
-        if (!user) return json(res, 401, { error: 'جلسة غير صالحة' });
-        if (!rateOk('uid:' + user.id, 10)) return json(res, 429, { error: 'محاولات كثيرة - انتظر دقيقة' });
-        if (!await isClinicAdmin(user.id)) return json(res, 403, { error: 'هذه العملية للمالك فقط' });
+        if (!user) return json(res, 401, { error: 'جلسة غير صالحة', reason: 'invalid_session' });
+        if (!rateOk('uid:' + user.id, 10)) return json(res, 429, { error: 'محاولات كثيرة - انتظر دقيقة', reason: 'rate_limited' });
+        if (!await isClinicAdmin(user.id)) return json(res, 403, { error: 'هذه العملية للمالك فقط', reason: 'owner_only' });
 
         if (action === '/account') {
             // Owner edits their OWN login: identity is proven with the CURRENT
@@ -231,19 +231,19 @@ const server = http.createServer(async (req, res) => {
             const current = body && body.current_password;
             const newEmail = body && typeof body.new_email === 'string' ? body.new_email.trim() : '';
             const newPassword = body && typeof body.new_password === 'string' ? body.new_password : '';
-            if (!current || typeof current !== 'string') return json(res, 400, { error: 'كلمة المرور الحالية مطلوبة' });
-            if (!newEmail && !newPassword) return json(res, 400, { error: 'لا يوجد تغيير مطلوب' });
-            if (newEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newEmail)) return json(res, 400, { error: 'صيغة البريد غير صالحة' });
-            if (newPassword && newPassword.length < 8) return json(res, 400, { error: 'كلمة المرور الجديدة قصيرة - ٨ أحرف على الأقل' });
-            if (!await verifyUserPassword(user.email, current)) return json(res, 401, { error: 'كلمة المرور الحالية غير صحيحة' });
+            if (!current || typeof current !== 'string') return json(res, 400, { error: 'كلمة المرور الحالية مطلوبة', reason: 'current_password_required' });
+            if (!newEmail && !newPassword) return json(res, 400, { error: 'لا يوجد تغيير مطلوب', reason: 'no_change' });
+            if (newEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newEmail)) return json(res, 400, { error: 'صيغة البريد غير صالحة', reason: 'bad_email_format' });
+            if (newPassword && newPassword.length < 8) return json(res, 400, { error: 'كلمة المرور الجديدة قصيرة - ٨ أحرف على الأقل', reason: 'new_password_too_short' });
+            if (!await verifyUserPassword(user.email, current)) return json(res, 401, { error: 'كلمة المرور الحالية غير صحيحة', reason: 'wrong_current_password' });
             if (newEmail && newEmail !== user.email) {
                 const dup = await findAuthUserByEmail(newEmail);
-                if (dup) return json(res, 409, { error: 'يوجد حساب بهذا البريد بالفعل' });
-                if (!await setAuthUserEmail(user.id, newEmail)) return json(res, 502, { error: 'تعذر تحديث البريد - لم يتغير شيء' });
+                if (dup) return json(res, 409, { error: 'يوجد حساب بهذا البريد بالفعل', reason: 'email_exists' });
+                if (!await setAuthUserEmail(user.id, newEmail)) return json(res, 502, { error: 'تعذر تحديث البريد - لم يتغير شيء', reason: 'email_update_failed' });
             }
             if (newPassword) {
                 if (!await setAuthUserPassword(user.id, newPassword)) {
-                    return json(res, 502, { error: newEmail ? 'تم تحديث البريد وتعذرت كلمة المرور' : 'تعذر تحديث كلمة المرور' });
+                    return json(res, 502, { error: newEmail ? 'تم تحديث البريد وتعذرت كلمة المرور' : 'تعذر تحديث كلمة المرور', reason: 'password_update_failed' });
                 }
                 if (!await revokeUserSessions(user.id)) {
                     return json(res, 502, { error: 'تم تحديث كلمة المرور وتعذر إنهاء الجلسات - سجّل الدخول بكلمة المرور الجديدة' });
@@ -290,6 +290,7 @@ const bootServer = http.createServer(async (req, res) => {
         if (req.method !== 'POST' || !['/bootstrap-owner', '/owner-reset'].includes(action)) {
             return json(res, 404, { error: 'not found' });
         }
+        const ip = req.socket.remoteAddress || 'unknown';
         if (action === '/owner-reset') {
             // FORGOTTEN owner password. Loopback-only: shell access to the host
             // IS the authority here (same trust as the database volume itself).
@@ -302,20 +303,19 @@ const bootServer = http.createServer(async (req, res) => {
                     req.on('data', c => { d += c; if (d.length > 2048) { no(new Error('too large')); req.destroy(); } });
                     req.on('end', () => ok(d)); req.on('error', no);
                 }));
-            } catch { return json(res, 400, { error: 'body غير صالح' }); }
+            } catch { return json(res, 400, { error: 'body غير صالح', reason: 'bad_body' }); }
             const email = typeof body.email === 'string' ? body.email.trim() : '';
             const password = typeof body.password === 'string' ? body.password : '';
-            if (!email || !password) return json(res, 400, { error: 'email و password مطلوبان' });
-            if (password.length < 8) return json(res, 400, { error: 'كلمة المرور قصيرة - ٨ أحرف على الأقل' });
-            if (!rateOk('owner-reset:' + ip, 5)) return json(res, 429, { error: 'محاولات كثيرة - انتظر دقيقة' });
+            if (!email || !password) return json(res, 400, { error: 'email و password مطلوبان', reason: 'missing_fields' });
+            if (password.length < 8) return json(res, 400, { error: 'كلمة المرور قصيرة - ٨ أحرف على الأقل', reason: 'password_too_short' });
+            if (!rateOk('owner-reset:' + ip, 5)) return json(res, 429, { error: 'محاولات كثيرة - انتظر دقيقة', reason: 'rate_limited' });
             const user = await findAuthUserByEmail(email);
-            if (!user) return json(res, 404, { error: 'لا يوجد حساب بهذا البريد' });
-            if (!await isClinicAdmin(user.id)) return json(res, 403, { error: 'هذا الحساب ليس حساب مالك' });
-            if (!await setAuthUserPassword(user.id, password)) return json(res, 502, { error: 'تعذر تحديث كلمة المرور' });
+            if (!user) return json(res, 404, { error: 'لا يوجد حساب بهذا البريد', reason: 'no_such_account' });
+            if (!await isClinicAdmin(user.id)) return json(res, 403, { error: 'هذا الحساب ليس حساب مالك', reason: 'owner_only' });
+            if (!await setAuthUserPassword(user.id, password)) return json(res, 502, { error: 'تعذر تحديث كلمة المرور', reason: 'password_update_failed' });
             await revokeUserSessions(user.id);
             return json(res, 200, { ok: true, email }); // password never echoed
         }
-        const ip = req.socket.remoteAddress || 'unknown';
         let body = {};
         try {
             body = JSON.parse(await new Promise((ok, no) => {
@@ -323,7 +323,7 @@ const bootServer = http.createServer(async (req, res) => {
                 req.on('data', c => { d += c; if (d.length > 2048) { no(new Error('too large')); req.destroy(); } });
                 req.on('end', () => ok(d)); req.on('error', no);
             }));
-        } catch { return json(res, 400, { error: 'body غير صالح' }); }
+        } catch { return json(res, 400, { error: 'body غير صالح', reason: 'bad_body' }); }
         return await handleBootstrap(res, ip, body);
     } catch (e) {
         return json(res, 500, { error: 'خطأ داخلي' });

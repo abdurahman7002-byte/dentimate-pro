@@ -104,6 +104,27 @@ jobs:
             "https://localhost/auth/v1/token?grant_type=password" -H "apikey: $ANON_KEY" \
             -H 'Content-Type: application/json' \
             -d "{\"email\":\"ci-owner@clinic.local\",\"password\":\"$OWNER_PASSWORD\"}"
+          # owner-reset exposure negatives (loopback-only enforcement):
+          # 1) the public TLS origin must not route /owner-reset at all
+          PUB=$(curl -sk --cacert "$NODE_EXTRA_CA_CERTS" -o /dev/null -w '%{http_code}' -X POST "https://localhost/owner-reset" -H 'Content-Type: application/json' -d '{}')
+          echo "owner-reset-via-public-origin=$PUB"
+          test "$PUB" != "200"
+          # 2) the loopback listener port must not be reachable from the host
+          if timeout 3 bash -c 'echo > /dev/tcp/127.0.0.1/9091' 2>/dev/null; then
+            echo "owner-reset-loopback-port=REACHABLE-unexpected"; exit 1
+          else
+            echo "owner-reset-loopback-port=not-published"
+          fi
+          # 3) owner-only enforcement: a non-owner account is refused and state stays intact
+          if printf 'not-an-owner@clinic.local\n%s\n%s\n' "$TMPPW" "$TMPPW" | $COMPOSE exec -T provision node reset-owner.mjs; then
+            echo "owner-reset-non-owner=ACCEPTED-unexpected"; exit 1
+          else
+            echo "owner-reset-non-owner=refused"
+          fi
+          curl -fsS --cacert "$NODE_EXTRA_CA_CERTS" -o /dev/null -w 'owner-login-after-negatives=%{http_code}\n' \
+            "https://localhost/auth/v1/token?grant_type=password" -H "apikey: $ANON_KEY" \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"ci-owner@clinic.local\",\"password\":\"$OWNER_PASSWORD\"}"
 
       - name: Authenticated smoke (login, employee provision, RLS/storage negatives, revoke)
         working-directory: local-edition

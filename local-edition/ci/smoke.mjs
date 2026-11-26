@@ -109,7 +109,11 @@ const AH = (tok) => ({ apikey: ANON_KEY, Authorization: `Bearer ${tok}`, 'Conten
 const TMP_PW = 'tmp-' + crypto.randomUUID();
 const TMP_EMAIL = 'ci-owner-alias@clinic.local';
 
-const accDetail = async (r) => String(r.status) + ' ' + (((await r.json().catch(() => null)) || {}).error || '');
+// Public logs carry the allowlisted reason LABEL only, never server text.
+const accDetail = async (r) => {
+    const b = await r.json().catch(() => null);
+    return String(r.status) + ' ' + ((b && b.reason) || 'unmapped');
+};
 
 const e1 = await fetch(ACC, { method: 'POST', headers: AH(empTok), body: JSON.stringify({ current_password: 'fixture', new_password: 'x'.repeat(10) }) });
 check('employee token: /account DENIED (owner only)', e1.status === 403, String(e1.status));
@@ -127,8 +131,20 @@ if (c1.ok) {
     // expiry (JWT_EXPIRY, 3600s default) - that bound is asserted, not hidden.
     const refreshed = await tryRefresh(preSess && preSess.refresh_token);
     check('refresh token of the changing session: REVOKED immediately', refreshed === false, refreshed ? 'still-alive' : 'revoked');
-    const stale = await fetch(`${BASE}/rest/v1/employees?select=id&limit=1`, { headers: AH(owner) });
-    console.log(`stale-access-token-after-password-change valid=${stale.ok} (bounded by JWT_EXPIRY, not silent)`);
+    // old-token behavior after a password change, asserted explicitly:
+    const oldTok = owner;
+    const claims = JSON.parse(Buffer.from(String(oldTok).split('.')[1], 'base64url').toString('utf8'));
+    const remaining = claims.exp - Math.floor(Date.now() / 1000);
+    check('old access token: remaining lifetime within JWT_EXPIRY bound (<=3600s)', remaining > 0 && remaining <= 3600, 'remaining-s=' + remaining);
+    // a privileged CHANGE with the old token must be impossible without
+    // re-authentication: /account with an empty body may only refuse
+    // (400 current_password_required = session alive but change denied;
+    //  401 invalid_session = session dead). 200 is never acceptable.
+    const staleAcc = await fetch(ACC, { method: 'POST', headers: AH(oldTok), body: '{}' });
+    const staleLabel = await accDetail(staleAcc);
+    check('old access token: /account allows no privileged change (400/401 only)', staleAcc.status === 400 || staleAcc.status === 401, staleLabel);
+    const stale = await fetch(`${BASE}/rest/v1/employees?select=id&limit=1`, { headers: AH(oldTok) });
+    console.log(`old-token-after-password-change: account=${staleLabel} rest-read-accepted=${stale.ok} (stateless JWT; lifetime bound asserted; refresh revoked)`);
     owner = await login(OWNER_EMAIL, TMP_PW);
     check('login with NEW password works', !!owner, 'login-failed');
     const c2 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: TMP_PW, new_password: OWNER_PASSWORD }) });
