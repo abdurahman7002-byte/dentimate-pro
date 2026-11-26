@@ -126,7 +126,8 @@ jobs:
           [ "$code" = "403" ] && [ "$code2" = "403" ] || { echo "::error title=stage4::unexpected codes $code $code2: $(tail -c 300 /c/spike/prov.log | tr '\n' ' ')"; exit 1; }
       - name: Stage 5 - owner bootstrap + Caddy TLS web serving on Windows
         run: |
-          say(){ echo "$1"; echo "::notice title=spike::$1"; }
+          say(){ echo "$1"; echo "$1" >> /c/spike/sum5.txt; }
+          trap 'echo "::notice title=stage5-summary::$(tr "\n" " " </c/spike/sum5.txt)"' EXIT
           cd /c/spike
           JWT="$(cat jwt.txt)"
           mint(){ ROLE="$1" JWT="$JWT" node -e "const c=require('crypto');const b=o=>Buffer.from(JSON.stringify(o)).toString('base64url');const h=b({alg:'HS256',typ:'JWT'})+'.'+b({role:process.env.ROLE,iss:'spike',exp:Math.floor(Date.now()/1000)+3600});console.log(h+'.'+c.createHmac('sha256',process.env.JWT).update(h).digest('base64url'))"; }
@@ -189,3 +190,31 @@ jobs:
           say "stage5-owner-is_admin=$(curl -sk -X POST -H "apikey: $ANON" -H "Authorization: Bearer $tok" https://localhost:8443/rest/v1/rpc/is_admin | head -c 20)"
           say "stage5-owner-provision-http=$(curl -sk -o /c/spike/p5.txt -w '%{http_code}' -X POST https://localhost:8443/provision -H 'Content-Type: application/json' -H 'Origin: https://clinic.lan' -H "Authorization: Bearer $tok" -d '{"employee_id":"00000000-0000-0000-0000-000000000000"}') reason=$(sed -n 's/.*"error":"\([^"]*\)".*/\1/p' /c/spike/p5.txt | head -c 60)"
           [ -n "$tok" ] || { echo "::error title=stage5::owner login failed: $(tail -c 300 /c/spike/auth.log | tr '\n' ' ')"; exit 1; }
+      - name: Stage 6 - Supabase storage-api (Node, file backend) on Windows
+        if: always()
+        run: |
+          set +e
+          say(){ echo "$1"; echo "$1" >> /c/spike/sum6.txt; }
+          trap 'echo "::notice title=stage6-summary::$(tr "\n" " " </c/spike/sum6.txt)"' EXIT
+          cd /c/spike
+          PGB=/c/spike/pgsql/bin/psql.exe; PGP="$(cat pgpass.txt)"; JWT="$(cat jwt.txt)"
+          mint(){ ROLE="$1" JWT="$JWT" node -e "const c=require('crypto');const b=o=>Buffer.from(JSON.stringify(o)).toString('base64url');const h=b({alg:'HS256',typ:'JWT'})+'.'+b({role:process.env.ROLE,iss:'spike',exp:Math.floor(Date.now()/1000)+3600});console.log(h+'.'+c.createHmac('sha256',process.env.JWT).update(h).digest('base64url'))"; }
+          ANON=$(mint anon); SVC=$(mint service_role)
+          git clone -q --depth 1 --branch v1.98.6 https://github.com/supabase/storage.git storage-src && say "stage6-clone=1" || { echo "::error title=stage6::storage clone failed"; exit 1; }
+          cd storage-src
+          npm ci --no-audit --no-fund >/c/spike/npmci.log 2>&1 && say "stage6-npm-ci=1" || { echo "::error title=stage6::npm ci failed: $(tail -c 400 /c/spike/npmci.log | tr '\n' ' ' | tr -d '"')"; exit 1; }
+          npm run build >/c/spike/npmbuild.log 2>&1 && say "stage6-build=1" || { echo "::error title=stage6::build failed: $(tail -c 500 /c/spike/npmbuild.log | tr '\n' ' ' | tr -d '"')"; exit 1; }
+          ls dist/start >/c/spike/dist.txt 2>&1; say "stage6-dist-start=$(tr '\n' ',' </c/spike/dist.txt)"
+          $PGB -h 127.0.0.1 -p 54329 -U postgres -c "grant create on database postgres to supabase_storage_admin; grant usage on schema public to supabase_storage_admin;" >/dev/null
+          mkdir -p /c/spike/storage-data
+          export DATABASE_URL="postgres://supabase_storage_admin:$PGP@127.0.0.1:54329/postgres" DATABASE_POOL_URL="" 
+          export ANON_KEY="$ANON" SERVICE_KEY="$SVC" AUTH_JWT_SECRET="$JWT" PGRST_JWT_SECRET="$JWT" POSTGREST_URL=http://127.0.0.1:3000
+          export SERVER_PORT=5000 SERVER_HOST=127.0.0.1 PORT=5000 STORAGE_BACKEND=file FILE_STORAGE_BACKEND_PATH=C:/spike/storage-data GLOBAL_S3_BUCKET=stub
+          export TENANT_ID=clinic REGION=local FILE_SIZE_LIMIT=52428800 ENABLE_IMAGE_TRANSFORMATION=false DB_INSTALL_ROLES=false
+          export REQUEST_ALLOW_X_FORWARDED_PATH=true STORAGE_PUBLIC_URL=https://localhost:8443 UPLOAD_FILE_SIZE_LIMIT=52428800 UPLOAD_FILE_SIZE_LIMIT_STANDARD=52428800
+          export S3_PROTOCOL_ACCESS_KEY_ID=spikekey S3_PROTOCOL_ACCESS_KEY_SECRET=spikesecret IS_MULTITENANT=false
+          (node dist/start/server.js >/c/spike/storage.log 2>&1 &)
+          for i in $(seq 1 40); do curl -s -o /dev/null http://127.0.0.1:5000/status && break; sleep 2; done
+          say "stage6-storage-status-http=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:5000/status)"
+          echo "::notice title=storagelog::$(tail -c 700 /c/spike/storage.log | tr '\n' ' ' | tr -d '\r"' | sed "s/$PGP/***/g")"
+          say "stage6-storage-schema-tables=$($PGB -h 127.0.0.1 -p 54329 -U postgres -tAc "select count(*) from information_schema.tables where table_schema='storage'")"
