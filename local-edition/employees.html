@@ -439,6 +439,10 @@
 <script src="js/config.js"></script>
 <script src="js/supabase.js"></script>
 <script>window.PAGE_KEY = "employees";</script>
+<script>
+/* notification.js (shared nav/menu code) expects getUserId(); this page does not load auth.js */
+window.getUserId = async function(){ try { const r = await window.supabaseClient.auth.getSession(); return (r.data && r.data.session) ? r.data.session.user.id : null; } catch (_) { return null; } };
+</script>
 <script src="js/preferences.js"></script>
 <script src="js/notification.js"></script>
 <script src="js/employees-nav.js"></script>
