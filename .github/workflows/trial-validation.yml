@@ -14,6 +14,15 @@ on:
       - '.devcontainer/**'
       - 'local-edition/packaging/trial/**'
       - '.github/workflows/trial-validation.yml'
+      # code the trial pipeline actually executes (its absence here let the
+      # owner-account work ship without trial revalidation)
+      - 'local-edition/server/**'
+      - 'local-edition/ci/**'
+      - 'local-edition/packaging/official/**'
+      - 'local-edition/packaging/docker-compose.dentix-override.yml'
+      - 'local-edition/packaging/post-boot-storage.sql'
+      - 'local-edition/packaging/post-boot-realtime.sql'
+      - 'local-edition/packaging/build-web.sh'
 
 env:
   COMPOSE: docker compose -f docker-compose.yml -f docker-compose.pg17.yml -f docker-compose.kong.yml -f ../docker-compose.dentix-override.yml -f ../trial/docker-compose.trial.yml --env-file .env.dentix

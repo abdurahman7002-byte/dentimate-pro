@@ -112,7 +112,7 @@ const TMP_EMAIL = 'ci-owner-alias@clinic.local';
 // Public logs carry the allowlisted reason LABEL only, never server text.
 const accDetail = async (r) => {
     const b = await r.json().catch(() => null);
-    return String(r.status) + ' ' + ((b && b.reason) || 'unmapped');
+    return String(r.status) + ' ' + ((b && (b.reason || (b.ok ? 'ok' : null))) || 'unmapped');
 };
 
 const e1 = await fetch(ACC, { method: 'POST', headers: AH(empTok), body: JSON.stringify({ current_password: 'fixture', new_password: 'x'.repeat(10) }) });
