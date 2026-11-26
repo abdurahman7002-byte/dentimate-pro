@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Stage 1 - stock PostgreSQL 17 zip binaries on Windows
         run: |
+          say(){ echo "$1"; echo "::notice title=spike::$1"; }
           set -u
           REPO="$(pwd)"
           mkdir -p /c/spike && cd /c/spike
@@ -28,32 +29,34 @@ jobs:
             if curl -fsIL "$url" >/dev/null 2>&1; then got="$v"; curl -fsSL -o pg.zip "$url"; break; fi
           done
           if [ -z "$got" ]; then echo "::error title=stage1::no EDB 17 zip url resolved"; exit 1; fi
-          echo "stage1-edb-zip-version=$got"
+          say "stage1-edb-zip-version=$got"
           unzip -q pg.zip
           PGBIN="/c/spike/pgsql/bin"
-          echo "stage1-binaries-present=$([ -x $PGBIN/pg_ctl.exe ] && echo 1 || echo 0)"
+          say "stage1-binaries-present=$([ -x $PGBIN/pg_ctl.exe ] && echo 1 || echo 0)"
           "$PGBIN/initdb.exe" -D /c/spike/data -U postgres --auth=trust -E UTF8 >/dev/null
           "$PGBIN/pg_ctl.exe" -D /c/spike/data -o "-p 54329" -l /c/spike/pg.log -w start >/dev/null
           "$PGBIN/psql.exe" -h 127.0.0.1 -p 54329 -U postgres -tAc "select 'pg-major=' || current_setting('server_version_num')::int/10000"
-          "$PGBIN/psql.exe" -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -c "create extension if not exists \"uuid-ossp\"; create extension if not exists pgcrypto;" >/dev/null && echo "stage1-extensions-uuid-pgcrypto=1" || { echo "::error title=stage1::extensions failed"; exit 1; }
+          "$PGBIN/psql.exe" -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -c "create extension if not exists \"uuid-ossp\"; create extension if not exists pgcrypto;" >/dev/null && say "stage1-extensions-uuid-pgcrypto=1" || { echo "::error title=stage1::extensions failed"; exit 1; }
           PGP="spk-$(openssl rand -hex 12)"
           echo "$PGP" > /c/spike/pgpass.txt
-          "$PGBIN/psql.exe" -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -v pgpass="$PGP" -f "$REPO/local-edition/packaging/windows/bootstrap-roles.sql" >/c/spike/roles.log 2>&1 && echo "stage1-roles=1" || { echo "::error title=stage1::roles sql failed: $(grep -i -m3 error /c/spike/roles.log | cut -c1-200 | tr '\n' ' ')"; exit 1; }
+          "$PGBIN/psql.exe" -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -v pgpass="$PGP" -f "$REPO/local-edition/packaging/windows/bootstrap-roles.sql" >/c/spike/roles.log 2>&1 && say "stage1-roles=1" || { echo "::error title=stage1::roles sql failed: $(grep -i -m3 error /c/spike/roles.log | cut -c1-200 | tr '\n' ' ')"; exit 1; }
       - name: Stage 3a - build Supabase Auth (GoTrue) for Windows
         run: |
+          say(){ echo "$1"; echo "::notice title=spike::$1"; }
           cd /c/spike
           git clone -q --depth 1 --branch v2.198.0 https://github.com/supabase/auth.git auth-src || { echo "::error title=stage3::clone failed"; exit 1; }
           cd auth-src
           go version
           # Finding from the first run: cmd/serve_cmd.go uses unix.SO_REUSEPORT, which does not
           # exist on Windows. Spike-only patch: skip the socket option and drop the unix import.
-          echo "stage3-unix-import-files=$(grep -rl 'golang.org/x/sys/unix' --include=*.go . | tr '\n' ' ')"
+          say "stage3-unix-import-files=$(grep -rl 'golang.org/x/sys/unix' --include=*.go . | tr '\n' ' ')"
           sed -i 's|serr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1).*|_ = fd|' cmd/serve_cmd.go
           sed -i '/"golang.org\/x\/sys\/unix"/d' cmd/serve_cmd.go
-          go build -o ../auth.exe . 2>/c/spike/gobuild.log && echo "stage3-auth-build=1" || { echo "::error title=stage3::go build failed: $(tail -c 300 /c/spike/gobuild.log | tr '\n' ' ')"; exit 1; }
+          go build -o ../auth.exe . 2>/c/spike/gobuild.log && say "stage3-auth-build=1" || { echo "::error title=stage3::go build failed: $(tail -c 300 /c/spike/gobuild.log | tr '\n' ' ')"; exit 1; }
           ls migrations | wc -l | sed 's/^/stage3-migration-files=/'
       - name: Stage 3b - run Auth migrations + serve on Windows
         run: |
+          say(){ echo "$1"; echo "::notice title=spike::$1"; }
           cd /c/spike/auth-src
           PGP="$(cat /c/spike/pgpass.txt)"
           export GOTRUE_DB_DRIVER=postgres
@@ -65,24 +68,26 @@ jobs:
           export GOTRUE_JWT_AUD=authenticated GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated GOTRUE_JWT_ADMIN_ROLES=service_role
           export GOTRUE_EXTERNAL_EMAIL_ENABLED=true GOTRUE_MAILER_AUTOCONFIRM=true GOTRUE_DISABLE_SIGNUP=false
           echo "$GOTRUE_JWT_SECRET" > /c/spike/jwt.txt
-          (../auth.exe migrate >/c/spike/migrate.log 2>&1) && echo "stage3-auth-migrate=1" || { echo "::error title=stage3::migrate failed: $(tail -c 400 /c/spike/migrate.log | tr '\n' ' ' | sed "s/$PGP/***/g")"; exit 1; }
+          (../auth.exe migrate >/c/spike/migrate.log 2>&1) && say "stage3-auth-migrate=1" || { echo "::error title=stage3::migrate failed: $(tail -c 400 /c/spike/migrate.log | tr '\n' ' ' | sed "s/$PGP/***/g")"; exit 1; }
           (../auth.exe serve >/c/spike/auth.log 2>&1 &) ; sleep 6
           code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:9999/health)
-          echo "stage3-auth-health-http=$code"
+          say "stage3-auth-health-http=$code"
           [ "$code" = "200" ] || { echo "::error title=stage3::auth health $code: $(tail -c 300 /c/spike/auth.log | tr '\n' ' ' | sed "s/$PGP/***/g")"; exit 1; }
-          echo "stage3-auth-uid-function=$(/c/spike/pgsql/bin/psql.exe -h 127.0.0.1 -p 54329 -U postgres -tAc "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='auth' and p.proname='uid'")"
+          say "stage3-auth-uid-function=$(/c/spike/pgsql/bin/psql.exe -h 127.0.0.1 -p 54329 -U postgres -tAc "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='auth' and p.proname='uid'")"
       - name: Stage 2 - repo schema + RLS on stock Windows Postgres
         run: |
+          say(){ echo "$1"; echo "::notice title=spike::$1"; }
           PSQL="/c/spike/pgsql/bin/psql.exe -h 127.0.0.1 -p 54329 -U postgres"
           for f in zz10-schema zz20-employees zz30-rls; do
-            $PSQL -v ON_ERROR_STOP=1 -f local-edition/packaging/init/$f.sql >/c/spike/$f.log 2>&1 && echo "stage2-$f=1" || { echo "::error title=stage2::$f failed: $(grep -i -m3 -E 'error' /c/spike/$f.log | cut -c1-220 | tr '\n' ' ')"; exit 1; }
+            $PSQL -v ON_ERROR_STOP=1 -f local-edition/packaging/init/$f.sql >/c/spike/$f.log 2>&1 && say "stage2-$f=1" || { echo "::error title=stage2::$f failed: $(grep -i -m3 -E 'error' /c/spike/$f.log | cut -c1-220 | tr '\n' ' ')"; exit 1; }
           done
-          echo "stage2-public-tables=$($PSQL -tAc "select count(*) from pg_tables where schemaname='public'")"
-          $PSQL -c "grant select, insert, update, delete on all tables in schema public to authenticated; grant usage on all sequences in schema public to authenticated; grant execute on all functions in schema public to anon, authenticated;" >/dev/null && echo "stage2-grants=1"
+          say "stage2-public-tables=$($PSQL -tAc "select count(*) from pg_tables where schemaname='public'")"
+          $PSQL -c "grant select, insert, update, delete on all tables in schema public to authenticated; grant usage on all sequences in schema public to authenticated; grant execute on all functions in schema public to anon, authenticated;" >/dev/null && say "stage2-grants=1"
       - name: Stage 2b - PostgREST Windows release + authenticated query
         run: |
+          say(){ echo "$1"; echo "::notice title=spike::$1"; }
           cd /c/spike
-          curl -fsSL -o pgrst.zip https://github.com/PostgREST/postgrest/releases/download/v14.18/postgrest-v14.18-windows-x86-64.zip && unzip -q -o pgrst.zip -d pgrst && echo "stage2b-postgrest-downloaded=1" || { echo "::error title=stage2b::postgrest download"; exit 1; }
+          curl -fsSL -o pgrst.zip https://github.com/PostgREST/postgrest/releases/download/v14.18/postgrest-v14.18-windows-x86-64.zip && unzip -q -o pgrst.zip -d pgrst && say "stage2b-postgrest-downloaded=1" || { echo "::error title=stage2b::postgrest download"; exit 1; }
           PGP="$(cat pgpass.txt)"; JWT="$(cat jwt.txt)"
           cat > pgrst.conf <<CONF
           db-uri = "postgres://authenticator:$PGP@127.0.0.1:54329/postgres"
@@ -94,12 +99,12 @@ jobs:
           CONF
           sed -i 's/^ *//' pgrst.conf
           (./pgrst/postgrest.exe pgrst.conf >pgrst.log 2>&1 &) ; sleep 6
-          echo "stage2b-postgrest-root-http=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/)"
+          say "stage2b-postgrest-root-http=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/)"
           # sign up a synthetic user through Auth, then query with its JWT
           EM="spike-$(openssl rand -hex 4)@example.test"; PW="Spk-$(openssl rand -hex 10)"
           tok=$(curl -s -X POST http://127.0.0.1:9999/signup -H 'Content-Type: application/json' -d "{\"email\":\"$EM\",\"password\":\"$PW\"}" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
-          echo "stage3-signup-got-token=$([ -n "$tok" ] && echo 1 || echo 0)"
+          say "stage3-signup-got-token=$([ -n "$tok" ] && echo 1 || echo 0)"
           [ -n "$tok" ] || { echo "::error title=stage3::signup produced no token: $(tail -c 300 auth.log 2>/dev/null)"; exit 1; }
-          echo "stage2b-authenticated-query-http=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $tok" http://127.0.0.1:3000/patients?select=id)"
-          echo "stage2b-anon-query-http=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/patients?select=id)"
-          echo "stage2b-rpc-is_admin-http=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $tok" http://127.0.0.1:3000/rpc/is_admin)"
+          say "stage2b-authenticated-query-http=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $tok" http://127.0.0.1:3000/patients?select=id)"
+          say "stage2b-anon-query-http=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/patients?select=id)"
+          say "stage2b-rpc-is_admin-http=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $tok" http://127.0.0.1:3000/rpc/is_admin)"
