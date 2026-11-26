@@ -12,7 +12,7 @@ on:
 jobs:
   package:
     runs-on: windows-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -73,22 +73,29 @@ jobs:
           # --- zip
           cd /c/stage && 7z a -tzip -mx=5 /c/dentimate-offline-win.zip dentimate-offline >/c/dl/zip.log 2>&1 && say "zip-mb=$(du -m /c/dentimate-offline-win.zip | cut -f1)" || { echo "::error title=build::zip failed"; exit 1; }
       - name: Smoke test the unpacked zip (Windows PowerShell 5.1, fresh folder)
+        timeout-minutes: 20
         shell: powershell
         run: |
           $ErrorActionPreference = 'Continue'
           $notes = New-Object System.Collections.Generic.List[string]
           function Note($k, $v) { $script:notes.Add("$k=$v"); Write-Host "$k=$v" }
           function Http($u, $args2) { & curl.exe -s -k --ssl-no-revoke -o NUL -w '%{http_code}' @args2 $u }
+            function RunPs($script, $extra, $secs) {
+              $o = "$env:TEMP\run-$([guid]::NewGuid().ToString('N')).log"
+              $p = Start-Process -FilePath powershell.exe -ArgumentList (@('-NoProfile','-ExecutionPolicy','Bypass','-File',$script) + $extra) -RedirectStandardOutput $o -RedirectStandardError "$o.err" -PassThru -WindowStyle Hidden
+              if (-not $p.WaitForExit($secs * 1000)) { try { $p.Kill() } catch {}; $script:lastRc = 'timeout' } else { $script:lastRc = $p.ExitCode }
+              $script:lastOut = ((Get-Content $o -Tail 4 -ErrorAction SilentlyContinue) -join ' | ') + ' ERR: ' + ((Get-Content "$o.err" -Tail 3 -ErrorAction SilentlyContinue) -join ' | ')
+            }
           try {
             Remove-Item C:\clinic-test -Recurse -Force -ErrorAction SilentlyContinue
             & 7z x C:\dentimate-offline-win.zip -oC:\clinic-test -y | Out-Null
             $R = 'C:\clinic-test\dentimate-offline'
             Note 'unzipped' ([int](Test-Path "$R\START-CLINIC.bat"))
             $t0 = Get-Date
-            & powershell -NoProfile -ExecutionPolicy Bypass -File "$R\scripts\start.ps1" -NoBrowser 2>&1 | Tee-Object -Variable startOut | Out-Null
-            Note 'first-start-rc' $LASTEXITCODE
+            RunPs "$R\scripts\start.ps1" @('-NoBrowser') 600
+            Note 'first-start-rc' $lastRc
             Note 'first-start-seconds' ([int]((Get-Date) - $t0).TotalSeconds)
-            Note 'start-tail' (($startOut | Select-Object -Last 4 | ForEach-Object { "$_" }) -join ' | ' -replace '[\r\n"]',' ')
+            Note 'start-tail' (($lastOut -replace '[\r\n"]',' '))
             Note 'index-http' (Http 'https://localhost:8443/index.html' @())
             Note 'config-origin-based' ([int]((& curl.exe -s -k --ssl-no-revoke https://localhost:8443/js/config.local.js) -match 'window.location.origin'))
             Note 'server-dir-http' (Http 'https://localhost:8443/server/provision-server.mjs' @())
@@ -122,17 +129,17 @@ jobs:
                 foreach ($p in 9090,9091,3000,5000,9999,54329) { Note "lan-$p-open" ([int](Test-NetConnection -ComputerName $lan -Port $p -WarningAction SilentlyContinue -InformationLevel Quiet)) }
             }
             # backup
-            & powershell -NoProfile -ExecutionPolicy Bypass -File "$R\scripts\backup.ps1" 2>&1 | Out-Null
+            RunPs "$R\scripts\backup.ps1" @() 300; Note 'backup-tail' ($lastOut -replace '[\r\n"]',' ')
             $b = Get-ChildItem "$R\backups" -Directory | Select-Object -First 1
             Note 'backup-dump-bytes' ((Get-Item "$($b.FullName)\database.dump").Length)
             Note 'backup-files-copied' ((Get-ChildItem "$($b.FullName)\storage-files" -Recurse -File -ErrorAction SilentlyContinue | Measure-Object).Count)
             # stop, then restart (second-start path) and check the data survived
-            & powershell -NoProfile -ExecutionPolicy Bypass -File "$R\scripts\stop.ps1" 2>&1 | Out-Null
+            RunPs "$R\scripts\stop.ps1" @() 120
             Start-Sleep 3
             Note 'procs-after-stop' ((Get-Process -Name postgres,caddy,auth,postgrest -ErrorAction SilentlyContinue | Measure-Object).Count)
             $t1 = Get-Date
-            & powershell -NoProfile -ExecutionPolicy Bypass -File "$R\scripts\start.ps1" -NoBrowser 2>&1 | Out-Null
-            Note 'restart-rc' $LASTEXITCODE
+            RunPs "$R\scripts\start.ps1" @('-NoBrowser') 300
+            Note 'restart-rc' $lastRc
             Note 'restart-seconds' ([int]((Get-Date) - $t1).TotalSeconds)
             $login2 = & curl.exe -s -k --ssl-no-revoke -X POST 'https://localhost:8443/auth/v1/token?grant_type=password' -H "apikey: $anon" -H 'Content-Type: application/json' --data-binary "@$tf"
             $tok2 = ($login2 | ConvertFrom-Json).access_token
