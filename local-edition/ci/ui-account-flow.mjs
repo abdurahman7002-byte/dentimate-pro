@@ -6,7 +6,7 @@
 import { chromium } from 'playwright';
 
 const { BASE, ANON_KEY, OWNER_EMAIL, OWNER_PASSWORD } = process.env;
-const fail = (stage, m) => { console.log(`FAIL ui-account-flow stage=${stage}: ${m}`); process.exit(1); };
+const fail = (stage, m) => { console.log(`FAIL ui-account-flow stage=${stage}: ${m}`); console.log(`::error title=ui-account-flow::stage=${stage} ${m}`); process.exit(1); };
 const ok = (m) => console.log(`ui-account-${m}`);
 
 const TMP_PW = 'uitmp-' + crypto.randomUUID();

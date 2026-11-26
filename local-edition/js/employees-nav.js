@@ -25,6 +25,8 @@
   }
   /* other page scripts may rebuild the menu after DOMContentLoaded, so run
      after full load and once more shortly after (idempotent) */
-  function later(){ run(); setTimeout(run,1500); }
+  function later(){ run(); setTimeout(run,1500); setTimeout(run,4000); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run);
+  else run();
   if(document.readyState==='complete') later(); else window.addEventListener('load',later);
 })();
