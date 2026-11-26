@@ -37,8 +37,25 @@ const ctx = await browser.newContext({ ignoreHTTPSErrors: true });
 const page = await ctx.newPage();
 let connectedCount = 0;
 let pageErrorCount = 0;
+const pageErrorFns = {};
 const seenStatuses = [];
-page.on('pageerror', () => { pageErrorCount++; });
+// Identify uncaught page exceptions without printing raw error text (public
+// log): the error NAME is an enumerated label, and the throwing function is
+// matched against top-level functions from the app's own source - bare
+// identifier tokens, no values, no messages.
+const KNOWN_FNS = ['checkMissedWaitingVisits', 'checkLabDeliveriesToday', 'createLowStockNotifications',
+    'loadNotifications', 'catchUpNotifications', 'startNotificationRealtime', 'startSourceRealtime',
+    'showNotificationToast', 'addNotificationToList', 'updateNotificationCountRealtime',
+    'navigateToNotificationSource', 'findInventoryItem', 'updateNotificationInList',
+    'checkUser', 'getUserId', 'getRole', 'applyTheme', 'applyLanguage', 'generateVisitNumberMap',
+    'markReminderAsSent', 'normalizeEgyptianPhone', 'copyTextToClipboard'];
+page.on('pageerror', (e) => {
+    pageErrorCount++;
+    const stack = String((e && e.stack) || '');
+    const fn = KNOWN_FNS.find((f) => stack.includes(f)) || 'unattributed';
+    pageErrorFns[fn] = (pageErrorFns[fn] || 0) + 1;
+    console.log(`ui-page-error name=${(e && e.name) || 'Error'} fn=${fn}`);
+});
 page.on('console', (msg) => {
     const t = msg.text();
     if (t.includes('Notification Realtime CONNECTED')) connectedCount++;
