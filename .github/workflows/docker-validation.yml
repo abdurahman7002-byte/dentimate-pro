@@ -290,6 +290,12 @@ jobs:
                 *"rror"*|*"xception"*) CCLASS="unclassified-error-present";;
               esac
               echo "$C-log-class=$CCLASS"
+              # bare identifier tokens only (error class name, missing relation/db
+              # name) - fixed-shape system identifiers, never message text
+              ETOK="$(printf '%s' "$CLOG" | grep -oE '[A-Za-z]*Error' | head -1 || true)"
+              echo "$C-error-token=${ETOK:-none}"
+              MTOK="$(printf '%s' "$CLOG" | grep -oE '(relation|database|role|schema) "[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?" does not exist' | head -1 || true)"
+              echo "$C-missing-object=${MTOK:-none}"
             done
             docker rm -f dentix-restore-storage dentix-restore-rest dentix-restore-db >/dev/null 2>&1 || true
             docker network rm dentix-restore-net >/dev/null 2>&1 || true
