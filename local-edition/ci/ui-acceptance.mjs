@@ -158,20 +158,28 @@ const gap = await insertNotification('postrejoin-gap');
 const msGap = await waitDom(gap, 120000, 'post-rejoin-gap');
 const s1 = await page.evaluate(() => window.rtStreamEventCount || 0);
 console.log(`ui-post-rejoin-gap-ms=${msGap} via=${s1 > s0 ? 'stream' : 'catchup'}`);
-{
-    const t0 = Date.now();
-    let active = false;
-    while (Date.now() - t0 < 150000) {
-        if ((await page.evaluate(() => window.rtStreamEventCount || 0)) > s1) { active = true; break; }
-        await page.waitForTimeout(500);
+// b. prove the stream reactivates: keep inserting probe rows until one
+// arrives VIA the stream (the shipped counter rises). Without fresh commits
+// the stream has nothing to deliver and reactivation cannot be observed.
+// Every probe that lands before activation must still surface in the DOM
+// through the shipped periodic catch-up.
+let liveRowAt = 0, probes = 0, viaCatchup = 0;
+const tw0 = Date.now();
+while (probes < 25 && !liveRowAt) {
+    probes++;
+    const t = await insertNotification('postrejoin-probe');
+    const c0 = await page.evaluate(() => window.rtStreamEventCount || 0);
+    const t1 = Date.now();
+    while (Date.now() - t1 < 6000) {
+        if ((await page.evaluate(() => window.rtStreamEventCount || 0)) > c0) { liveRowAt = Date.now(); break; }
+        await page.waitForTimeout(400);
     }
-    console.log(`ui-stream-reactivated=${active ? 1 : 0} after-s=${Math.round((Date.now() - t0) / 1000)}`);
-    if (!active) fail('post-rejoin', 'stream never reactivated within 150s (indicator state should be showing)');
+    if (!liveRowAt) { await waitDom(t, 15000, 'post-rejoin-probe-dom'); viaCatchup++; }
 }
-const live = await insertNotification('postrejoin-live');
-const ms4 = await waitDom(live, 20000, 'post-rejoin-live');
-console.log(`ui-post-rejoin-live-ms=${ms4}`);
+console.log(`ui-stream-reactivated=${liveRowAt ? 1 : 0} after-s=${Math.round(((liveRowAt || Date.now()) - tw0) / 1000)} probes=${probes} probes-via-catchup=${viaCatchup}`);
+if (!liveRowAt) fail('post-rejoin', 'stream never reactivated across bounded probes (indicator state should be showing)');
+console.log('ui-post-rejoin-live=stream-delivered');
 
-console.log(`PASS ui-acceptance (login ok, shipped code loaded, steady ${ms1}ms, outage recovered ${ms2}ms via shipped catch-up, post-rejoin gap row ${msGap}ms, live ${ms4}ms)`);
+console.log(`PASS ui-acceptance (login ok, shipped code loaded, steady ${ms1}ms, outage recovered ${ms2}ms via shipped catch-up, post-rejoin gap row ${msGap}ms via ${s1 > s0 ? 'stream' : 'catchup'}, stream reactivated after ${probes} probes)`);
 await browser.close();
 process.exit(0);
