@@ -34,7 +34,7 @@ jobs:
             if (-not $p.WaitForExit(600000)) { try { $p.Kill() } catch {} }
             Note 'start-rc' $p.ExitCode
             $em = "owner@example.test"; $pw = "Demo-$([guid]::NewGuid().ToString('N'))"
-            ("$em`n$pw`n$pw`n") | & "$R\runtime\node\node.exe" "$R\app\server\bootstrap-owner.mjs" | Out-Null
+            $env:BOOTSTRAP_PORT = '39995'; ("$em`n$pw`n$pw`n") | & "$R\runtime\node\node.exe" "$R\app\server\bootstrap-owner.mjs" | Out-Null
             $sec = Get-Content "$R\data\secrets.json" -Raw | ConvertFrom-Json
             $env:PGPASSWORD = $sec.pg_superuser
             $psql = "$R\runtime\pgsql\bin\psql.exe"

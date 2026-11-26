@@ -63,7 +63,7 @@ const password = await ask('Owner password (min 8 chars, hidden): ', true);
 const password2 = await ask('Repeat password: ', true);
 if (password !== password2) { console.error('Passwords do not match - nothing sent.'); process.exit(1); }
 
-const res = await fetch('http://127.0.0.1:9091/bootstrap-owner', {
+const res = await fetch(`http://127.0.0.1:${process.env.BOOTSTRAP_PORT || 9091}/bootstrap-owner`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),

@@ -103,6 +103,7 @@ jobs:
             Note 'server-dir-http' (Http 'https://localhost:8443/server/provision-server.mjs' @())
             # owner bootstrap through the repo script (piped, synthetic)
             $em = "owner-$([guid]::NewGuid().ToString('N').Substring(0,6))@example.test"; $pw = "Own-$([guid]::NewGuid().ToString('N'))"
+            $env:BOOTSTRAP_PORT = '39995'
             $out = ("$em`n$pw`n$pw`n") | & "$R\runtime\node\node.exe" "$R\app\server\bootstrap-owner.mjs" 2>&1
             Note 'owner-created' ([int](($out -join ' ') -match 'First owner created'))
             $anon = (Get-Content "$R\data\secrets.json" -Raw | ConvertFrom-Json).anon_key
@@ -141,7 +142,7 @@ jobs:
             Note 'lan-ip-found' ([int][bool]$lan)
             if ($lan) {
                 Note 'lan-8443-http' (Http "https://${lan}:8443/index.html" @())
-                foreach ($p in 9090,9091,3000,5000,9999,54329) { Note "lan-$p-open" ([int](Test-NetConnection -ComputerName $lan -Port $p -WarningAction SilentlyContinue -InformationLevel Quiet)) }
+                foreach ($p in 39991,39992,39993,39994,39995,54329) { Note "lan-$p-open" ([int](Test-NetConnection -ComputerName $lan -Port $p -WarningAction SilentlyContinue -InformationLevel Quiet)) }
             }
             # backup
             RunPs "$R\scripts\backup.ps1" @() 300; Note 'backup-tail' ($lastOut -replace '[\r\n"]',' ')

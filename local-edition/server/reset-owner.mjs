@@ -63,7 +63,7 @@ const p1 = await ask('new password: ', true);
 const p2 = await ask('new password again: ', true);
 if (p1 !== p2) { console.error('passwords do not match - nothing changed'); process.exit(1); }
 
-const r = await fetch('http://127.0.0.1:9091/owner-reset', {
+const r = await fetch(`http://127.0.0.1:${process.env.BOOTSTRAP_PORT || 9091}/owner-reset`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password: p1 })

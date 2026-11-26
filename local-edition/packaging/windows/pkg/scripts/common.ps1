@@ -68,3 +68,27 @@ function Run-Quiet([string]$exe, [string[]]$argv, [string]$logName, [int]$second
     if (-not $p.WaitForExit($seconds * 1000)) { try { $p.Kill() } catch {}; return -999 }
     return $p.ExitCode
 }
+
+function Tail-Log([string]$name) {
+    $o = ''
+    foreach ($ext in 'err','out') {
+        $f = Join-Path $Logs "$name.$ext.log"
+        if ((Test-Path $f) -and ((Get-Item $f).Length -gt 0)) { $o += "`n--- $name.$ext.log (last lines) ---`n" + ((Get-Content $f -Tail 12 -ErrorAction SilentlyContinue) -join "`n") }
+    }
+    return $o
+}
+function Require-Http([string]$label, [string]$logName, $proc, [string]$url, [int]$secs, [string]$expect = '200') {
+    $r = Wait-Http $url $secs
+    if ($r -ne $expect) {
+        $state = if ($proc -and $proc.HasExited) { "the program exited (code $($proc.ExitCode))" } elseif ($proc) { 'the program is running but did not answer' } else { 'no answer' }
+        throw "$label did not start: $state (answer: $r).`nPort check and logs:$(Tail-Log $logName)`nFolder: $Root"
+    }
+}
+function Test-PortsFree([int[]]$ports) {
+    $busy = @()
+    foreach ($p in $ports) {
+        $l = Get-NetTCPConnection -State Listen -LocalPort $p -ErrorAction SilentlyContinue
+        if ($l) { $busy += $p }
+    }
+    if ($busy.Count) { throw "These ports are already used by another program on this PC: $($busy -join ', '). Close that program or tell the developer." }
+}

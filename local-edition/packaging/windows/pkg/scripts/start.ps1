@@ -11,6 +11,8 @@ $fwd = { param($p) $p -replace '\\','/' }
 
 Say 'Starting the clinic system...'
 Stop-All
+$env:PATH = "$Pg;$env:PATH"
+Test-PortsFree @($PgPort, 39991, 39992, 39993, 39994, 39995, $HttpsPort)
 
 # ---------- first run: secrets and database ----------
 $first = -not (Test-Path $Flag)
@@ -44,7 +46,7 @@ $authEnv = @{
     DATABASE_URL = "postgres://supabase_auth_admin:$($S.svc_db)@127.0.0.1:$PgPort/postgres?sslmode=disable"
     GOTRUE_DB_DATABASE_URL = "postgres://supabase_auth_admin:$($S.svc_db)@127.0.0.1:$PgPort/postgres?sslmode=disable"
     GOTRUE_DB_MIGRATIONS_PATH = (& $fwd (Join-Path $Rt 'auth\migrations'))
-    GOTRUE_API_HOST = '127.0.0.1'; GOTRUE_API_PORT = '9999'
+    GOTRUE_API_HOST = '127.0.0.1'; GOTRUE_API_PORT = '39991'
     API_EXTERNAL_URL = "https://localhost:$HttpsPort"; GOTRUE_SITE_URL = "https://localhost:$HttpsPort"
     GOTRUE_JWT_SECRET = $S.jwt_secret; GOTRUE_JWT_EXP = '3600'; GOTRUE_JWT_AUD = 'authenticated'
     GOTRUE_JWT_DEFAULT_GROUP_NAME = 'authenticated'; GOTRUE_JWT_ADMIN_ROLES = 'service_role'
@@ -61,8 +63,8 @@ if ($first) {
     foreach ($k in $authEnv.Keys) { Remove-Item "Env:$k" -ErrorAction SilentlyContinue }
     if ($rc -ne 0) { throw 'Login service migration failed (see data\logs\auth-migrate.log)' }
 }
-Start-Svc 'auth' (Join-Path $Rt 'auth\auth.exe') @('serve') $authEnv (Join-Path $Rt 'auth') | Out-Null
-if ((Wait-Http 'http://127.0.0.1:9999/health' 60) -ne '200') { throw 'Login service did not start (see data\logs\auth.err.log)' }
+$authProc = Start-Svc 'auth' (Join-Path $Rt 'auth\auth.exe') @('serve') $authEnv (Join-Path $Rt 'auth')
+Require-Http 'Login service' 'auth' $authProc 'http://127.0.0.1:39991/health' 120
 if ($first) {
     Say 'First run: creating the clinic tables...'
     foreach ($f in 'zz10-schema','zz20-employees','zz30-rls') { Invoke-Psql -file (Join-Path $Sql "$f.sql") }
@@ -77,18 +79,18 @@ db-schemas = "public"
 db-anon-role = "anon"
 jwt-secret = "$($S.jwt_secret)"
 server-host = "127.0.0.1"
-server-port = 3000
+server-port = 39992
 "@ | Set-Content -Path $pgrstConf -Encoding ASCII
-Start-Svc 'postgrest' (Join-Path $Rt 'postgrest\postgrest.exe') @($pgrstConf) @{} (Join-Path $Rt 'postgrest') | Out-Null
-if ((Wait-Http 'http://127.0.0.1:3000/' 40) -ne '200') { throw 'Data service did not start (see data\logs\postgrest.err.log)' }
+$pgrstProc = Start-Svc 'postgrest' (Join-Path $Rt 'postgrest\postgrest.exe') @($pgrstConf) @{} (Join-Path $Rt 'postgrest')
+Require-Http 'Data service' 'postgrest' $pgrstProc 'http://127.0.0.1:39992/' 120
 
 # Storage (files)
 New-Item -ItemType Directory -Force -Path $StoreDir | Out-Null
 $stEnv = @{
     DATABASE_URL = "postgres://supabase_storage_admin:$($S.svc_db)@127.0.0.1:$PgPort/postgres"; DATABASE_POOL_URL = ''
     ANON_KEY = $S.anon_key; SERVICE_KEY = $S.service_key; AUTH_JWT_SECRET = $S.jwt_secret; PGRST_JWT_SECRET = $S.jwt_secret
-    POSTGREST_URL = 'http://127.0.0.1:3000'
-    SERVER_PORT = '5000'; SERVER_HOST = '127.0.0.1'; PORT = '5000'
+    POSTGREST_URL = 'http://127.0.0.1:39992'
+    SERVER_PORT = '39993'; SERVER_HOST = '127.0.0.1'; PORT = '39993'
     STORAGE_BACKEND = 'file'; FILE_STORAGE_BACKEND_PATH = (& $fwd $StoreDir); GLOBAL_S3_BUCKET = 'stub'
     TENANT_ID = 'clinic'; REGION = 'local'; FILE_SIZE_LIMIT = '52428800'; UPLOAD_FILE_SIZE_LIMIT = '52428800'; UPLOAD_FILE_SIZE_LIMIT_STANDARD = '52428800'
     ENABLE_IMAGE_TRANSFORMATION = 'false'; DB_INSTALL_ROLES = 'false'; IS_MULTITENANT = 'false'
@@ -96,7 +98,7 @@ $stEnv = @{
     S3_PROTOCOL_ACCESS_KEY_ID = $S.s3_key; S3_PROTOCOL_ACCESS_KEY_SECRET = $S.s3_secret
 }
 $stProc = Start-Svc 'storage' $Node @('dist/start/server.js') $stEnv (Join-Path $Rt 'storage')
-if ((Wait-Http 'http://127.0.0.1:5000/status' 90) -ne '200') { throw "File service did not start (exited=$($stProc.HasExited); see data\logs\storage.err.log)" }
+Require-Http 'File service' 'storage' $stProc 'http://127.0.0.1:39993/status' 180
 if ($first) {
     Say 'First run: creating file folders and rules...'
     Invoke-Psql -file (Join-Path $Sql 'zz40-storage.sql')
@@ -121,11 +123,11 @@ window.DENTIX_CONFIG = { SUPABASE_URL: window.location.origin, SUPABASE_ANON_KEY
 
 # provision server (owner-only account management), loopback only
 $prEnv = @{
-    GOTRUE_URL = 'http://127.0.0.1:9999'; POSTGREST_URL = 'http://127.0.0.1:3000'; SERVICE_ROLE_JWT = $S.service_key
-    ALLOWED_ORIGINS = ($origins -join ','); PROVISION_PORT = '9090'; PROVISION_BIND = '127.0.0.1'; BOOTSTRAP_PORT = '9091'
+    GOTRUE_URL = 'http://127.0.0.1:39991'; POSTGREST_URL = 'http://127.0.0.1:39992'; SERVICE_ROLE_JWT = $S.service_key
+    ALLOWED_ORIGINS = ($origins -join ','); PROVISION_PORT = '39994'; PROVISION_BIND = '127.0.0.1'; BOOTSTRAP_PORT = '39995'
 }
-Start-Svc 'provision' $Node @((Join-Path $App 'server\provision-server.mjs')) $prEnv $App | Out-Null
-if ((Wait-Http 'http://127.0.0.1:9090/nope' 20) -ne '404') { throw 'Account service did not start (see data\logs\provision.err.log)' }
+$provProc = Start-Svc 'provision' $Node @((Join-Path $App 'server\provision-server.mjs')) $prEnv $App
+Require-Http 'Account service' 'provision' $provProc 'http://127.0.0.1:39994/nope' 60 '404'
 
 # web server + HTTPS
 $sites = ($origins -join ', ')
@@ -146,17 +148,17 @@ $sites {
         respond 404
     }
     handle_path /rest/v1/* {
-        reverse_proxy 127.0.0.1:3000
+        reverse_proxy 127.0.0.1:39992
     }
     handle_path /auth/v1/* {
-        reverse_proxy 127.0.0.1:9999
+        reverse_proxy 127.0.0.1:39991
     }
     handle_path /storage/v1/* {
-        reverse_proxy 127.0.0.1:5000
+        reverse_proxy 127.0.0.1:39993
     }
     @prov path /provision /reset-password /account
     handle @prov {
-        reverse_proxy 127.0.0.1:9090
+        reverse_proxy 127.0.0.1:39994
     }
     handle {
         root * $(& $fwd $Web)
@@ -164,8 +166,8 @@ $sites {
     }
 }
 "@ | Set-Content -Path $caddyFile -Encoding ASCII
-Start-Svc 'caddy' (Join-Path $Rt 'caddy\caddy.exe') @('run','--config',$caddyFile,'--adapter','caddyfile') @{} $Data | Out-Null
-if ((Wait-Http "https://localhost:$HttpsPort/index.html" 40) -ne '200') { throw 'Web server did not start (see data\logs\caddy.err.log)' }
+$caddyProc = Start-Svc 'caddy' (Join-Path $Rt 'caddy\caddy.exe') @('run','--config',$caddyFile,'--adapter','caddyfile') @{} $Data
+Require-Http 'Web server' 'caddy' $caddyProc "https://localhost:$HttpsPort/index.html" 90
 
 $env:PGPASSWORD = $S.pg_superuser
 $admins = & (Join-Path $Pg 'psql.exe') -h 127.0.0.1 -p $PgPort -U postgres -d postgres -tAc 'select count(*) from public.clinic_admins'
