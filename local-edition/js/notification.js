@@ -9,6 +9,13 @@ let notificationRealtimeChannel = null;
 // between page load and server-side subscription activation), so every
 // (re-)SUBSCRIBED triggers a plain refetch of what was missed.
 let notificationsCatchUpSince = new Date().toISOString();
+// Bounded resubscribe retry: when the realtime server restarts, the client's
+// automatic rejoin can land before the server is ready, the join is refused
+// (CHANNEL_ERROR) and supabase-js does NOT retry it while the socket stays
+// up. Without this the app would only log the error and stay deaf until the
+// next page load. Retries reset on every successful SUBSCRIBED.
+let notificationRealtimeRetries = 0;
+const NOTIFICATION_REALTIME_MAX_RETRIES = 6;
 let notificationToastContainer = null;
 let notificationInitialized = false;
 let notificationRefreshInterval = null;
@@ -1128,13 +1135,16 @@ async function cleanupExpiredNotifications() {
 // check inside addNotificationToList and the knownNotificationIds set.
 async function catchUpNotifications(userId) {
     try {
-        const since = notificationsCatchUpSince;
+        // 2s overlap below the watermark + id dedupe: covers rows sharing the
+        // exact boundary timestamp and rows committed while the previous fetch
+        // was in flight. Repeats are harmless (dedupe), misses are not.
+        const since = new Date(Date.parse(notificationsCatchUpSince) - 2000).toISOString();
         notificationsCatchUpSince = new Date().toISOString();
         const { data, error } = await supabaseClient
             .from("notifications")
             .select("*")
             .eq("user_id", userId)
-            .gt("created_at", since)
+            .gte("created_at", since)
             .order("created_at", { ascending: true });
         if (error) {
             console.error("Notification catch-up fetch error:", error);
@@ -1209,7 +1219,24 @@ async function startNotificationRealtime() {
             console.log("🔔 Notification Realtime status:", status);
             if (status === "SUBSCRIBED") {
                 console.log("✅ Notification Realtime CONNECTED");
+                notificationRealtimeRetries = 0;
                 catchUpNotifications(userId);
+                // Trailing passes close the activation-gap race: the immediate
+                // fetch can finish before the server-side WAL subscription
+                // starts streaming, so a commit landing in between is missed
+                // by both. These re-fetch after the observed lag window.
+                setTimeout(() => catchUpNotifications(userId), 5000);
+                setTimeout(() => catchUpNotifications(userId), 15000);
+            }
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+                if (notificationRealtimeRetries < NOTIFICATION_REALTIME_MAX_RETRIES) {
+                    notificationRealtimeRetries++;
+                    const delay = Math.min(5000 * notificationRealtimeRetries, 25000);
+                    console.warn(`🔁 Notification realtime ${status} - resubscribe attempt ${notificationRealtimeRetries} in ${delay}ms`);
+                    setTimeout(() => { startNotificationRealtime(); }, delay);
+                } else {
+                    console.error("❌ Notification realtime resubscribe attempts exhausted");
+                }
             }
             if (status === "CHANNEL_ERROR") console.error("❌ Notification Realtime CHANNEL ERROR");
             if (status === "TIMED_OUT") console.error("⏱️ Notification Realtime TIMED OUT");

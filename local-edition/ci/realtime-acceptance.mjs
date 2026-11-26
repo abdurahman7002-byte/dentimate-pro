@@ -46,20 +46,38 @@ const catchUpFetch = async (title) => {
     return Array.isArray(rows) && rows.length > 0;
 };
 
-const state = { subscribedCount: 0, events: new Set(), lastStatus: 'none' };
+const state = { subscribedCount: 0, events: new Set(), lastStatus: 'none', tSubscribed: 0, retries: 0 };
 let onResubscribe = null;
+let channel = null;
 
-const channel = sb
-    .channel('notifications-' + uid + '-acceptance')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${uid}` },
-        (payload) => { if (payload.new && payload.new.title) state.events.add(payload.new.title); })
-    .subscribe((status) => {
-        state.lastStatus = status;
-        if (status === 'SUBSCRIBED') {
-            state.subscribedCount++;
-            if (state.subscribedCount > 1 && onResubscribe) onResubscribe();
-        }
-    });
+// mirrors the shipped app's recovery (notification.js): supabase-js does not
+// retry a refused rejoin while the socket stays up, so on CHANNEL_ERROR /
+// TIMED_OUT the client removes the channel and resubscribes, bounded.
+const MAX_RETRIES = 8;
+function subscribe() {
+    channel = sb
+        .channel('notifications-' + uid + '-acceptance-' + state.retries)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${uid}` },
+            (payload) => { if (payload.new && payload.new.title) state.events.add(payload.new.title); })
+        .subscribe((status) => {
+            state.lastStatus = status;
+            if (status === 'SUBSCRIBED') {
+                state.subscribedCount++;
+                state.retries = 0;
+                if (state.subscribedCount === 1) state.tSubscribed = Date.now();
+                if (state.subscribedCount > 1 && onResubscribe) onResubscribe();
+            }
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                if (state.retries < MAX_RETRIES) {
+                    state.retries++;
+                    const delay = Math.min(5000 * state.retries, 25000);
+                    console.log(`resubscribe-retry=${state.retries} delay-ms=${delay}`);
+                    setTimeout(async () => { try { await sb.removeChannel(channel); } catch (_) {} subscribe(); }, delay);
+                }
+            }
+        });
+}
+subscribe();
 
 const waitFor = async (cond, ms, stage, what) => {
     const t0 = Date.now();
@@ -72,16 +90,23 @@ const waitFor = async (cond, ms, stage, what) => {
 
 await waitFor(() => state.subscribedCount >= 1, 20000, 'subscribe', 'initial SUBSCRIBED');
 
-// phase 1: activation lag (bounded sentinels, 1/s, stop at first event)
-let sentinels = 0, activated = false;
+// phase 1: activation lag (bounded sentinels, 1/s, stop at first event).
+// The lag is measured explicitly: it is the interval the shipped trailing
+// catch-up passes (+5s, +15s) must bracket, so it is gated against 15s.
+let sentinels = 0, activated = false, firstEventAt = 0;
 for (let i = 0; i < 15 && !activated; i++) {
     const t = await insertNotification('sentinel');
     sentinels++;
     await new Promise(r => setTimeout(r, 1000));
     activated = state.events.has(t) || [...state.events].some(x => x.includes('sentinel'));
+    if (activated && !firstEventAt) firstEventAt = Date.now();
 }
 if (!activated) fail('activation', `no event across ${sentinels} sentinel inserts`);
+const lagMs = firstEventAt - state.tSubscribed;
 console.log(`activation-sentinels=${sentinels}`);
+console.log(`activation-lag-ms=${lagMs}`);
+if (lagMs > 15000) fail('activation', `activation-lag-ms=${lagMs} exceeds the shipped trailing catch-up bracket (15s) - bounded recovery would not cover it`);
+console.log('activation-within-trailing-bracket=1');
 
 // phase 2: steady-state single change, no retry
 const single = await insertNotification('single');
@@ -95,7 +120,7 @@ const rejoinPromise = new Promise(res => { onResubscribe = () => { rejoined = tr
 execSync(`docker restart ${REALTIME_CONTAINER}`, { stdio: 'ignore' });
 await new Promise(r => setTimeout(r, 3000));
 const duringOutage = await insertNotification('outage');
-const rejoinTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('rejoin timeout')), 90000));
+const rejoinTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('rejoin timeout')), 150000));
 await Promise.race([rejoinPromise, rejoinTimeout]).catch(e => fail('reconnect', e.message + ` (status=${state.lastStatus})`));
 console.log('reconnect=rejoined');
 

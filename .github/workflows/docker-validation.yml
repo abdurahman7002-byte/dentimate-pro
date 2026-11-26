@@ -127,6 +127,19 @@ jobs:
           REALTIME_CONTAINER="$($COMPOSE ps --format '{{.Names}}' | grep -m1 realtime)"
           export REALTIME_CONTAINER
           (cd ../../ci && node realtime-acceptance.mjs)
+          # UI acceptance: the ACTUAL shipped app (js/notification.js) in a
+          # real browser - app-form login, app subscription, app catch-up
+          # resync under a realtime restart. Screenshots are fixture-only.
+          (cd ../../ci && npm install --no-save --silent playwright >/dev/null && npx playwright install --with-deps chromium >/dev/null && node ui-acceptance.mjs)
+
+      - name: UI acceptance screenshots (fixture-only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-acceptance-screenshots
+          path: local-edition/ci/ui-*.png
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Backup + ISOLATED restore gate (restored storage service download + hash)
         working-directory: local-edition/packaging/official
