@@ -1,0 +1,61 @@
+name: windows-screens
+# Demo screenshots from the built offline package (artifact of an earlier windows-package run), synthetic data only.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci-validation]
+    paths:
+      - '.github/workflows/windows-screens.yml'
+      - 'local-edition/packaging/windows/pkg/uitest/**'
+jobs:
+  screens:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dentimate-offline-win-ci
+          run-id: 45838697703
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: C:\dl
+      - name: Start package, seed synthetic data, take screenshots
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $notes = New-Object System.Collections.Generic.List[string]
+          function Note($k, $v) { $script:notes.Add("$k=$v"); Write-Host "$k=$v" }
+          try {
+            & 7z x C:\dl\dentimate-offline-win.zip -oC:\clinic -y | Out-Null
+            $R = 'C:\clinic\dentimate-offline'
+            $o = "$env:TEMP\start.log"
+            $p = Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"$R\scripts\start.ps1",'-NoBrowser') -RedirectStandardOutput $o -RedirectStandardError "$o.err" -PassThru -WindowStyle Hidden
+            $null = $p.Handle
+            if (-not $p.WaitForExit(600000)) { try { $p.Kill() } catch {} }
+            Note 'start-rc' $p.ExitCode
+            $em = "owner@example.test"; $pw = "Demo-$([guid]::NewGuid().ToString('N'))"
+            ("$em`n$pw`n$pw`n") | & "$R\runtime\node\node.exe" "$R\app\server\bootstrap-owner.mjs" | Out-Null
+            $sec = Get-Content "$R\data\secrets.json" -Raw | ConvertFrom-Json
+            $env:PGPASSWORD = $sec.pg_superuser
+            $psql = "$R\runtime\pgsql\bin\psql.exe"
+            $owner = (& $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -tAc "select id from auth.users limit 1").Trim()
+            & $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -v ON_ERROR_STOP=1 -v "owner=$owner" -q -f "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg\uitest\seed.sql" 2>&1 | Out-Null
+            Note 'seed-rc' $LASTEXITCODE
+            Note 'patients' (& $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -tAc "select count(*) from public.patients").Trim()
+            New-Item -ItemType Directory -Force C:\uitest | Out-Null
+            Copy-Item "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg\uitest\screens.mjs" C:\uitest\ -Force
+            Push-Location C:\uitest
+            Set-Content -Path package.json -Value '{"type":"module"}' -Encoding ASCII
+            & npm.cmd i playwright-core --no-audit --no-fund 2>&1 | Out-Null
+            $env:OWNER_EM = $em; $env:OWNER_PW = $pw; $env:SHOTS = 'C:\shots'; $env:LAUNCHER_LOG = "$R\data\logs\start.log"
+            Note 'screens' ((& node screens.mjs 2>&1 | Out-String) -replace '[\r\n"]',' ')
+            Pop-Location
+            & "$R\scripts\stop.ps1" 2>&1 | Out-Null
+          } catch { Note 'EXCEPTION' (("$_" -replace '[\r\n"]',' ')) }
+          finally { Write-Host "::notice title=screens-summary::$($notes -join ' ')" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: demo-screenshots
+          path: C:\shots
+          retention-days: 14
