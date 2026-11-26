@@ -103,6 +103,10 @@ jobs:
           # enable the publication for the smoke table (self-host publications start empty)
           $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c \
             "do \$\$ begin if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and tablename='patients') then alter publication supabase_realtime add table public.patients; end if; end \$\$;"
+          # official-client control (supabase-js, the protocol reference): waits for
+          # SUBSCRIBED readiness, then inserts one fixture row and watches the
+          # callback. Prints enumerated labels only; informs diagnosis, does not gate.
+          (cd ../../ci && npm install --no-save --silent @supabase/supabase-js@2 >/dev/null && node realtime-official-client.mjs; echo "official-client-exit=$?")
           node ../../ci/realtime-check.mjs
 
       - name: Backup + ISOLATED restore gate (restored storage service download + hash)
@@ -114,14 +118,18 @@ jobs:
           set -e
           mkdir -p /tmp/backup-gate
           # consistent capture: stack is quiesced (CI, no concurrent writes);
-          # manifest = dump hash + per-file object hashes + row counts
-          $COMPOSE exec -T db pg_dump -U postgres -d postgres -Fc > /tmp/backup-gate/dump.fc
+          # manifest = dump hash + per-file object hashes + row counts.
+          # dump + reads run as supabase_admin: in this supabase/postgres image the
+          # 'postgres' role is supautils-restricted (not a real superuser); pg_dump as
+          # postgres can silently skip schemas it cannot read (auth, storage).
+          PGP="$(grep '^POSTGRES_PASSWORD=' .env.dentix | head -1 | cut -d= -f2-)"
+          $COMPOSE exec -T -e PGPASSWORD="$PGP" db pg_dump -h localhost -U supabase_admin -d postgres -Fc > /tmp/backup-gate/dump.fc
           sha256sum /tmp/backup-gate/dump.fc > /tmp/backup-gate/manifest.txt
           cp -r volumes/storage /tmp/backup-gate/storage-copy
           (cd /tmp/backup-gate/storage-copy && find . -type f -exec sha256sum {} +) >> /tmp/backup-gate/manifest.txt
-          $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -tA \
+          $COMPOSE exec -T -e PGPASSWORD="$PGP" db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -tA \
             -c "select 'patients='||count(*) from public.patients" > /tmp/backup-gate/expected.txt
-          $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -tA \
+          $COMPOSE exec -T -e PGPASSWORD="$PGP" db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -tA \
             -c "select 'objects='||count(*) from storage.objects" >> /tmp/backup-gate/expected.txt
           # object content file: file backend stores objects as <objpath>/<uuid>
           OBJ_FILE=$(find /tmp/backup-gate/storage-copy -type f -path '*ci-smoke.bin*' | head -1)
@@ -135,14 +143,15 @@ jobs:
           docker run -d --name dentix-restore-db --network dentix-restore-net \
             -e POSTGRES_PASSWORD=tmp-only supabase/postgres:17.6.1.136
           for i in $(seq 1 40); do docker exec dentix-restore-db pg_isready -U postgres && break || sleep 2; done
-          # the image's init creates the standard roles; give the two roles the
-          # restore-stack services use a known password for this drill only
-          docker exec dentix-restore-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c \
+          # supabase_admin is the image's real superuser; its password follows
+          # POSTGRES_PASSWORD at initdb. Give the two roles the restore-stack services
+          # use a known password for this drill only.
+          docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c \
             "alter role authenticator with password 'tmp-only'; alter role supabase_storage_admin with password 'tmp-only';"
           # restore into a FRESH empty database (avoids conflicts with the
           # schemas the image pre-initializes in the postgres db)
-          docker exec dentix-restore-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "create database restore_verify;"
-          docker exec -i dentix-restore-db pg_restore -U postgres -d restore_verify --exit-on-error < /tmp/backup-gate/dump.fc
+          docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c "create database restore_verify;"
+          docker exec -e PGPASSWORD=tmp-only -i dentix-restore-db pg_restore -h localhost -U supabase_admin -d restore_verify --exit-on-error < /tmp/backup-gate/dump.fc
 
           docker run -d --name dentix-restore-rest --network dentix-restore-net \
             -e PGRST_DB_URI=postgres://authenticator:tmp-only@dentix-restore-db:5432/restore_verify \
@@ -163,9 +172,9 @@ jobs:
           curl -sf http://127.0.0.1:5099/status >/dev/null
 
           # restored row counts MUST equal backup-time counts
-          docker exec dentix-restore-db psql -U postgres -d restore_verify -v ON_ERROR_STOP=1 -tA \
+          docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d restore_verify -v ON_ERROR_STOP=1 -tA \
             -c "select 'patients='||count(*) from public.patients" > /tmp/backup-gate/restored.txt
-          docker exec dentix-restore-db psql -U postgres -d restore_verify -v ON_ERROR_STOP=1 -tA \
+          docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d restore_verify -v ON_ERROR_STOP=1 -tA \
             -c "select 'objects='||count(*) from storage.objects" >> /tmp/backup-gate/restored.txt
           diff /tmp/backup-gate/expected.txt /tmp/backup-gate/restored.txt
 
@@ -176,7 +185,7 @@ jobs:
             -H 'content-type: application/json' -d "{\"email\":\"$OWNER_EMAIL\",\"password\":\"$OWNER_PASSWORD\"}" \
             | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const t=JSON.parse(d).access_token;if(!t)process.exit(1);console.log(t)})")
           test -n "$TOKEN"
-          REL=$(docker exec dentix-restore-db psql -U postgres -d restore_verify -tA \
+          REL=$(docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d restore_verify -tA \
             -c "select name from storage.objects where bucket_id='patient-files' order by created_at desc limit 1")
           test -n "$REL"
           curl -fsS -H "apikey: $ANON_KEY" -H "Authorization: Bearer $TOKEN" \
