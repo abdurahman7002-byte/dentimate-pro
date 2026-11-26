@@ -143,6 +143,12 @@ jobs:
             -c "select 'patients='||count(*) from public.patients" > /tmp/backup-gate/expected.txt
           $COMPOSE exec -T -e PGPASSWORD="$PGP" db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -tA \
             -c "select 'objects='||count(*) from storage.objects" >> /tmp/backup-gate/expected.txt
+          # roles are cluster-level and NOT in pg_dump output; capture them so the
+          # restore side can pre-create the ones the fresh image does not provide
+          # (e.g. service-created owners like supabase_realtime_admin)
+          $COMPOSE exec -T -e PGPASSWORD="$PGP" db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -tA \
+            -c "select rolname from pg_roles where rolname not like 'pg\\_%' and rolname <> 'postgres'" > /tmp/backup-gate/roles.txt
+          echo "roles captured: $(wc -l < /tmp/backup-gate/roles.txt)"
           # object content file: file backend stores objects as <objpath>/<uuid>
           OBJ_FILE=$(find /tmp/backup-gate/storage-copy -type f -path '*ci-smoke.bin*' | head -1)
           test -n "$OBJ_FILE"
@@ -163,6 +169,13 @@ jobs:
           # restore into a FRESH empty database (avoids conflicts with the
           # schemas the image pre-initializes in the postgres db)
           docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c "create database restore_verify;"
+          # pre-create captured roles the fresh image lacks (NOLOGIN placeholders;
+          # membership/privilege fidelity is out of scope for this drill)
+          while IFS= read -r R; do
+            [ -n "$R" ] || continue
+            docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c \
+              "do \$\$ begin if not exists (select 1 from pg_roles where rolname = '$R') then create role \"$R\" nologin; end if; end \$\$;"
+          done < /tmp/backup-gate/roles.txt
           docker exec -e PGPASSWORD=tmp-only -i dentix-restore-db pg_restore -h localhost -U supabase_admin -d restore_verify --exit-on-error < /tmp/backup-gate/dump.fc
 
           docker run -d --name dentix-restore-rest --network dentix-restore-net \
