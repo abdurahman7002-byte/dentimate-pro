@@ -257,13 +257,16 @@ jobs:
           # the acceptance gate already restarted realtime once; poll until the
           # stack heals (or 12 min cap) to measure true server-side recovery
           # time, and compare the Kong-routed path vs container-local health
-          for i in $(seq 1 36); do
+          (cd ../../ci && npm install --no-save --silent @supabase/supabase-js@2 >/dev/null)
+          for i in $(seq 1 18); do
             SLOTS=$($COMPOSE exec -T db psql -U postgres -tA -c "select count(*) from pg_replication_slots" 2>/dev/null || echo -1)
             SENDERS=$($COMPOSE exec -T db psql -U postgres -tA -c "select count(*) from pg_stat_replication" 2>/dev/null || echo -1)
             KONG_RT=$(curl -s --cacert "$NODE_EXTRA_CA_CERTS" -o /dev/null -w '%{http_code}' --max-time 5 "https://localhost/realtime/v1/" -H "apikey: $ANON_KEY" || echo 000)
             DIRECT_RT=$($COMPOSE exec -T realtime curl -s -o /dev/null -w '%{http_code}' --max-time 5 -H "Authorization: Bearer $ANON_KEY" http://localhost:4000/api/tenants/realtime-dev/health 2>/dev/null || echo 000)
-            echo "probe t=$((i*20))s slots=$SLOTS senders=$SENDERS kong-rt=$KONG_RT direct-rt=$DIRECT_RT"
-            if [ "$SLOTS" != "0" ] && [ "$SLOTS" != "-1" ]; then echo "recovery-observed-at-s=$((i*20))"; break; fi
+            SUB="skipped"
+            if [ $((i % 3)) -eq 0 ]; then SUB=$(cd ../../ci && node realtime-subscribe-probe.mjs 2>/dev/null | grep -o 'probe-subscribe-status=[A-Z_]*' | cut -d= -f2); fi
+            echo "probe t=$((i*40))s slots=$SLOTS senders=$SENDERS kong-rt=$KONG_RT direct-rt=$DIRECT_RT subscribe=$SUB"
+            if [ "$SUB" = "SUBSCRIBED" ] || { [ "$SLOTS" != "0" ] && [ "$SLOTS" != "-1" ]; }; then echo "recovery-observed-at-s=$((i*40)) via=${SUB:-slots}"; break; fi
             sleep 20
           done
 
@@ -332,6 +335,23 @@ jobs:
           echo "rtlog-subscriptions=$(b 'ubscription')"
           echo "rtlog-migration=$(b 'igration')"
           echo "rtlog-error-lines=$(printf '%s\n' "$RLOG" | grep -ciE 'error|exception' || true)"
+          # exact init-step markers from realtime v2.174.6 source
+          # (tenants/replication_connection.ex + tenants/connect.ex)
+          echo "rtlog2-broadcast-start=$(b 'Starting replication for Broadcast Changes')"
+          echo "rtlog2-checking-slot=$(b 'Checking if replication slot')"
+          echo "rtlog2-slot-in-use=$(b 'replication_slot_in_use')"
+          echo "rtlog2-create-publication=$(b 'Create publication')"
+          echo "rtlog2-validating-publication=$(b 'exists, validating')"
+          echo "rtlog2-recreating-publication=$(b 'does not match the expected configuration')"
+          echo "rtlog2-create-slot=$(b 'Create replication slot')"
+          echo "rtlog2-conn-timeout=$(b 'ReplicationConnectionTimeout')"
+          echo "rtlog2-start-failed=$(b 'StartReplicationFailed')"
+          echo "rtlog2-tenant-db=$(b 'UnableToConnectToTenantDatabase')"
+          echo "rtlog2-migrations-failed=$(b 'MigrationsFailedToRun')"
+          echo "rtlog2-migrations-not-ready=$(b 'TenantMigrationsNotReady')"
+          echo "rtlog2-db-down=$(b 'DatabaseConnectionDown')"
+          echo "rtlog2-repl-down=$(b 'ReplicationConnectionDown')"
+          echo "rtlog2-recovery-failed=$(b 'ReplicationConnectionRecoveryFailed')"
           # restore-drill leftovers exist only when the backup gate failed mid-run
           # (its cleanup runs on the success path): classify their logs, then clean up
           if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^dentix-restore'; then
