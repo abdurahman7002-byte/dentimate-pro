@@ -35,12 +35,26 @@ const navShown = await page.waitForFunction(() => {
 if (!navShown) fail('nav', 'employees menu item not revealed for owner');
 ok('employees-nav-owner=ok');
 
+const navVisible = () => page.waitForFunction(() => {
+    const el = document.getElementById('employeesMenuItem');
+    return el && el.getAttribute('href') === 'employees.html' && getComputedStyle(el).display !== 'none';
+}, { timeout: 10000 }).then(() => true).catch(() => false);
+
+// the entry is injected on other pages too (shared employees-nav.js)
+await page.goto(BASE + '/patients.html', { waitUntil: 'domcontentloaded' });
+if (!(await navVisible())) fail('nav', 'employees menu item not revealed on patients page');
+ok('employees-nav-other-page=ok');
+
 // 2. the account card exists on the employees page with all four fields
 await page.goto(BASE + '/employees.html', { waitUntil: 'domcontentloaded' });
 for (const id of ['#accNewEmail', '#accNewPassword', '#accNewPassword2', '#accCurrentPassword']) {
     await page.waitForSelector(id, { timeout: 10000 }).catch(() => fail('card', `missing field ${id}`));
 }
 ok('card-fields=4');
+// employees page now carries the nav bar and the owner entry
+if (!(await page.$('.navv-bottom-nav'))) fail('nav', 'bottom nav missing on employees page');
+if (!(await navVisible())) fail('nav', 'employees menu item not revealed on employees page');
+ok('employees-page-nav=ok');
 
 // 3. change the password THROUGH THE CARD (real click, not a script call)
 await page.fill('#accCurrentPassword', OWNER_PASSWORD);
