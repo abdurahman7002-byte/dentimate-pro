@@ -13,6 +13,6 @@ with e as (insert into public.employees (owner_id, full_name, email) values
   (:'owner'::uuid,'Emp Bill Add','billadd@example.test'),
   (:'owner'::uuid,'Emp No Perms','none@example.test') returning id, email)
 insert into public.employee_permissions (employee_id, page_key, can_view, can_add, can_edit, can_delete)
-select e.id, k, true, false, false, false from e, unnest(array['bill','doctors','patients']) k where e.email like 'three%'
+select e.id, k, true, false, false, false from e, unnest(array['bill','doctors','patients','patient-file']) k where e.email like 'three%'
 union all select e.id, 'patients', true, false, false, false from e where e.email like 'pat%'
 union all select e.id, 'bill', true, true, false, false from e where e.email like 'billadd%';
