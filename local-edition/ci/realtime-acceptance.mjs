@@ -119,6 +119,9 @@ const rejoinPromise = new Promise(res => { onResubscribe = () => { rejoined = tr
 const tRestart = Date.now();
 execSync(`docker restart ${REALTIME_CONTAINER}`, { stdio: 'ignore' });
 console.log(`restart-returned-ms=${Date.now() - tRestart}`);
+// marker so later steps can segment realtime's log AFTER the restart
+// (docker compose logs --since accepts RFC3339)
+try { (await import('node:fs')).writeFileSync('/tmp/rt-restart-since', new Date(tRestart).toISOString()); } catch (_) {}
 await new Promise(r => setTimeout(r, 3000));
 const duringOutage = await insertNotification('outage');
 // server-side recovery bound: the dead walsender lingers until

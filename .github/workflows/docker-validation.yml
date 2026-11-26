@@ -263,9 +263,14 @@ jobs:
             SENDERS=$($COMPOSE exec -T db psql -U postgres -tA -c "select count(*) from pg_stat_replication" 2>/dev/null || echo -1)
             KONG_RT=$(curl -s --cacert "$NODE_EXTRA_CA_CERTS" -o /dev/null -w '%{http_code}' --max-time 5 "https://localhost/realtime/v1/" -H "apikey: $ANON_KEY" || echo 000)
             DIRECT_RT=$($COMPOSE exec -T realtime curl -s -o /dev/null -w '%{http_code}' --max-time 5 -H "Authorization: Bearer $ANON_KEY" http://localhost:4000/api/tenants/realtime-dev/health 2>/dev/null || echo 000)
-            SUB="skipped"
-            if [ $((i % 3)) -eq 0 ]; then SUB=$(cd ../../ci && node realtime-subscribe-probe.mjs 2>/dev/null | grep -o 'probe-subscribe-status=[A-Z_]*' | cut -d= -f2); fi
-            echo "probe t=$((i*40))s slots=$SLOTS senders=$SENDERS kong-rt=$KONG_RT direct-rt=$DIRECT_RT subscribe=$SUB"
+            SUB="skipped"; SUB_STAGE="-"; SUB_EXIT="-"
+            if [ $((i % 3)) -eq 0 ]; then
+              SUB_OUT=$(cd ../../ci && node realtime-subscribe-probe.mjs 2>/dev/null); SUB_EXIT=$?
+              SUB=$(printf '%s' "$SUB_OUT" | grep -o 'probe-subscribe-status=[A-Z_]*' | cut -d= -f2)
+              SUB_STAGE=$(printf '%s' "$SUB_OUT" | grep -o 'probe-stage=[a-z-]*' | tail -1 | cut -d= -f2)
+            fi
+            SUBS=$($COMPOSE exec -T db psql -U postgres -tA -c "select count(*) from realtime.subscription" 2>/dev/null || echo -1)
+            echo "probe t=$((i*40))s slots=$SLOTS senders=$SENDERS subs=$SUBS kong-rt=$KONG_RT direct-rt=$DIRECT_RT subscribe=$SUB stage=$SUB_STAGE exit=$SUB_EXIT"
             if [ "$SUB" = "SUBSCRIBED" ] || { [ "$SLOTS" != "0" ] && [ "$SLOTS" != "-1" ]; }; then echo "recovery-observed-at-s=$((i*40)) via=${SUB:-slots}"; break; fi
             sleep 20
           done
@@ -352,6 +357,30 @@ jobs:
           echo "rtlog2-db-down=$(b 'DatabaseConnectionDown')"
           echo "rtlog2-repl-down=$(b 'ReplicationConnectionDown')"
           echo "rtlog2-recovery-failed=$(b 'ReplicationConnectionRecoveryFailed')"
+          # post-restart segment: the same markers restricted to lines emitted
+          # after the acceptance gate's docker restart (its timestamp file)
+          if [ -f /tmp/rt-restart-since ]; then
+            RLOGP="$($COMPOSE logs --since "$(cat /tmp/rt-restart-since)" realtime 2>&1 | sed 's/\x1b\[[0-9;]*[A-Za-z]//g' || true)"
+            bp() { case "$RLOGP" in *"$1"*) echo 1;; *) echo 0;; esac; }
+            echo "rtpost-lines=$(printf '%s\n' "$RLOGP" | grep -c . || true)"
+            echo "rtpost-broadcast-start=$(bp 'Starting replication for Broadcast Changes')"
+            echo "rtpost-checking-slot=$(bp 'Checking if replication slot')"
+            echo "rtpost-slot-in-use=$(bp 'replication_slot_in_use')"
+            echo "rtpost-create-publication=$(bp 'Create publication')"
+            echo "rtpost-validating-publication=$(bp 'exists, validating')"
+            echo "rtpost-recreating-publication=$(bp 'does not match the expected configuration')"
+            echo "rtpost-create-slot=$(bp 'Create replication slot')"
+            echo "rtpost-conn-timeout=$(bp 'ReplicationConnectionTimeout')"
+            echo "rtpost-start-failed=$(bp 'StartReplicationFailed')"
+            echo "rtpost-tenant-db=$(bp 'UnableToConnectToTenantDatabase')"
+            echo "rtpost-migrations-failed=$(bp 'MigrationsFailedToRun')"
+            echo "rtpost-db-down=$(bp 'DatabaseConnectionDown')"
+            echo "rtpost-repl-down=$(bp 'ReplicationConnectionDown')"
+            echo "rtpost-recovery-failed=$(bp 'ReplicationConnectionRecoveryFailed')"
+            echo "rtpost-old-walsender=$(bp 'Waiting for old walsender')"
+          else
+            echo "rtpost-lines=marker-missing"
+          fi
           # restore-drill leftovers exist only when the backup gate failed mid-run
           # (its cleanup runs on the success path): classify their logs, then clean up
           if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^dentix-restore'; then
