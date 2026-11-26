@@ -36,7 +36,15 @@ const browser = await chromium.launch();
 const ctx = await browser.newContext({ ignoreHTTPSErrors: true });
 const page = await ctx.newPage();
 let connectedCount = 0;
-page.on('console', (msg) => { if (msg.text().includes('Notification Realtime CONNECTED')) connectedCount++; });
+let pageErrorCount = 0;
+const seenStatuses = [];
+page.on('pageerror', () => { pageErrorCount++; });
+page.on('console', (msg) => {
+    const t = msg.text();
+    if (t.includes('Notification Realtime CONNECTED')) connectedCount++;
+    const m = t.match(/Notification Realtime status:\s*(\w+)/);
+    if (m) { seenStatuses.push(m[1]); console.log(`ui-page-status=${m[1]}`); }
+});
 
 // owner token for fixture inserts (REST, same as the CI fixtures use)
 const lr = await fetch(`${BASE}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: OWNER_EMAIL, password: OWNER_PASSWORD }) });
@@ -77,8 +85,14 @@ const waitDom = async (title, ms, stage) => {
 const c0 = connectedCount;
 {
     const t0 = Date.now();
-    while (connectedCount === c0 && Date.now() - t0 < 20000) await page.waitForTimeout(250);
-    if (connectedCount === c0) fail('subscribe', 'no SUBSCRIBED console line');
+    // 90s, not 20s: the shipped ramp retries at 5/10/15/20/25s, so the wait
+    // must outlive several retries (mirrors the app, per the alignment rule)
+    while (connectedCount === c0 && Date.now() - t0 < 90000) await page.waitForTimeout(250);
+    if (connectedCount === c0) {
+        const tally = [...new Set(seenStatuses)].map((x) => `${x}=${seenStatuses.filter((y) => y === x).length}`).join(' ') || 'none';
+        console.log(`ui-subscribe-diag statuses=${tally} page-errors=${pageErrorCount}`);
+        fail('subscribe', 'no SUBSCRIBED console line');
+    }
 }
 
 // 2. steady-state single change -> UI, no retry
