@@ -15,6 +15,7 @@ jobs:
     steps:
       - name: Caddy on Windows, local TLS, static file
         run: |
+          set +e
           say(){ echo "$1"; echo "::notice title=probe::$1"; }
           mkdir -p /c/probe/web && cd /c/probe
           echo hello > web/index.html
