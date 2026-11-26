@@ -70,9 +70,13 @@ jobs:
           # GoTrue health endpoint proves the /auth/ proxy path (Kong key-auth
           # applies to /auth/ too, so the anon key is required)
           curl -sf -o /dev/null -w 'auth-via-trial-http=%{http_code}\n' -H "apikey: $ANON_KEY" http://localhost:8080/auth/v1/health
-          # table-level REST probe (the bare /rest/v1/ root is not a valid anon
-          # target - PostgREST answers 403 there even on the LAN listener)
-          curl -sf -o /dev/null -w 'rest-via-trial-http=%{http_code}\n' -H "apikey: $ANON_KEY" "http://localhost:8080/rest/v1/patients?select=id"
+          # table-level REST probe: anonymous select on patients MUST be denied
+          # (RLS) - 401/403 here PROVES the nginx->Kong->PostgREST path works;
+          # a 200 would mean RLS is broken. Positive REST coverage comes from
+          # the authenticated smoke step below.
+          code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $ANON_KEY" "http://localhost:8080/rest/v1/patients?select=id")
+          echo "rest-anon-denied-http=$code"
+          test "$code" = "401" || test "$code" = "403"
           # TLS-only listener must be gone in the trial profile
           code=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 3 https://localhost:443/ || true)
           echo "tls-listener-absent=$([ -z "$code" ] || [ "$code" = "000" ] && echo 1 || echo 0)"
