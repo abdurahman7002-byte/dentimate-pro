@@ -10,6 +10,8 @@ on:
       - 'local-edition/packaging/windows/pkg/uitest/perms*'
       - 'local-edition/js/supabase.js'
       - 'local-edition/pricing.html'
+      - 'local-edition/waiting.html'
+      - 'local-edition/packaging/init/**'
       - 'local-edition/patients.html'
 jobs:
   perms:
@@ -53,7 +55,9 @@ jobs:
             $env:OWNER_EM = $em; $env:OWNER_PW = $pw
             $env:PHASE = 'before'
             Note 'before' ((& node perms.mjs 2>&1 | Out-String) -replace '[\r\n"]',' ')
-            foreach ($f in 'js\supabase.js','js\preferences.js','pricing.html','patients.html') { Copy-Item "$env:GITHUB_WORKSPACE\local-edition\$f" "$R\app\web\$f" -Force }
+            foreach ($f in 'js\supabase.js','js\preferences.js','js\waiting.js','pricing.html','patients.html','waiting.html') { Copy-Item "$env:GITHUB_WORKSPACE\local-edition\$f" "$R\app\web\$f" -Force }
+            $rl = & $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -q -f "$env:GITHUB_WORKSPACE\local-edition\packaging\init\zz30-rls.sql" 2>&1 | Out-String
+            Note 'rls-reapply-errors' ([regex]::Matches($rl,'ERROR').Count)
             Start-Sleep -Seconds 61
             $env:PHASE = 'after'
             Note 'after' ((& node perms.mjs 2>&1 | Out-String) -replace '[\r\n"]',' ')

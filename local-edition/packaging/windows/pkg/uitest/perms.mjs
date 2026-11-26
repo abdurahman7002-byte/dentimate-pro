@@ -64,6 +64,26 @@ for (const [pg, nd] of [['Bill.html', 'Perm Beneficiary A'], ['doctors.html', 'P
   const r = await ui('pat@example.test', pg, nd);
   out['ui_pat_' + pg.replace('.html', '')] = `stayed=${r.stayed},sees_data=${r.sees}`;
 }
+// Waiting screen: RPC and page, owner and employee with waiting=view, employee without
+{
+  const rpc = async (t) => { const r = await fetch(base + '/rest/v1/rpc/get_waiting_queue', { method: 'POST', headers: H(t), body: '{}' }); const j = await r.json().catch(() => null); return `${r.status}:${Array.isArray(j) ? j.length : -1}`; };
+  out.rpc_owner = await rpc(owner);
+  out.rpc_wait_emp = await rpc(T['wait']);
+  out.rpc_pat_emp_denied = await rpc(T['pat']);
+  const o = await (async () => {
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true }); const page = await ctx.newPage();
+    await page.goto(base + '/index.html', { waitUntil: 'load' });
+    await page.fill('#email', process.env.OWNER_EM); await page.fill('#password', process.env.OWNER_PW);
+    await page.click('button:has-text("Login")');
+    await page.waitForURL((u) => !u.pathname.endsWith('/index.html') && u.pathname !== '/', { timeout: 30000 }).catch(() => {});
+    await page.goto(base + '/waiting.html', { waitUntil: 'load' }); await page.waitForTimeout(7000);
+    const t = await page.locator('body').innerText(); const title = await page.title(); await ctx.close();
+    return { sees: t.includes('Perm Patient A'), dentix: /dentix/i.test(t + title) };
+  })();
+  out.owner_waiting_sees_patient = o.sees; out.waiting_old_name_visible = o.dentix;
+  const e = await ui('wait@example.test', 'waiting.html', 'Perm Patient A');
+  out.wait_emp_waiting = `stayed=${e.stayed},sees_data=${e.sees}`;
+}
 // Pricing Helper in the More menu: owner sees the link and the page opens; employee without 'control' is bounced
 {
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true }); const page = await ctx.newPage();

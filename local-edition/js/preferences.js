@@ -1166,7 +1166,7 @@ en: {
 
 
 // ========== من ملف clinic-settings.html ==========
-"214": "Clinic Page Settings | Dentix Pro",
+"214": "Clinic Page Settings | Dentimate Pro",
 "215": "Example: Smile Specialized Clinic",
 "216": "Write a brief about the clinic and services...",
 "217": "01000000000",
@@ -1195,7 +1195,7 @@ en: {
 "241": "Patients Files",
 "242": "Search patients by name, phone, or address...",
 // ========== من ملف storage.html ==========
-"243": "Storage | Dentix Pro",
+"243": "Storage | Dentimate Pro",
 "244": "Storage",
 "245": "Manage clinic inventory and material consumption",
 "246": "Total Items",
@@ -1988,7 +1988,7 @@ en: {
 
 
 
-"prints_title": "Medical Prints | Dentix Pro",
+"prints_title": "Medical Prints | Dentimate Pro",
 "medical_prints": "Medical Prints",
 "medical_prints_desc": "Create and manage prescriptions, reports and invoices professionally",
 "create_new_print": "Create New Print",
@@ -2023,7 +2023,7 @@ en: {
 "print_now": "Print Now",
 "close": "Close",
 
-"dose_calculator_title": "Dose Calculator | Dentix Pro",
+"dose_calculator_title": "Dose Calculator | Dentimate Pro",
 "dose_calculator": "Dose Calculator",
 "dose_calculator_subtitle": "Smart pediatric & adult dosing",
 "manage_drugs": "Manage Drugs",
@@ -2038,7 +2038,7 @@ en: {
 "calculate_dose": "Calculate Dose",
 "dosing_recommendation": "Dosing Recommendation",
 
-"drugs_manager_title": "Drugs Manager | Dentix Pro",
+"drugs_manager_title": "Drugs Manager | Dentimate Pro",
 "drugs_manager": "Drugs Manager",
 "drugs_manager_subtitle": "Manage your clinic drug database",
 "add_new_drug": "Add New Drug",
@@ -2895,7 +2895,7 @@ ar: {
 "211": "البحث بالمستفيد أو التاريخ...",
 "212": "تفاصيل الفاتورة",
 "213": "إغلاق",
-"214": "إعدادات صفحة العيادة | Dentix Pro",
+"214": "إعدادات صفحة العيادة | Dentimate Pro",
 "215": "مثال: عيادة الابتسامة المتخصصة",
 "216": "اكتب نبذة مختصرة عن العيادة والخدمات المقدمة...",
 "217": "01000000000",
@@ -2977,7 +2977,7 @@ ar: {
 "238": "زيارة فائتة",
 "241": "ملفات المرضى",
 "242": "ابحث عن المرضى بالاسم أو الهاتف أو العنوان...",
-"243": "المخزن | Dentix Pro",
+"243": "المخزن | Dentimate Pro",
 "244": "المخزن",
 "245": "إدارة مخزون العيادة واستهلاك المواد",
 "246": "إجمالي العناصر",
@@ -3975,7 +3975,7 @@ ar: {
 
 
 
-"prints_title": "المطبوعات الطبية | Dentix Pro",
+"prints_title": "المطبوعات الطبية | Dentimate Pro",
 "medical_prints": "المطبوعات الطبية",
 "medical_prints_desc": "إنشاء وإدارة الوصفات والتقارير والفواتير باحترافية",
 "create_new_print": "إنشاء مطبوعة جديدة",
@@ -4010,7 +4010,7 @@ ar: {
 "print_now": "طباعة الآن",
 "close": "إغلاق",
 
-"dose_calculator_title": "حاسبة الجرعات | Dentix Pro",
+"dose_calculator_title": "حاسبة الجرعات | Dentimate Pro",
 "dose_calculator": "حاسبة الجرعات",
 "dose_calculator_subtitle": "جرعات ذكية للأطفال والبالغين",
 "manage_drugs": "إدارة الأدوية",
@@ -4025,7 +4025,7 @@ ar: {
 "calculate_dose": "احسب الجرعة",
 "dosing_recommendation": "توصية الجرعة",
 
-"drugs_manager_title": "مدير الأدوية | Dentix Pro",
+"drugs_manager_title": "مدير الأدوية | Dentimate Pro",
 "drugs_manager": "مدير الأدوية",
 "drugs_manager_subtitle": "إدارة قاعدة بيانات أدوية العيادة",
 "add_new_drug": "إضافة دواء جديد",

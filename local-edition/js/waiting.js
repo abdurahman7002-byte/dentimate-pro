@@ -65,12 +65,12 @@ async function loadClinicInfo() {
 
     if (textEl) {
         textEl.textContent =
-            data.clinic_name || "Dentix Clinic";
+            data.clinic_name || "Dentimate Pro Clinic";
     }
 
     if (headerEl) {
         headerEl.textContent =
-            data.clinic_name || "Dentix Clinic";
+            data.clinic_name || "Dentimate Pro Clinic";
     }
 
     // شعار العيادة

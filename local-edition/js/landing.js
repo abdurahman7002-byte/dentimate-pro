@@ -93,7 +93,7 @@ function fillClinicData(data){
     document.getElementById(
         "clinicName"
     ).textContent =
-    data.clinic_name || "Dentix Clinic";
+    data.clinic_name || "Dentimate Pro Clinic";
 
     document.getElementById(
         "clinicDescription"

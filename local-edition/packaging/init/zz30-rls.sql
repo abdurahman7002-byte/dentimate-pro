@@ -335,11 +335,12 @@ create policy dentix_self on public.notifications for all to authenticated
 -- on the TV, add p.phone here as an explicit decision.
 -- =========================================================
 
+drop function if exists public.get_waiting_queue();
 create or replace function public.get_waiting_queue()
 returns table (
-    id uuid,
-    appointment_start timestamptz,
-    appointment_end timestamptz,
+    id bigint,
+    appointment_start timestamp,
+    appointment_end timestamp,
     visit_status text,
     patient_name text
 )
