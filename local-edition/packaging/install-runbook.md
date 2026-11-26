@@ -10,40 +10,67 @@ free RAM. All commands below run from `local-edition/packaging/official`
 unless noted otherwise.
 
 Server host: the validated environment is Linux. Windows hosts are NOT
-validated - see the host-selection section below before choosing where the
-server runs (Windows 10 is out of Microsoft servicing and is not a supported
-Docker host as of November 2026).
+validated - see the host-selection section below, which separates the
+verified constraints from the open alternatives (Windows 10 left Microsoft
+servicing on 2025-10-14; what that means for a given trial route is stated
+there, without categorical claims).
 
-### Choosing the server host (verified November 2026)
+### Choosing the server host - verified constraints vs. open alternatives
 
-The validated environment is Linux. Check any candidate host against these
-verified facts:
+Verified constraints (sources checked November 2026):
 
-- Windows 10 reached end of support on 2025-10-14 (Microsoft release-health).
-  Docker's own install docs state Docker Desktop is supported only on Windows
-  versions still within Microsoft's servicing timeline, so a Windows 10 PC is
-  NOT a supported host for this stack, even though its build number appears
-  in the requirements table. (Paid ESU does not change Docker's policy.)
-- Windows 11 requires a supported CPU; 6th-generation Intel Core (e.g.
-  i7-6700HQ) is not on Microsoft's Windows 11 supported processor list, so a
-  supported in-place Windows 11 upgrade is not available on such PCs.
-- A Windows 11 PC (8th-gen Intel or newer) with Docker Desktop's WSL2 backend
-  remains a possible but UNVALIDATED host: Docker Desktop is free only for
-  small businesses (fewer than 250 employees AND under $10M annual revenue,
-  per the Docker Subscription Service Agreement) - confirm that condition
-  yourself before relying on it, and treat the first boot as a trial run.
-- The zero-cost validated route on existing hardware: install a mainstream
-  Linux distribution on the intended server PC (an i7-6700HQ with 16 GB RAM
-  exceeds this stack's needs comfortably) and follow section 1 verbatim.
-  Docker Engine on Linux is open source - no Docker Desktop license
-  condition applies. Back up anything on that PC first; installing Linux
-  replaces the existing system unless you deliberately dual-boot.
-- A small dedicated Linux machine as the LAN server is the other clean
-  option (validated environment, the workstation stays untouched).
+- The only VALIDATED environment is Linux x86_64 with Docker Engine
+  (CI-verified every run). Everything else is unvalidated.
+- Windows 10 reached end of support on 2025-10-14 (Microsoft release-health)
+  and no longer receives security updates.
+- Docker's install documentation states Docker Desktop is supported only on
+  Windows versions still within Microsoft's servicing timeline. No vendor
+  statement was found on whether paid ESU servicing changes this; that
+  question is UNRESOLVED, not answered.
+- Whether this specific PC can run Windows 11 is decided by Microsoft's PC
+  Health Check on the machine itself; it could not be verified from here.
+- Linux hardware compatibility (drivers, storage headroom) for a specific PC
+  cannot be established from CPU/RAM figures alone; the trial below is how it
+  gets established.
 
-On any Linux host (repurposed PC or dedicated machine), also disable sleep /
-lid suspend while it acts as the server, and run the backup + isolated
-restore drill (sections 2-3) once before real data is entered.
+Open alternatives (none chosen here; the host decision is the owner's):
+
+1. NON-DESTRUCTIVE TRIAL CANDIDATE on the existing PC (not yet executed):
+   boot an Ubuntu live USB in "Try Ubuntu" mode, install Docker Engine inside
+   the live session (Docker's official Ubuntu apt path), run this runbook end
+   to end including the backup/restore drill, then reboot.
+   Vendor grounding: Ubuntu's own documentation states a live session does
+   not alter the computer's configuration and a restart without the USB
+   restores the machine (ubuntu.com/tutorials/try-ubuntu-before-you-install).
+   Risks and limits, stated plainly:
+   - Preparing the boot media ERASES the USB stick selected for it - check
+     the selected device carefully before writing the image.
+   - A live session CAN access the internal disks if someone mounts or opens
+     them - during the trial, do not mount internal drives; keep all work
+     inside the live session.
+   - Resource headroom is measured, not assumed: the stack's images total
+     about 2.2 GB compressed download (Docker Hub, November 2026) and roughly
+     6-8 GB uncompressed, plus the live OS session, the database volume and
+     the backup/restore drill's duplicate copies - an estimated ~10 GB RAM
+     footprint overall (estimate from registry sizes, not a trial measurement).
+     On a 16 GB machine this is expected to fit with headroom; on 8 GB it is
+     unproven and likely tight. The trial itself is what proves it.
+   - Nothing created inside the session survives reboot - that is what makes
+     the trial safe, and also why it cannot be the production install.
+2. Reversible software route on the existing Windows 10: enable WSL2, install
+   Ubuntu + Docker Engine inside WSL (open source - the Docker Desktop
+   license condition does not apply), run the trial, and remove it afterwards
+   (`wsl --unregister`). Caveat: the OS is out of servicing, so this is a
+   time-boxed trial route, not a production verdict.
+3. A different PC already running a supported OS (Windows 11 with Docker
+   Desktop - confirm the small-business license condition yourself - or any
+   Linux), validated by the same trial-first approach.
+4. A dedicated Linux machine as the permanent LAN server, if and when the
+   trial proves the system worth it.
+
+On any eventual production host: disable sleep/lid suspend while it acts as
+the server, and run the backup + isolated restore drill (sections 2-3) once
+before real data is entered.
 
 ---
 
