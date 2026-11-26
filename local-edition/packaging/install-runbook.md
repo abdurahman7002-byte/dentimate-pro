@@ -48,12 +48,11 @@ Open alternatives (none chosen here; the host decision is the owner's):
    - A live session CAN access the internal disks if someone mounts or opens
      them - during the trial, do not mount internal drives; keep all work
      inside the live session.
-   - Resource facts: the stack's images total about 2.2 GB compressed
-     download (measured from the Docker Hub registry API, November 2026).
-     The uncompressed on-disk size, live-session RAM footprint and free
-     headroom on any specific machine are NOT yet measured; CI will record
-     the actual disk and memory usage of the running stack. Until those
-     numbers exist, no fit claim is made for any machine.
+   - Resource facts (measured in CI, November 2026): about 2.2 GB compressed
+     image download, about 7.5 GB of uncompressed images on disk, and the
+     running stack totals about 1.2 GB of container RAM. Whether a specific
+     machine has the free disk and RAM headroom must still be checked on
+     that machine; the trial is how that gets established.
    - Nothing created inside the session survives reboot - that is what makes
      the trial safe, and also why it cannot be the production install.
 2. Reversible software route on the existing Windows 10: enable WSL2, install
@@ -261,13 +260,17 @@ docker network rm dentix-restore-net
 
 ## 4. Operational notes
 
-- Realtime: after a page subscribes there is an activation lag of a few
-  seconds before postgres_changes events flow (observed in CI: first insert
-  right after SUBSCRIBED can be missed). The app refetches missed
-  notifications on every (re-)subscribe (`catchUpNotifications` in
-  `js/notification.js`), including automatic reconnects; changes committed
-  while the connection was down are recovered by that fetch, not replayed by
-  realtime.
+- Realtime recovery, as validated in CI (November 2026): after the realtime
+  container (or the host) restarts, an open page resubscribes on its own
+  (observed: reconnected ~10-40s after the restart) and re-fetches what was
+  committed while it was down. The live event stream reactivates lazily
+  (observed ~13s after the resubscribe); until it does, the app re-fetches
+  every 5s so committed rows still appear. This is bounded recovery, not a
+  guarantee: if no live event has arrived for 3 minutes, the app shows a
+  small "syncing" indicator and keeps re-fetching every 30s while the page
+  is open; the indicator clears on the first live event. Changes committed
+  while the connection was down are recovered by that fetch, not replayed
+  by realtime.
 - The supavisor pooler is disabled by default (opt-in compose profile
   `pooler`); the app reaches the database through Kong/PostgREST and does not
   use the pooler.
@@ -283,5 +286,6 @@ docker network rm dentix-restore-net
 | storage-api exits right after boot in a restored/custom stack | `FILE_STORAGE_BACKEND_PATH` unset | set it to `/var/lib/storage` (see 3) |
 | notifications never arrive | publication membership missing | run `post-boot-realtime.sql` (see 1) |
 | notification arrives a few seconds late right after page load | realtime activation lag | expected; the app catch-up covers the gap |
+| "syncing" indicator stays on after a host/container restart | realtime stream not reactivated (rows still sync every 30s) | check `docker compose ... ps` realtime health; restart the realtime container once if it is stuck |
 | roles restore prints "already exists" errors | image built-in roles | expected; only other errors matter |
 | `pg_dump` output missing auth/storage rows | dumped as `postgres` | redo as `supabase_admin` (see 2) |
