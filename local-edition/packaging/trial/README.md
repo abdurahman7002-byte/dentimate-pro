@@ -83,6 +83,12 @@ What this is NOT:
 - Secrets in `.env.dentix` are freshly generated inside your codespace and
   never leave it.
 - Signup is disabled; only the owner you create can provision accounts.
+- The owner can change their own email/password inside the app (employees
+  page, account card, current password required). A password change revokes
+  all sessions immediately (refresh layer); a forgotten owner password is
+  recovered from the codespace shell with
+  `docker compose ... exec -T provision node reset-owner.mjs` (loopback-only
+  endpoint - shell access is the authority, same trust as the DB volume).
 - The Supabase Studio dashboard is reachable through the gateway with HTTP
   basic auth; its password is the regenerated `DASHBOARD_PASSWORD` in
   `.env.dentix`, and the private port keeps it off the open internet.

@@ -109,6 +109,8 @@ const AH = (tok) => ({ apikey: ANON_KEY, Authorization: `Bearer ${tok}`, 'Conten
 const TMP_PW = 'tmp-' + crypto.randomUUID();
 const TMP_EMAIL = 'ci-owner-alias@clinic.local';
 
+const accDetail = async (r) => String(r.status) + ' ' + (((await r.json().catch(() => null)) || {}).error || '');
+
 const e1 = await fetch(ACC, { method: 'POST', headers: AH(empTok), body: JSON.stringify({ current_password: 'fixture', new_password: 'x'.repeat(10) }) });
 check('employee token: /account DENIED (owner only)', e1.status === 403, String(e1.status));
 
@@ -117,7 +119,7 @@ check('wrong current password: change REFUSED (identity check works)', w1.status
 
 const preSess = await loginSession(OWNER_EMAIL, OWNER_PASSWORD);
 const c1 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: OWNER_PASSWORD, new_password: TMP_PW }) });
-check('owner: password change ACCEPTED with correct current password', c1.ok, String(c1.status));
+check('owner: password change ACCEPTED with correct current password', c1.ok, await accDetail(c1));
 if (c1.ok) {
     // session behavior after a password change, measured exactly:
     // refresh tokens must be dead immediately (no silent session survival);
@@ -130,14 +132,14 @@ if (c1.ok) {
     owner = await login(OWNER_EMAIL, TMP_PW);
     check('login with NEW password works', !!owner, 'login-failed');
     const c2 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: TMP_PW, new_password: OWNER_PASSWORD }) });
-    check('password reverted to original', c2.ok, String(c2.status));
+    check('password reverted to original', c2.ok, await accDetail(c2));
     owner = await login(OWNER_EMAIL, OWNER_PASSWORD);
     check('login with ORIGINAL password works again', !!owner, 'login-failed');
     if (!owner) die('cannot continue without owner token after password round trip');
 }
 
 const c3 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: OWNER_PASSWORD, new_email: TMP_EMAIL }) });
-check('owner: email change ACCEPTED with correct current password', c3.ok, String(c3.status));
+check('owner: email change ACCEPTED with correct current password', c3.ok, await accDetail(c3));
 if (c3.ok) {
     // email change must NOT kill the session (no secret changed)
     const alive = await fetch(`${BASE}/rest/v1/employees?select=id&limit=1`, { headers: AH(owner) });
@@ -145,7 +147,7 @@ if (c3.ok) {
     const le = !!(await login(TMP_EMAIL, OWNER_PASSWORD));
     check('login with NEW email works', le, 'login-failed');
     const c4 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: OWNER_PASSWORD, new_email: OWNER_EMAIL }) });
-    check('email reverted to original', c4.ok, String(c4.status));
+    check('email reverted to original', c4.ok, await accDetail(c4));
     const le2 = !!(await login(OWNER_EMAIL, OWNER_PASSWORD));
     check('login with ORIGINAL email works again', le2, 'login-failed');
 }
