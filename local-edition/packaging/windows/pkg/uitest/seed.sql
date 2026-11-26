@@ -10,7 +10,7 @@ insert into public.patients (full_name, phone, gender, address, birth_date, medi
  ('Ahmed Fathy','0100000107','male','Cairo, Zamalek','1969-08-08','Heart medication','Dentures review',:'owner'),
  ('Hana Tarek','0100000108','female','Giza, Mohandessin','2010-12-01','None','First visit',:'owner');
 insert into public.patient_visits (patient_id, user_id, visit_status, appointment_start, appointment_end, patient_name, patient_phone, patient_age, visit_title)
-select p.id, :'owner', 'قادم', date_trunc('day', now()) + ((8 + p.id % 8) || ' hours')::interval, date_trunc('day', now()) + ((8 + p.id % 8) || ' hours 30 minutes')::interval, p.full_name, p.phone, 30, 'Checkup'
+select p.id, :'owner', 'قادم', now() + ((p.id * 40) || ' minutes')::interval, now() + ((p.id * 40 + 30) || ' minutes')::interval, p.full_name, p.phone, 30, 'Checkup'
 from public.patients p;
 insert into public.doctors (user_id, doctor_name, specialization, phone) values
  (:'owner'::uuid,'Dr. Laila Nabil','Orthodontics','0100000201'),(:'owner'::uuid,'Dr. Hesham Zaki','Endodontics','0100000202'),(:'owner'::uuid,'Dr. Rania Fouad','General dentistry','0100000203');

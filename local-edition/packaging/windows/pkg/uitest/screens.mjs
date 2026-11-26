@@ -10,7 +10,7 @@ const page = await ctx.newPage();
 const labels = {};
 async function shot(name) {
   await page.waitForTimeout(3500);
-  await page.screenshot({ path: `${dir}/${name}.png`, fullPage: process.env.FULL === '1' });
+  await page.screenshot({ path: `${dir}/${name}.png`, fullPage: process.env.FULL === '1' && /patient-detail|employees|settings|patients$|patients-files/.test(name) });
   labels[name] = await page.evaluate(() => ({
     title: document.title,
     headings: [...document.querySelectorAll('h1,h2,h3')].map(e => e.innerText.trim()).filter(Boolean).slice(0, 25),
@@ -24,6 +24,7 @@ await page.fill('#password', process.env.OWNER_PW);
 await page.click('button:has-text("Login")');
 await page.waitForURL((u) => !u.pathname.endsWith('/index.html'), { timeout: 30000 }).catch(() => {});
 await shot('02-dashboard-after-login');
+await page.evaluate(() => window.scrollTo(0, 950)); await page.waitForTimeout(800); await page.screenshot({ path: `${dir}/02b-dashboard-appointments.png` });
 const pages = [['03-patients', 'patients.html'], ['04-patients-files', 'patients-files.html'], ['06-employees-permissions', 'employees.html'],
   ['07-waiting-screen', 'waiting.html'], ['08-billing', 'Bill.html'], ['09-reports', 'reports.html'], ['10-clinic-settings', 'control.html'], ['11-doctors', 'doctors.html']];
 for (const [n, p] of pages) {
