@@ -81,14 +81,15 @@ const waitDom = async (title, ms, stage) => {
     fail(stage, `title never appeared in notification UI within ${ms}ms`);
 };
 
-// initial subscribe settles
-const c0 = connectedCount;
+// initial subscribe settles. Pass when ANY CONNECTED was seen since page
+// load: a fast first subscribe can land during login/screenshot, before this
+// wait starts (observed: SUBSCRIBED logged 1s after ui-login=ok).
 {
     const t0 = Date.now();
     // 90s, not 20s: the shipped ramp retries at 5/10/15/20/25s, so the wait
     // must outlive several retries (mirrors the app, per the alignment rule)
-    while (connectedCount === c0 && Date.now() - t0 < 90000) await page.waitForTimeout(250);
-    if (connectedCount === c0) {
+    while (connectedCount === 0 && Date.now() - t0 < 90000) await page.waitForTimeout(250);
+    if (connectedCount === 0) {
         const tally = [...new Set(seenStatuses)].map((x) => `${x}=${seenStatuses.filter((y) => y === x).length}`).join(' ') || 'none';
         console.log(`ui-subscribe-diag statuses=${tally} page-errors=${pageErrorCount}`);
         fail('subscribe', 'no SUBSCRIBED console line');
