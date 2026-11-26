@@ -4,6 +4,11 @@
    ========================================================= */
 
 let notificationRealtimeChannel = null;
+// Watermark for the reconnect/activation catch-up fetch: postgres_changes does
+// not replay changes committed while the socket was down (or in the seconds
+// between page load and server-side subscription activation), so every
+// (re-)SUBSCRIBED triggers a plain refetch of what was missed.
+let notificationsCatchUpSince = new Date().toISOString();
 let notificationToastContainer = null;
 let notificationInitialized = false;
 let notificationRefreshInterval = null;
@@ -1117,6 +1122,38 @@ async function cleanupExpiredNotifications() {
    REALTIME — Notifications table
    ========================================================= */
 
+// Catch-up resync: runs on every SUBSCRIBED (initial subscribe and automatic
+// rejoins after a connection drop). Fetches rows committed since the last
+// watermark that realtime never delivered; dedupe happens through the DOM id
+// check inside addNotificationToList and the knownNotificationIds set.
+async function catchUpNotifications(userId) {
+    try {
+        const since = notificationsCatchUpSince;
+        notificationsCatchUpSince = new Date().toISOString();
+        const { data, error } = await supabaseClient
+            .from("notifications")
+            .select("*")
+            .eq("user_id", userId)
+            .gt("created_at", since)
+            .order("created_at", { ascending: true });
+        if (error) {
+            console.error("Notification catch-up fetch error:", error);
+            return;
+        }
+        if (!data || data.length === 0) return;
+        for (const n of data) {
+            if (knownNotificationIds.has(String(n.id))) continue;
+            knownNotificationIds.add(String(n.id));
+            showNotificationToast(n);
+            addNotificationToList(n);
+        }
+        updateNotificationCountRealtime();
+    }
+    catch (err) {
+        console.error("Notification catch-up error:", err);
+    }
+}
+
 async function startNotificationRealtime() {
     const userId = await getUserId();
     if (!userId) {
@@ -1170,7 +1207,10 @@ async function startNotificationRealtime() {
         })
         .subscribe(status => {
             console.log("🔔 Notification Realtime status:", status);
-            if (status === "SUBSCRIBED") console.log("✅ Notification Realtime CONNECTED");
+            if (status === "SUBSCRIBED") {
+                console.log("✅ Notification Realtime CONNECTED");
+                catchUpNotifications(userId);
+            }
             if (status === "CHANNEL_ERROR") console.error("❌ Notification Realtime CHANNEL ERROR");
             if (status === "TIMED_OUT") console.error("⏱️ Notification Realtime TIMED OUT");
             if (status === "CLOSED") console.warn("⚠️ Notification Realtime CLOSED");

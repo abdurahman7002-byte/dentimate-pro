@@ -120,6 +120,13 @@ jobs:
           echo "official-client-exit=$?"
           set -e
           node ../../ci/realtime-check.mjs
+          # acceptance gate: the app's actual client pattern (supabase-js,
+          # notification-channel shape) must deliver a single committed change
+          # in steady state, rejoin after a realtime restart, and recover an
+          # outage-interval change through the app's catch-up resync.
+          REALTIME_CONTAINER="$($COMPOSE ps --format '{{.Names}}' | grep -m1 realtime)"
+          export REALTIME_CONTAINER
+          (cd ../../ci && node realtime-acceptance.mjs)
 
       - name: Backup + ISOLATED restore gate (restored storage service download + hash)
         working-directory: local-edition/packaging/official
