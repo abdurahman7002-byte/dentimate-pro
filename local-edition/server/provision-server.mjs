@@ -187,7 +187,7 @@ async function handleBootstrap(res, ip, body) {
         await deleteAuthUser(old.id);
         created = await createAuthUser(email, password, true);
     }
-    if (created.error) return json(res, 502, { error: 'تعذر إنشاء حساب الدخول' });
+    if (created.error) return json(res, 502, { error: 'تعذر إنشاء حساب الدخول', detail: String(created.error).slice(0, 200) });
     const boot = await bootstrapFirstAdmin(created.id);
     if (boot !== 'ok') {
         await deleteAuthUser(created.id); // compensating cleanup: identity created by THIS attempt
@@ -270,7 +270,7 @@ const server = http.createServer(async (req, res) => {
             const password = genPassword();
             const created = await createAuthUser(emp.email, password);
             if (created.error === 'duplicate') return json(res, 409, { error: 'يوجد حساب دخول بهذا البريد بالفعل' });
-            if (created.error) return json(res, 502, { error: 'تعذر إنشاء حساب الدخول' });
+            if (created.error) return json(res, 502, { error: 'تعذر إنشاء حساب الدخول', detail: String(created.error).slice(0, 200) });
             if (!await linkEmployee(emp.id, created.id)) {
                 await deleteAuthUser(created.id); // compensating cleanup: no orphan accounts
                 return json(res, 502, { error: 'تعذر ربط الحساب بالموظف - لم يُنشأ أي حساب' });

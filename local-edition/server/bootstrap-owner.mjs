@@ -58,9 +58,14 @@ function ask(q, hidden = false) {
     });
 }
 
+console.log('Rules: email like name@example.com (no spaces). Password: 8 to 128 characters, any characters.');
+console.log('The password is hidden while you type (nothing appears, that is normal). Press Enter after each line.');
+console.log('');
 const email = (await ask('Owner email: ')).trim();
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { console.error('REJECTED: the email must look like name@example.com (no spaces, one @, a dot after it). You typed: ' + email); process.exit(1); }
 const password = await ask('Owner password (min 8 chars, hidden): ', true);
 const password2 = await ask('Repeat password: ', true);
+if (password.length < 8 || password.length > 128) { console.error('REJECTED: the password must be 8 to 128 characters. You typed ' + password.length + ' characters.'); process.exit(1); }
 if (password !== password2) { console.error('Passwords do not match - nothing sent.'); process.exit(1); }
 
 const res = await fetch(`http://127.0.0.1:${process.env.BOOTSTRAP_PORT || 9091}/bootstrap-owner`, {
@@ -73,6 +78,8 @@ if (res.ok) {
     console.log('First owner created for', body.email);
     console.log('Next: sign in at https://<this-machine>/ and add your clinic data.');
 } else {
-    console.error('Bootstrap refused/failed:', body.error || res.status);
+    const known = { 409: 'An owner (or an account with this email) already exists. This step works only once.', 429: 'Too many tries. Wait one minute and run it again.', 502: 'The login service refused: ' + (body.detail || 'unknown reason') };
+    console.error('REJECTED by the system (code ' + res.status + '): ' + (known[res.status] || 'see data\\logs\\provision.err.log'));
+    console.error('Server message: ' + (body.error || ''));
     process.exit(1);
 }
