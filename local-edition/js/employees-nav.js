@@ -23,5 +23,8 @@
       if(!r.error && r.data===true) el.style.display='';
     }catch(_){ /* stay hidden */ }
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
+  /* other page scripts may rebuild the menu after DOMContentLoaded, so run
+     after full load and once more shortly after (idempotent) */
+  function later(){ run(); setTimeout(run,1500); }
+  if(document.readyState==='complete') later(); else window.addEventListener('load',later);
 })();
