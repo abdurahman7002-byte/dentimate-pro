@@ -67,8 +67,9 @@ jobs:
       - name: Trial listener serves app + API on one origin
         run: |
           curl -sf -o /dev/null -w 'app-index-http=%{http_code}\n' http://localhost:8080/
-          # GoTrue health endpoint proves the /auth/ proxy path (no key needed)
-          curl -sf -o /dev/null -w 'auth-via-trial-http=%{http_code}\n' http://localhost:8080/auth/v1/health
+          # GoTrue health endpoint proves the /auth/ proxy path (Kong key-auth
+          # applies to /auth/ too, so the anon key is required)
+          curl -sf -o /dev/null -w 'auth-via-trial-http=%{http_code}\n' -H "apikey: $ANON_KEY" http://localhost:8080/auth/v1/health
           # table-level REST probe (the bare /rest/v1/ root is not a valid anon
           # target - PostgREST answers 403 there even on the LAN listener)
           curl -sf -o /dev/null -w 'rest-via-trial-http=%{http_code}\n' -H "apikey: $ANON_KEY" "http://localhost:8080/rest/v1/patients?select=id"
