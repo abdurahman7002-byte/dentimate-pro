@@ -5,7 +5,11 @@
 # packaging/, docs/, setup/, tools/, analysis/, .git or markdown.
 set -eu
 DEST="$(dirname "$0")/web"
-rm -rf "$DEST"; mkdir -p "$DEST"
+# Empty the directory IN PLACE, never rm -rf it: a running web container
+# bind-mounts this directory, and replacing the directory itself leaves the
+# container looking at a deleted inode (403/404 until it is recreated).
+mkdir -p "$DEST"
+find "$DEST" -mindepth 1 -delete
 
 # pages (pricing.html KEPT: clinical pricing page linked from control.html)
 cp ./*.html "$DEST"/
