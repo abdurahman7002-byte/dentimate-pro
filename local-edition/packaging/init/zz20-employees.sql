@@ -314,6 +314,7 @@ end;
 $$;
 
 grant execute on function public.first_allowed_page() to authenticated;
+grant execute on function public.clinic_owner_id() to authenticated;
 
 -- =========================================================
 -- user_roles: UNUSED legacy authorization table. The live app

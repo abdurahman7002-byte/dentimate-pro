@@ -1,0 +1,61 @@
+name: windows-perms
+# Employee permission test on the built offline package (synthetic data only).
+# Phase 'before' = package as built earlier; phase 'after' = same package with the fixed js/supabase.js overlaid.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci-validation]
+    paths:
+      - '.github/workflows/windows-perms.yml'
+      - 'local-edition/packaging/windows/pkg/uitest/perms*'
+      - 'local-edition/js/supabase.js'
+jobs:
+  perms:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dentimate-offline-win-ci
+          run-id: 45845364518
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: C:\dl
+      - name: Start package, seed, test employees before and after the fix
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $notes = New-Object System.Collections.Generic.List[string]
+          function Note($k, $v) { $script:notes.Add("$k=$v"); Write-Host "$k=$v" }
+          try {
+            & 7z x C:\dl\dentimate-offline-win.zip -oC:\clinic -y | Out-Null
+            $R = 'C:\clinic\dentimate-offline'
+            $o = "$env:TEMP\start.log"
+            $p = Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"$R\scripts\start.ps1",'-NoBrowser') -RedirectStandardOutput $o -RedirectStandardError "$o.err" -PassThru -WindowStyle Hidden
+            $null = $p.Handle
+            if (-not $p.WaitForExit(600000)) { try { $p.Kill() } catch {} }
+            Note 'start-rc' $p.ExitCode
+            $em = "owner@example.test"; $pw = "Demo-$([guid]::NewGuid().ToString('N'))"
+            $env:BOOTSTRAP_PORT = '39995'; ("$em`n$pw`n$pw`n") | & "$R\runtime\node\node.exe" "$R\app\server\bootstrap-owner.mjs" | Out-Null
+            $sec = Get-Content "$R\data\secrets.json" -Raw | ConvertFrom-Json
+            $env:PGPASSWORD = $sec.pg_superuser
+            $psql = "$R\runtime\pgsql\bin\psql.exe"
+            $owner = (& $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -tAc "select id from auth.users limit 1").Trim()
+            $seedOut = & $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -v "owner=$owner" -q -f "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg\uitest\perms-seed.sql" 2>&1 | Out-String
+            Note 'seed-errors' (($seedOut -replace '[\r\n"]',' ').Substring(0, [Math]::Min(300, $seedOut.Length)))
+            New-Item -ItemType Directory -Force C:\uitest | Out-Null
+            Copy-Item "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg\uitest\perms.mjs" C:\uitest\ -Force
+            Push-Location C:\uitest
+            Set-Content -Path package.json -Value '{"type":"module"}' -Encoding ASCII
+            & npm.cmd i playwright-core --no-audit --no-fund 2>&1 | Out-Null
+            $env:OWNER_EM = $em; $env:OWNER_PW = $pw
+            $env:PHASE = 'before'
+            Note 'before' ((& node perms.mjs 2>&1 | Out-String) -replace '[\r\n"]',' ')
+            Copy-Item "$env:GITHUB_WORKSPACE\local-edition\js\supabase.js" "$R\app\web\js\supabase.js" -Force
+            Start-Sleep -Seconds 61
+            $env:PHASE = 'after'
+            Note 'after' ((& node perms.mjs 2>&1 | Out-String) -replace '[\r\n"]',' ')
+            Pop-Location
+            & "$R\scripts\stop.ps1" 2>&1 | Out-Null
+          } catch { Note 'EXCEPTION' (("$_" -replace '[\r\n"]',' ')) }
+          finally { Write-Host "::notice title=perms-summary::$($notes -join ' ')" }
