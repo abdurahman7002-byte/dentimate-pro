@@ -11,6 +11,18 @@ fi
 
 cd "$(dirname "$0")/../official"
 
+# Rerun guard: the database persists in ./volumes/db/data (bind mount). If an
+# initialized DB exists but .env.dentix is gone, regenerating fresh secrets
+# would silently orphan the existing installation (every stored credential
+# and session becomes invalid). Refuse loudly instead.
+if [ ! -f .env.dentix ] && [ -d volumes/db/data ] && [ -n "$(ls -A volumes/db/data 2>/dev/null)" ]; then
+    echo "REFUSING to generate fresh secrets: an initialized database already" >&2
+    echo "exists at volumes/db/data but .env.dentix is missing. Recreate" >&2
+    echo ".env.dentix from the original values, or delete volumes/db/data for a" >&2
+    echo "fully fresh trial." >&2
+    exit 1
+fi
+
 if [ ! -f .env.dentix ]; then
     cp .env.example .env.dentix
     JWT_SECRET=$(openssl rand -hex 32)
@@ -43,11 +55,16 @@ $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < ../post-bo
 $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < ../post-boot-realtime.sql
 
 echo
-echo "Create the owner account for this trial (email + password you choose):"
-printf "owner email: "; read -r OWNER_EMAIL
-stty -echo 2>/dev/null || true; printf "password: "; read -r P1; printf "\npassword again: "; read -r P2; printf "\n"; stty echo 2>/dev/null || true
-printf '%s\n%s\n%s\n' "$OWNER_EMAIL" "$P1" "$P2" | $COMPOSE exec -T provision node bootstrap-owner.mjs
-P1=""; P2=""
+if [ "$($COMPOSE exec -T db psql -U postgres -tA -d postgres -c "select count(*) from auth.users" 2>/dev/null || echo 0)" != "0" ]; then
+    echo "An owner account already exists in this trial DB - skipping bootstrap."
+    echo "Log in with the original owner credentials."
+else
+    echo "Create the owner account for this trial (email + password you choose):"
+    printf "owner email: "; read -r OWNER_EMAIL
+    stty -echo 2>/dev/null || true; printf "password: "; read -r P1; printf "\npassword again: "; read -r P2; printf "\n"; stty echo 2>/dev/null || true
+    printf '%s\n%s\n%s\n' "$OWNER_EMAIL" "$P1" "$P2" | $COMPOSE exec -T provision node bootstrap-owner.mjs
+    P1=""; P2=""
+fi
 
 echo
 echo "Trial is up. Open:  $ORIGIN"

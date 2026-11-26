@@ -14,19 +14,24 @@ What this is NOT:
 ## Verified facts about Codespaces (docs.github.com, checked 2026-11-26)
 
 - Machine sizes start at 2 cores / 8 GB RAM / 32 GB storage; this stack
-  needs ~1.2 GB RAM running and ~7.5 GB of image disk, so the smallest
-  machine fits. (docs.github.com/en/codespaces/about-codespaces/what-are-codespaces)
-- Personal GitHub accounts include a monthly free quota (observed: 120 core
-  hours + 15 GB storage on the Free plan; Pro: 180 + 20 GB). Starting a
-  codespace needs no payment details; going beyond the included quota
-  requires adding payment details AND a spending limit first - so with no
-  payment method on file, usage stops at the quota and cannot charge you.
-  (docs.github.com/en/billing/reference/product-usage-included,
-  docs.github.com/en/billing/concepts/product-billing/github-codespaces)
-- A 2-core machine consumes 2 core-hours per running hour. A short trial
-  (an hour or two) is a few core-hours. STOP the codespace when done:
-  compute stops then. DELETE it when finished: a stopped codespace still
-  counts its disk against the 15 GB included storage until deleted.
+  needs ~1.2 GB RAM running and ~7.5 GB of image disk once pulled, so the
+  smallest machine fits on paper. NOTE: actual build/boot disk peak and RAM
+  headroom inside a real codespace have NOT been measured - only idle CI
+  runner measurements exist. (docs.github.com/en/codespaces/about-codespaces/what-are-codespaces)
+- Personal GitHub accounts include a monthly free quota (Free plan:
+  120 core-hours compute + 15 GB-month storage; Pro: 180 + 20 GB). The
+  included compute is measured in CORE-hours: a 2-core machine consumes
+  2 core-hours per running hour (so ~60 running hours per month on Free).
+  Storage accrues per GB per hour, so short trials use little - but STOP
+  the codespace when done and DELETE it when finished (a stopped codespace
+  still counts its disk until deleted). This trial uses the DEFAULT dev
+  container image, which is not counted toward included storage; the ~7.5 GB
+  of pulled app images DO count as loaded data while the codespace exists.
+- Safeguard, exactly as documented: "If your account does not have a valid
+  payment method on file, usage is blocked once you use up your quota."
+  This protection is CONDITIONAL on your account having no payment method
+  on file - check yours at github.com/settings/billing before the trial.
+  (docs.github.com/en/billing/concepts/product-billing/github-codespaces)
 - Forwarded ports are PRIVATE by default: only you, signed into your GitHub
   account, can open the app URL. NEVER switch the port to Public - anyone
   with the URL could then open the trial app without any GitHub sign-in.
@@ -63,6 +68,13 @@ What this is NOT:
   on GitHub's infrastructure and is exercised on first real use; if the app
   loads but live notifications do not arrive through the edge, that is an
   edge-specific issue, not a product regression - report it.
+- NOT yet measured inside a real codespace: actual disk peak during image
+  build/pull and boot, and RAM headroom under load. The fit claim above
+  comes from machine specs vs idle CI-runner measurements only.
+- Rerun safety: start-trial.sh is idempotent on a normal rerun (secrets are
+  kept, bootstrap is skipped if an owner already exists), and it REFUSES to
+  generate fresh secrets if an initialized database exists without its
+  .env.dentix (that would silently orphan the existing installation).
 
 ## Security notes
 
