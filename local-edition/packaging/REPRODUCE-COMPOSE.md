@@ -35,6 +35,13 @@ override (opt-in compose profile "pooler"). The app and provision server connect
 Kong/PostgREST only; no app component uses pooler ports 5432/6543. Do not publish or
 document those ports for the clinic install.
 
+Backup note (constraint for the install-runbook backup section): in this
+supabase/postgres image the 'postgres' role is supautils-restricted, not a real
+superuser. Backup/restore commands documented for the clinic MUST run as
+supabase_admin (its password follows POSTGRES_PASSWORD at initdb): pg_dump as
+postgres can silently skip schemas it cannot read (auth, storage), and role ALTERs
+as postgres are rejected.
+
 Status: NOT YET RUN. This is the narrow environment need for the remaining gates
 (merged config, boot, realtime, TLS-terminated stack, compose-level backup,
 exact-image PG17 retest).
