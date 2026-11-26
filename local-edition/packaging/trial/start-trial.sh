@@ -45,6 +45,9 @@ else
 fi
 
 ORIGIN="https://${CODESPACE_NAME}-8080.app.github.dev"
+# the provision server's origin allowlist includes this public form of the
+# trial origin alongside the internal listener form (see trial compose)
+export TRIAL_PUBLIC_ORIGIN="$ORIGIN"
 printf 'window.DENTIX_CONFIG = { SUPABASE_URL: "%s", SUPABASE_ANON_KEY: "%s" };\n' "$ORIGIN" "$ANON_KEY" > ../../js/config.local.js
 (cd ../.. && sh packaging/build-web.sh)
 

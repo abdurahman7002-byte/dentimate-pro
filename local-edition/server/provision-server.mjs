@@ -48,7 +48,13 @@ const PORT   = Number(process.env.PROVISION_PORT || 9090);
 
 if (!SVC) { console.error('SERVICE_ROLE_JWT env required'); process.exit(1); }
 
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'http://127.0.0.1:8090';
+// Exact-match origin allowlist (comma-separated), NOT a wildcard. The LAN
+// profile sets ALLOWED_ORIGIN (single value); the trial profile sets
+// ALLOWED_ORIGINS with the two deterministic forms of the trial origin:
+// the internal listener form the Codespaces edge rewrites Origin to, and
+// the configured public trial origin.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || 'http://127.0.0.1:8090')
+    .split(',').map(s => s.trim()).filter(Boolean);
 const json = (res, code, obj) => {
     res.writeHead(code, { 'content-type': 'application/json', 'cache-control': 'no-store' });
     res.end(JSON.stringify(obj));
@@ -203,7 +209,12 @@ const server = http.createServer(async (req, res) => {
         if (!rateOk('ip:' + ip, 30)) return json(res, 429, { error: 'محاولات كثيرة - انتظر دقيقة', reason: 'rate_limited' });
         // same-origin guard: browsers send Origin; reject anything but the app origin
         const origin = req.headers.origin;
-        if (origin && origin !== ALLOWED_ORIGIN) return json(res, 403, { error: 'مصدر غير مسموح', reason: 'origin_denied' });
+        if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+            // log the denied origin (scheme+host only) so a deployment can
+            // see exactly what arrived; never log tokens or bodies
+            console.log('provision: origin denied:', JSON.stringify(origin));
+            return json(res, 403, { error: 'مصدر غير مسموح', reason: 'origin_denied' });
+        }
 
 
         let body = {};

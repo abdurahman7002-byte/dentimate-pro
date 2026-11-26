@@ -9,14 +9,16 @@
 services:
   provision:
     environment:
-      # Same-origin guard value for the trial. The Codespaces forwarding
-      # edge rewrites the browser's Origin header to the internal listener
-      # origin before the request reaches this container (verified against
-      # a live codespace 2026-11-26), so the only browser origin this
-      # server ever sees is the plain-HTTP trial listener itself. Strict
-      # single origin - NOT a wildcard; the LAN profile keeps its own
-      # https://LAN_HOST value from the dentix override.
-      ALLOWED_ORIGIN: http://localhost:8080
+      # Same-origin guard for the trial: an EXACT-MATCH list (no wildcard)
+      # of the two deterministic forms of the one trial origin:
+      #   1. http://localhost:8080 - the Codespaces forwarding edge rewrites
+      #      the browser's Origin header to the internal listener origin
+      #      (verified live 2026-11-26, and some clients pass it through)
+      #   2. $TRIAL_PUBLIC_ORIGIN - the configured public trial origin
+      #      (https://<codespace>-8080.app.github.dev), exported by
+      #      start-trial.sh; "disabled" matches nothing when unset (CI).
+      # The LAN profile keeps its own ALLOWED_ORIGIN=https://LAN_HOST.
+      ALLOWED_ORIGINS: "http://localhost:8080,${TRIAL_PUBLIC_ORIGIN:-disabled}"
 
   web:
     volumes: !override
