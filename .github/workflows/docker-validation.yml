@@ -88,6 +88,22 @@ jobs:
         run: |
           printf 'ci-owner@clinic.local\n%s\n%s\n' "$OWNER_PASSWORD" "$OWNER_PASSWORD" | \
             $COMPOSE exec -T provision node bootstrap-owner.mjs
+          # forgotten-owner-password recovery path (loopback-only /owner-reset):
+          # round trip to a temp password and back, proving the endpoint sets
+          # the password (login proof each way) without leaving changed state
+          TMPPW="tmp-$(openssl rand -hex 8)"
+          printf 'ci-owner@clinic.local\n%s\n%s\n' "$TMPPW" "$TMPPW" | \
+            $COMPOSE exec -T provision node reset-owner.mjs
+          curl -fsS --cacert "$NODE_EXTRA_CA_CERTS" -o /dev/null -w 'owner-reset-login-new=%{http_code}\n' \
+            "https://localhost/auth/v1/token?grant_type=password" -H "apikey: $ANON_KEY" \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"ci-owner@clinic.local\",\"password\":\"$TMPPW\"}"
+          printf 'ci-owner@clinic.local\n%s\n%s\n' "$OWNER_PASSWORD" "$OWNER_PASSWORD" | \
+            $COMPOSE exec -T provision node reset-owner.mjs
+          curl -fsS --cacert "$NODE_EXTRA_CA_CERTS" -o /dev/null -w 'owner-reset-login-original=%{http_code}\n' \
+            "https://localhost/auth/v1/token?grant_type=password" -H "apikey: $ANON_KEY" \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"ci-owner@clinic.local\",\"password\":\"$OWNER_PASSWORD\"}"
 
       - name: Authenticated smoke (login, employee provision, RLS/storage negatives, revoke)
         working-directory: local-edition
@@ -217,6 +233,14 @@ jobs:
           REALTIME_CONTAINER="$($COMPOSE ps --format '{{.Names}}' | grep -m1 realtime)"
           export REALTIME_CONTAINER
           (cd ../../ci && npm install --no-save --silent playwright >/dev/null && npx playwright install --with-deps chromium >/dev/null && node ui-acceptance.mjs)
+
+      - name: UI owner account flow (fixture-only)
+        working-directory: local-edition
+        env:
+          BASE: https://localhost
+          OWNER_EMAIL: ci-owner@clinic.local
+        run: |
+          (cd ci && npm install --no-save --silent playwright >/dev/null && npx playwright install --with-deps chromium >/dev/null && node ui-account-flow.mjs)
 
       - name: UI acceptance screenshots (fixture-only)
         if: always()

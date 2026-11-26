@@ -406,6 +406,14 @@ async function saveOwnerAccount() {
         const body = await r.json().catch(() => ({}));
         if (!r.ok) { toast(body.error || 'تعذر تحديث الحساب'); return; }
         ['accNewEmail', 'accNewPassword', 'accNewPassword2', 'accCurrentPassword'].forEach(id => { document.getElementById(id).value = ''; });
+        if (body.password_changed) {
+            // the server revoked every session, including this one - sign out
+            // locally and send the owner to log in with the new password
+            toast('تم تحديث كلمة المرور - سجّل الدخول مرة أخرى بكلمة المرور الجديدة');
+            try { await supabaseClient.auth.signOut(); } catch (e) {}
+            setTimeout(() => { location.href = 'index.html'; }, 1500);
+            return;
+        }
         let msg = 'تم تحديث الحساب';
         if (body.email_changed) msg += ' - استخدم البريد الجديد عند تسجيل الدخول القادم';
         toast(msg);

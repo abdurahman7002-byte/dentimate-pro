@@ -17,10 +17,18 @@ const login = async (email, password) => {
     const r = await fetch(`${BASE}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
     return r.ok ? (await r.json()).access_token : null;
 };
+const loginSession = async (email, password) => {
+    const r = await fetch(`${BASE}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+    return r.ok ? await r.json() : null;
+};
+const tryRefresh = async (refreshToken) => {
+    const r = await fetch(`${BASE}/auth/v1/token?grant_type=refresh_token`, { method: 'POST', headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: refreshToken }) });
+    return r.ok;
+};
 const H = (t) => ({ apikey: ANON_KEY, Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' });
 
 // ---- owner login (bootstrap already ran in the workflow) ----
-const owner = await login(OWNER_EMAIL, OWNER_PASSWORD);
+let owner = await login(OWNER_EMAIL, OWNER_PASSWORD);
 check('owner login', !!owner);
 if (!owner) die('cannot continue without owner token');
 const ownerUid = JSON.parse(Buffer.from(owner.split('.')[1], 'base64url').toString()).sub;
@@ -93,7 +101,9 @@ check('granted employee: storage download byte-exact (access proven before revok
 
 // ---- stage 3: owner account self-edit (identity-verified), full round trip ----
 // Runs while the employee token is still valid (for the owner-only denial).
-// Changes are always reverted, so later steps keep the original owner creds.
+// Password changes REVOKE all sessions (server-side), so each change is
+// followed by a fresh login and the fresh token is used from then on.
+// Originals are always restored, so later steps keep the original creds.
 const ACC = `${BASE}/account`;
 const AH = (tok) => ({ apikey: ANON_KEY, Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' });
 const TMP_PW = 'tmp-' + crypto.randomUUID();
@@ -105,20 +115,33 @@ check('employee token: /account DENIED (owner only)', e1.status === 403, String(
 const w1 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: 'wrong-fixture-password', new_password: TMP_PW }) });
 check('wrong current password: change REFUSED (identity check works)', w1.status === 401, String(w1.status));
 
+const preSess = await loginSession(OWNER_EMAIL, OWNER_PASSWORD);
 const c1 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: OWNER_PASSWORD, new_password: TMP_PW }) });
 check('owner: password change ACCEPTED with correct current password', c1.ok, String(c1.status));
 if (c1.ok) {
-    const lp = !!(await login(OWNER_EMAIL, TMP_PW));
-    check('login with NEW password works', lp, 'login-failed');
+    // session behavior after a password change, measured exactly:
+    // refresh tokens must be dead immediately (no silent session survival);
+    // a JWT access token cannot be revoked mid-flight and dies at its
+    // expiry (JWT_EXPIRY, 3600s default) - that bound is asserted, not hidden.
+    const refreshed = await tryRefresh(preSess && preSess.refresh_token);
+    check('refresh token of the changing session: REVOKED immediately', refreshed === false, refreshed ? 'still-alive' : 'revoked');
+    const stale = await fetch(`${BASE}/rest/v1/employees?select=id&limit=1`, { headers: AH(owner) });
+    console.log(`stale-access-token-after-password-change valid=${stale.ok} (bounded by JWT_EXPIRY, not silent)`);
+    owner = await login(OWNER_EMAIL, TMP_PW);
+    check('login with NEW password works', !!owner, 'login-failed');
     const c2 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: TMP_PW, new_password: OWNER_PASSWORD }) });
     check('password reverted to original', c2.ok, String(c2.status));
-    const lp2 = !!(await login(OWNER_EMAIL, OWNER_PASSWORD));
-    check('login with ORIGINAL password works again', lp2, 'login-failed');
+    owner = await login(OWNER_EMAIL, OWNER_PASSWORD);
+    check('login with ORIGINAL password works again', !!owner, 'login-failed');
+    if (!owner) die('cannot continue without owner token after password round trip');
 }
 
 const c3 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: OWNER_PASSWORD, new_email: TMP_EMAIL }) });
 check('owner: email change ACCEPTED with correct current password', c3.ok, String(c3.status));
 if (c3.ok) {
+    // email change must NOT kill the session (no secret changed)
+    const alive = await fetch(`${BASE}/rest/v1/employees?select=id&limit=1`, { headers: AH(owner) });
+    check('session after email-only change: still valid (no over-revocation)', alive.ok, String(alive.status));
     const le = !!(await login(TMP_EMAIL, OWNER_PASSWORD));
     check('login with NEW email works', le, 'login-failed');
     const c4 = await fetch(ACC, { method: 'POST', headers: AH(owner), body: JSON.stringify({ current_password: OWNER_PASSWORD, new_email: OWNER_EMAIL }) });

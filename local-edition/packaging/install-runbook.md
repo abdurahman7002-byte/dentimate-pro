@@ -166,6 +166,23 @@ the app itself (employees page, "حساب المالك" card); the change requir
 current password, which the server re-authenticates before applying anything.
 Employee accounts are still created/reset only by the owner from the same page.
 
+Two different things, kept distinct on purpose:
+- SELF-EDIT (in-app, above): for an owner who knows their current password.
+  A password change revokes every session immediately at the refresh layer -
+  everyone, including the owner who made the change, logs in again. An access
+  token already issued stays valid until its expiry (JWT_EXPIRY, 3600s
+  default); that is the JWT model's bound, not a hidden backdoor.
+- FORGOTTEN owner password (recovery): run on the clinic machine itself -
+  host shell access is the authority, same trust as the database volume:
+
+  ```bash
+  $COMPOSE exec -it provision node reset-owner.mjs
+  ```
+
+  It prompts for the owner email and a NEW password (hidden), sets it through
+  the loopback-only listener (unreachable from the LAN/nginx), refuses
+  non-owner accounts, and revokes all sessions. CI round-trips this path.
+
 Open `https://<LAN_HOST>` from a clinic device, log in as the owner, create a
 patient, upload a file, and confirm a notification appears.
 

@@ -11,7 +11,8 @@
    TWO LISTENERS (container-networking safe):
    - MAIN listener 0.0.0.0:9090 serves /provision + /reset-password + /account,
      so nginx (a separate container) can proxy them over the docker network.
-   - BOOTSTRAP listener 127.0.0.1:9091 serves /bootstrap-owner ONLY.
+   - BOOTSTRAP listener 127.0.0.1:9091 serves /bootstrap-owner + /owner-reset
+     (loopback only: forgotten-owner-password recovery; host shell = authority).
      Container loopback is unreachable from other containers and the LAN;
      only `docker compose exec provision ...` (same network namespace) can
      call it. It cannot require an admin caller (none exists yet), so it
@@ -110,6 +111,14 @@ async function verifyUserPassword(email, password) {
 async function setAuthUserPassword(id, password) {
     const r = await fetch(`${GOTRUE}/admin/users/${id}`, { method: 'PUT', headers: svcHeaders, body: JSON.stringify({ password }) });
     return r.ok;
+}
+async function revokeUserSessions(id) {
+    // After a password change every existing session (including the one that
+    // made the change) must lose its authority; the owner logs in again with
+    // the new password. GoTrue admin logout revokes all refresh tokens; the
+    // short-lived access token is rejected on the next refresh.
+    const r = await fetch(`${GOTRUE}/admin/users/${id}/logout`, { method: 'POST', headers: svcHeaders });
+    return r.ok || r.status === 204;
 }
 async function setAuthUserEmail(id, email) {
     const r = await fetch(`${GOTRUE}/admin/users/${id}`, { method: 'PUT', headers: svcHeaders,
@@ -232,8 +241,13 @@ const server = http.createServer(async (req, res) => {
                 if (dup) return json(res, 409, { error: 'يوجد حساب بهذا البريد بالفعل' });
                 if (!await setAuthUserEmail(user.id, newEmail)) return json(res, 502, { error: 'تعذر تحديث البريد - لم يتغير شيء' });
             }
-            if (newPassword && !await setAuthUserPassword(user.id, newPassword)) {
-                return json(res, 502, { error: newEmail ? 'تم تحديث البريد وتعذرت كلمة المرور' : 'تعذر تحديث كلمة المرور' });
+            if (newPassword) {
+                if (!await setAuthUserPassword(user.id, newPassword)) {
+                    return json(res, 502, { error: newEmail ? 'تم تحديث البريد وتعذرت كلمة المرور' : 'تعذر تحديث كلمة المرور' });
+                }
+                if (!await revokeUserSessions(user.id)) {
+                    return json(res, 502, { error: 'تم تحديث كلمة المرور وتعذر إنهاء الجلسات - سجّل الدخول بكلمة المرور الجديدة' });
+                }
             }
             return json(res, 200, { ok: true, email_changed: !!(newEmail && newEmail !== user.email), password_changed: !!newPassword });
         }
@@ -273,8 +287,33 @@ const BOOT_PORT = Number(process.env.BOOTSTRAP_PORT || 9091);
 const bootServer = http.createServer(async (req, res) => {
     try {
         const action = req.url.replace(/\/+$/, '');
-        if (req.method !== 'POST' || action !== '/bootstrap-owner') {
+        if (req.method !== 'POST' || !['/bootstrap-owner', '/owner-reset'].includes(action)) {
             return json(res, 404, { error: 'not found' });
+        }
+        if (action === '/owner-reset') {
+            // FORGOTTEN owner password. Loopback-only: shell access to the host
+            // IS the authority here (same trust as the database volume itself).
+            // Distinct from /account, which is in-app self-edit and requires the
+            // current password.
+            let body = {};
+            try {
+                body = JSON.parse(await new Promise((ok, no) => {
+                    let d = '';
+                    req.on('data', c => { d += c; if (d.length > 2048) { no(new Error('too large')); req.destroy(); } });
+                    req.on('end', () => ok(d)); req.on('error', no);
+                }));
+            } catch { return json(res, 400, { error: 'body غير صالح' }); }
+            const email = typeof body.email === 'string' ? body.email.trim() : '';
+            const password = typeof body.password === 'string' ? body.password : '';
+            if (!email || !password) return json(res, 400, { error: 'email و password مطلوبان' });
+            if (password.length < 8) return json(res, 400, { error: 'كلمة المرور قصيرة - ٨ أحرف على الأقل' });
+            if (!rateOk('owner-reset:' + ip, 5)) return json(res, 429, { error: 'محاولات كثيرة - انتظر دقيقة' });
+            const user = await findAuthUserByEmail(email);
+            if (!user) return json(res, 404, { error: 'لا يوجد حساب بهذا البريد' });
+            if (!await isClinicAdmin(user.id)) return json(res, 403, { error: 'هذا الحساب ليس حساب مالك' });
+            if (!await setAuthUserPassword(user.id, password)) return json(res, 502, { error: 'تعذر تحديث كلمة المرور' });
+            await revokeUserSessions(user.id);
+            return json(res, 200, { ok: true, email }); // password never echoed
         }
         const ip = req.socket.remoteAddress || 'unknown';
         let body = {};
@@ -290,4 +329,4 @@ const bootServer = http.createServer(async (req, res) => {
         return json(res, 500, { error: 'خطأ داخلي' });
     }
 });
-bootServer.listen(BOOT_PORT, '127.0.0.1', () => console.log(`bootstrap listener on 127.0.0.1:${BOOT_PORT} (bootstrap-owner only)`));
+bootServer.listen(BOOT_PORT, '127.0.0.1', () => console.log(`bootstrap listener on 127.0.0.1:${BOOT_PORT} (bootstrap-owner, owner-reset)`));
