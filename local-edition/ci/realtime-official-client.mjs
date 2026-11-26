@@ -1,8 +1,9 @@
 // OFFICIAL-CLIENT CONTROL for the realtime gate (not an assertion itself):
-// subscribes with @supabase/supabase-js (the protocol reference client) as the
-// owner, waits for the SUBSCRIBED status (real readiness), then inserts one
-// fixture row via the client and waits for the postgres_changes callback.
-// Prints ONLY enumerated labels - never tokens, payloads, or row data.
+// replicates the app's own notification channel (js/notification.js):
+// supabase-js, postgres_changes INSERT on the ACTUAL subscribed app table
+// 'notifications' with the same user_id filter the app uses. Waits for
+// SUBSCRIBED readiness, then retries committed fixture inserts and watches the
+// callback. Prints ONLY enumerated labels - never tokens, payloads, or row data.
 // Needs: BASE, ANON_KEY, OWNER_EMAIL, OWNER_PASSWORD.
 import { createClient } from '@supabase/supabase-js';
 
@@ -15,13 +16,15 @@ const supabase = createClient(BASE, ANON_KEY, {
 
 const { error: loginErr } = await supabase.auth.signInWithPassword({ email: OWNER_EMAIL, password: OWNER_PASSWORD });
 if (loginErr) { out('owner-login-failed'); process.exit(2); }
+const { data: { user } } = await supabase.auth.getUser();
+if (!user || !user.id) { out('owner-session-missing'); process.exit(2); }
 
 const statuses = new Set();
 let gotEvent = false;
 
 const ch = supabase
-    .channel('official-control')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'patients' }, () => { gotEvent = true; })
+    .channel('app-notifications-control-' + Date.now())
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'user_id=eq.' + user.id }, () => { gotEvent = true; })
     .subscribe((status) => { statuses.add(status); });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -41,7 +44,7 @@ let inserts = 0;
 const MAX = 6;
 while (!gotEvent && inserts < MAX) {
     inserts++;
-    const { error: insErr } = await supabase.from('patients').insert({ full_name: 'official control patient ' + inserts });
+    const { error: insErr } = await supabase.from('notifications').insert({ user_id: user.id, title: 'ci notification probe ' + inserts });
     if (insErr) { out('insert-failed'); process.exit(4); }
     const evDeadline = Date.now() + 4000;
     while (!gotEvent && Date.now() < evDeadline) await sleep(250);
