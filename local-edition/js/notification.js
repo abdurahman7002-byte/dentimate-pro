@@ -9,13 +9,18 @@ let notificationRealtimeChannel = null;
 // between page load and server-side subscription activation), so every
 // (re-)SUBSCRIBED triggers a plain refetch of what was missed.
 let notificationsCatchUpSince = new Date().toISOString();
-// Bounded resubscribe retry: when the realtime server restarts, the client's
+// Resubscribe retry: when the realtime server restarts, the client's
 // automatic rejoin can land before the server is ready, the join is refused
 // (CHANNEL_ERROR) and supabase-js does NOT retry it while the socket stays
 // up. Without this the app would only log the error and stay deaf until the
-// next page load. Retries reset on every successful SUBSCRIBED.
+// next page load. Server-side recovery itself can take minutes (Postgres
+// keeps the dead walsender until wal_sender_timeout; realtime v2.174.6 then
+// retries its replication on a hardcoded 5s..5min rand_exp backoff -
+// connect.ex), so a dashboard that stays open all day must NOT give up:
+// ramp 5/10/15/20/25s, then keep retrying every 30s while the page is open.
+// Every successful (re-)SUBSCRIBED resets the counter and runs the catch-up
+// fetch, so changes committed during the outage still surface.
 let notificationRealtimeRetries = 0;
-const NOTIFICATION_REALTIME_MAX_RETRIES = 6;
 let notificationToastContainer = null;
 let notificationInitialized = false;
 let notificationRefreshInterval = null;
@@ -1229,14 +1234,10 @@ async function startNotificationRealtime() {
                 setTimeout(() => catchUpNotifications(userId), 15000);
             }
             if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-                if (notificationRealtimeRetries < NOTIFICATION_REALTIME_MAX_RETRIES) {
-                    notificationRealtimeRetries++;
-                    const delay = Math.min(5000 * notificationRealtimeRetries, 25000);
-                    console.warn(`🔁 Notification realtime ${status} - resubscribe attempt ${notificationRealtimeRetries} in ${delay}ms`);
-                    setTimeout(() => { startNotificationRealtime(); }, delay);
-                } else {
-                    console.error("❌ Notification realtime resubscribe attempts exhausted");
-                }
+                notificationRealtimeRetries++;
+                const delay = notificationRealtimeRetries <= 5 ? Math.min(5000 * notificationRealtimeRetries, 25000) : 30000;
+                console.warn(`🔁 Notification realtime ${status} - resubscribe attempt ${notificationRealtimeRetries} in ${delay}ms`);
+                setTimeout(() => { startNotificationRealtime(); }, delay);
             }
             if (status === "CHANNEL_ERROR") console.error("❌ Notification Realtime CHANNEL ERROR");
             if (status === "TIMED_OUT") console.error("⏱️ Notification Realtime TIMED OUT");
@@ -1249,12 +1250,12 @@ async function startNotificationRealtime() {
    REALTIME — Source tables (auto-remove when cause gone)
    ========================================================= */
 
-// Bounded resubscribe retry for the source-table channels, same reasoning as
-// the notifications channel: supabase-js does not retry a refused rejoin while
-// the socket stays up, so a realtime server restart would otherwise leave
-// these subscriptions dead until the next page load.
+// Resubscribe retry for the source-table channels, same reasoning and
+// schedule as the notifications channel: supabase-js does not retry a
+// refused rejoin while the socket stays up, server-side recovery can take
+// minutes, so retries ramp 5..25s then continue every 30s while the page is
+// open instead of leaving these subscriptions dead until the next page load.
 const sourceRealtimeRetries = { patient_visits: 0, lab_works: 0, inventory_items: 0 };
-const SOURCE_REALTIME_MAX_RETRIES = 6;
 
 function subscribeSourceChannel(table, userId, assign) {
     const ch = supabaseClient
@@ -1271,17 +1272,13 @@ function subscribeSourceChannel(table, userId, assign) {
         .subscribe(status => {
             if (status === "SUBSCRIBED") sourceRealtimeRetries[table] = 0;
             if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-                if (sourceRealtimeRetries[table] < SOURCE_REALTIME_MAX_RETRIES) {
-                    sourceRealtimeRetries[table]++;
-                    const delay = Math.min(5000 * sourceRealtimeRetries[table], 25000);
-                    console.warn(`🔁 ${table} realtime ${status} - resubscribe attempt ${sourceRealtimeRetries[table]} in ${delay}ms`);
-                    setTimeout(async () => {
-                        try { await supabaseClient.removeChannel(ch); } catch (e) {}
-                        assign(subscribeSourceChannel(table, userId, assign));
-                    }, delay);
-                } else {
-                    console.error(`❌ ${table} realtime resubscribe attempts exhausted`);
-                }
+                sourceRealtimeRetries[table]++;
+                const delay = sourceRealtimeRetries[table] <= 5 ? Math.min(5000 * sourceRealtimeRetries[table], 25000) : 30000;
+                console.warn(`🔁 ${table} realtime ${status} - resubscribe attempt ${sourceRealtimeRetries[table]} in ${delay}ms`);
+                setTimeout(async () => {
+                    try { await supabaseClient.removeChannel(ch); } catch (e) {}
+                    assign(subscribeSourceChannel(table, userId, assign));
+                }, delay);
             }
         });
     return ch;

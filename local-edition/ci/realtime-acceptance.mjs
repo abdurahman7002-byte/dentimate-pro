@@ -52,8 +52,9 @@ let channel = null;
 
 // mirrors the shipped app's recovery (notification.js): supabase-js does not
 // retry a refused rejoin while the socket stays up, so on CHANNEL_ERROR /
-// TIMED_OUT the client removes the channel and resubscribes, bounded.
-const MAX_RETRIES = 6; // matches the shipped app retry budget - a more persistent client cannot prove the app recovered
+// TIMED_OUT the client removes the channel and resubscribes. Same schedule
+// as the app (ramp 5..25s, then every 30s, no give-up while open) - a more
+// persistent protocol client could not prove the app itself recovered.
 function subscribe() {
     channel = sb
         .channel('notifications-' + uid + '-acceptance-' + state.retries)
@@ -68,12 +69,10 @@ function subscribe() {
                 if (state.subscribedCount > 1 && onResubscribe) onResubscribe();
             }
             if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                if (state.retries < MAX_RETRIES) {
-                    state.retries++;
-                    const delay = Math.min(5000 * state.retries, 25000);
-                    console.log(`resubscribe-retry=${state.retries} delay-ms=${delay}`);
-                    setTimeout(async () => { try { await sb.removeChannel(channel); } catch (_) {} subscribe(); }, delay);
-                }
+                state.retries++;
+                const delay = state.retries <= 5 ? Math.min(5000 * state.retries, 25000) : 30000;
+                console.log(`resubscribe-retry=${state.retries} delay-ms=${delay}`);
+                setTimeout(async () => { try { await sb.removeChannel(channel); } catch (_) {} subscribe(); }, delay);
             }
         });
 }
@@ -117,12 +116,19 @@ console.log('steady-state-single=received');
 // the outage (recovered via resync), one after rejoin (live delivery)
 let rejoined = false;
 const rejoinPromise = new Promise(res => { onResubscribe = () => { rejoined = true; res(); }; });
+const tRestart = Date.now();
 execSync(`docker restart ${REALTIME_CONTAINER}`, { stdio: 'ignore' });
+console.log(`restart-returned-ms=${Date.now() - tRestart}`);
 await new Promise(r => setTimeout(r, 3000));
 const duringOutage = await insertNotification('outage');
-const rejoinTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('rejoin timeout')), 150000));
+// server-side recovery bound: the dead walsender lingers until
+// wal_sender_timeout (30s in the Dentix override) and realtime v2.174.6 then
+// retries replication on a hardcoded 5s..5min rand_exp backoff, so recovery
+// is minutes-bounded, not seconds. The app keeps resubscribing every 30s;
+// this gate allows 5 minutes for the full loop and measures it.
+const rejoinTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('rejoin timeout')), 300000));
 await Promise.race([rejoinPromise, rejoinTimeout]).catch(e => fail('reconnect', e.message + ` (status=${state.lastStatus})`));
-console.log('reconnect=rejoined');
+console.log(`reconnect=rejoined recovery-s=${Math.round((Date.now() - tRestart) / 1000)} retries=${state.retries}`);
 
 // resync: the outage change surfaces through the app's catch-up fetch
 let resynced = false;
@@ -135,7 +141,7 @@ console.log('resync-outage-change=recovered');
 console.log(`outage-event-replayed=${state.events.has(duringOutage) ? 1 : 0}`);
 
 const afterRejoin = await insertNotification('postrejoin');
-await waitFor(() => state.events.has(afterRejoin), 15000, 'reconnect', 'post-rejoin single change delivery');
+await waitFor(() => state.events.has(afterRejoin), 30000, 'reconnect', 'post-rejoin single change delivery');
 console.log('post-rejoin-single=received');
 
 console.log(`PASS realtime-acceptance (activation=${sentinels} sentinels, steady-state 1/1, rejoin+resync ok, post-rejoin 1/1)`);

@@ -38,7 +38,32 @@ services:
       - "127.0.0.1:${POSTGRES_PORT}:5432"
       - "127.0.0.1:${POOLER_PROXY_PORT_TRANSACTION}:6543"
 
+  realtime:
+    # give the BEAM release 30s to close connections cleanly on
+    # `docker restart` (default 10s -> SIGKILL): a clean exit closes the
+    # replication walsender immediately, so realtime's own recovery does not
+    # have to wait out the dead-sender window at all.
+    stop_grace_period: 30s
+
   db:
+    # wal_sender_timeout 30s (image default 60s): when the realtime container is
+    # restarted, Postgres keeps serving its dead walsender until this timeout,
+    # and realtime v2.174.6 refuses to rebuild replication while an old
+    # walsender is visible (connect.ex: "Waiting for old walsender to exit",
+    # retried on a hardcoded 5s..5min rand_exp backoff). Halving the window
+    # halves worst-case notification-outage time after a realtime crash; an
+    # unclean stop (power cut) is bounded by this same timeout. command
+    # replaces (not merges) the upstream list, so the upstream flags repeat.
+    command:
+      [
+        "postgres",
+        "-c",
+        "config_file=/etc/postgresql/postgresql.conf",
+        "-c",
+        "log_min_messages=fatal",
+        "-c",
+        "wal_sender_timeout=30s"
+      ]
     volumes:
       - ../init/zz10-schema.sql:/docker-entrypoint-initdb.d/init-scripts/zz10-schema.sql:Z
       - ../init/zz20-employees.sql:/docker-entrypoint-initdb.d/init-scripts/zz20-employees.sql:Z

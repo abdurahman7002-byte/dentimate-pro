@@ -94,7 +94,10 @@ const during = await insertNotification('outage');
 const c1 = connectedCount;
 {
     const t0 = Date.now();
-    while (connectedCount <= c1 && Date.now() - t0 < 180000) await page.waitForTimeout(300);
+    // server-side recovery after a container restart is minutes-bounded
+    // (dead-walsender window + realtime's hardcoded 5s..5min rand_exp
+    // replication backoff); the shipped app keeps resubscribing every 30s.
+    while (connectedCount <= c1 && Date.now() - t0 < 330000) await page.waitForTimeout(300);
     if (connectedCount <= c1) fail('reconnect', 'no re-SUBSCRIBED after restart');
 }
 console.log('ui-reconnect=rejoined');

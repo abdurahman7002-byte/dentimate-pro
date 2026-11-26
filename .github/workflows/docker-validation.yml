@@ -294,10 +294,12 @@ jobs:
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-wal-senders='||count(*) from pg_stat_replication" || true
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-wal-level='||setting from pg_settings where name='wal_level'" || true
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-tenants='||count(*) from _realtime.tenants" 2>/dev/null || echo 'rt-tenants=probe-failed'
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'wal-sender-timeout='||setting from pg_settings where name='wal_sender_timeout'" || true
           # realtime container log: derived class label only; raw lines stay private in-runner
           RLOG="$($COMPOSE logs realtime 2>&1 | sed 's/\x1b\[[0-9;]*[A-Za-z]//g' || true)"
           RCLASS="no-error-lines"
           case "$RLOG" in
+            *"Waiting for old walsender"*) RCLASS="waiting-old-walsender";;
             *"password authentication failed"*) RCLASS="db-auth-failed";;
             *"onnection refused"*) RCLASS="db-connection-refused";;
             *"insufficient_privilege"*|*"permission denied"*) RCLASS="db-permission-denied";;
