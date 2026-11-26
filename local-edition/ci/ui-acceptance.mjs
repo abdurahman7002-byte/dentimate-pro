@@ -146,11 +146,32 @@ const ms2 = await waitDom(during, 40000, 'resync');
 console.log(`ui-outage-recovered-ms=${ms2} via=shipped-catchup`);
 await page.screenshot({ path: 'ui-recovered.png' });
 
-// 4. one post-rejoin change -> UI
-const after = await insertNotification('postrejoin');
-const ms3 = await waitDom(after, 20000, 'post-rejoin');
-console.log(`ui-post-rejoin-ms=${ms3}`);
+// 4. post-rejoin rows, two distinct moments:
+//   a. IMMEDIATE post-rejoin - likely inside the activation gap (replication
+//      restarts lazily on the rejoin). It must still surface in the DOM, via
+//      the shipped periodic catch-up if the stream is not active yet. The
+//      path is attributed with the shipped window.rtStreamEventCount hook:
+//      DOM appearance without a stream event = recovered by catch-up.
+//   b. after the stream proves active - plain live delivery.
+const s0 = await page.evaluate(() => window.rtStreamEventCount || 0);
+const gap = await insertNotification('postrejoin-gap');
+const msGap = await waitDom(gap, 120000, 'post-rejoin-gap');
+const s1 = await page.evaluate(() => window.rtStreamEventCount || 0);
+console.log(`ui-post-rejoin-gap-ms=${msGap} via=${s1 > s0 ? 'stream' : 'catchup'}`);
+{
+    const t0 = Date.now();
+    let active = false;
+    while (Date.now() - t0 < 150000) {
+        if ((await page.evaluate(() => window.rtStreamEventCount || 0)) > s1) { active = true; break; }
+        await page.waitForTimeout(500);
+    }
+    console.log(`ui-stream-reactivated=${active ? 1 : 0} after-s=${Math.round((Date.now() - t0) / 1000)}`);
+    if (!active) fail('post-rejoin', 'stream never reactivated within 150s (indicator state should be showing)');
+}
+const live = await insertNotification('postrejoin-live');
+const ms4 = await waitDom(live, 20000, 'post-rejoin-live');
+console.log(`ui-post-rejoin-live-ms=${ms4}`);
 
-console.log(`PASS ui-acceptance (login ok, shipped code loaded, steady ${ms1}ms, outage recovered ${ms2}ms via shipped catch-up, post-rejoin ${ms3}ms)`);
+console.log(`PASS ui-acceptance (login ok, shipped code loaded, steady ${ms1}ms, outage recovered ${ms2}ms via shipped catch-up, post-rejoin gap row ${msGap}ms, live ${ms4}ms)`);
 await browser.close();
 process.exit(0);

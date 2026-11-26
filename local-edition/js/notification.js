@@ -1177,6 +1177,22 @@ async function catchUpNotifications(userId) {
     }
 }
 
+// Degraded-state indicator: shown only when no live event has arrived for
+// 3 minutes after a (re)SUBSCRIBED (stream never activated). Never shown in
+// normal operation; hidden on the first live event and on teardown.
+function setSyncIndicator(visible) {
+    let el = document.getElementById("realtimeSyncIndicator");
+    if (!el) {
+        if (!document.body) return;
+        el = document.createElement("div");
+        el.id = "realtimeSyncIndicator";
+        el.textContent = "جارٍ المزامنة…";
+        el.style.cssText = "position:fixed;bottom:12px;left:12px;z-index:9999;background:#4a3d00;color:#ffe08a;padding:4px 10px;border-radius:8px;font-size:12px;direction:rtl;";
+        document.body.appendChild(el);
+    }
+    el.style.display = visible ? "block" : "none";
+}
+
 // A WebSocket whose upgrade lands while realtime is mid-boot can hang in
 // CONNECTING forever (TCP accepted, no response). supabase-js connect() then
 // refuses to dial a new socket (isConnecting()) and every resubscribe rides
@@ -1225,7 +1241,9 @@ async function startNotificationRealtime() {
         }, async payload => {
             console.log("🔔 REALTIME INSERT:", payload.new);
             notificationStreamActive = true;
+            window.rtStreamEventCount = (window.rtStreamEventCount || 0) + 1;
             if (notificationCatchUpTimer) { clearInterval(notificationCatchUpTimer); notificationCatchUpTimer = null; }
+            setSyncIndicator(false);
             showNotificationToast(payload.new);
             addNotificationToList(payload.new);
             updateNotificationCountRealtime();
@@ -1238,7 +1256,9 @@ async function startNotificationRealtime() {
         }, async payload => {
             console.log("🔄 REALTIME UPDATE:", payload.new);
             notificationStreamActive = true;
+            window.rtStreamEventCount = (window.rtStreamEventCount || 0) + 1;
             if (notificationCatchUpTimer) { clearInterval(notificationCatchUpTimer); notificationCatchUpTimer = null; }
+            setSyncIndicator(false);
             updateNotificationInList(payload.new);
             updateNotificationCountRealtime();
         })
@@ -1249,7 +1269,9 @@ async function startNotificationRealtime() {
         }, async payload => {
             console.log("🗑️ REALTIME DELETE:", payload.old);
             notificationStreamActive = true;
+            window.rtStreamEventCount = (window.rtStreamEventCount || 0) + 1;
             if (notificationCatchUpTimer) { clearInterval(notificationCatchUpTimer); notificationCatchUpTimer = null; }
+            setSyncIndicator(false);
             removeNotificationFromList(payload.old.id);
             updateNotificationCountRealtime();
         })
@@ -1271,11 +1293,20 @@ async function startNotificationRealtime() {
                 let catchUpTicks = 0;
                 notificationCatchUpTimer = setInterval(() => {
                     catchUpTicks++;
-                    if (notificationStreamActive || catchUpTicks > 36) {
+                    if (notificationStreamActive) {
                         clearInterval(notificationCatchUpTimer);
                         notificationCatchUpTimer = null;
+                        setSyncIndicator(false);
                         return;
                     }
+                    // Bounded recovery, stated honestly: after 3 minutes with
+                    // no live event the stream may never have activated. Do
+                    // NOT silently stop while the UI looks healthy - show the
+                    // sync indicator and keep catching up slowly (every 30s)
+                    // while the page is open. Fetch errors are caught inside
+                    // catchUpNotifications, so the loop survives them.
+                    if (catchUpTicks === 37) setSyncIndicator(true);
+                    if (catchUpTicks > 36 && catchUpTicks % 6 !== 0) return;
                     catchUpNotifications(userId);
                 }, 5000);
             }
@@ -1422,6 +1453,7 @@ async function stopNotificationRealtime() {
         clearInterval(notificationCatchUpTimer);
         notificationCatchUpTimer = null;
     }
+    setSyncIndicator(false);
     notificationRealtimeRetries = 0;
     if (notificationRealtimeChannel) {
         try {
