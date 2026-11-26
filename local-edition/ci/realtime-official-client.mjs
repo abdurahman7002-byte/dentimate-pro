@@ -34,13 +34,19 @@ if (!statuses.has('SUBSCRIBED')) {
     process.exit(3);
 }
 
-// readiness proven: committed fixture insert through the same client
-const { error: insErr } = await supabase.from('patients').insert({ full_name: 'official control patient' });
-if (insErr) { out('insert-failed'); process.exit(4); }
-
-const evDeadline = Date.now() + 20000;
-while (!gotEvent && Date.now() < evDeadline) await sleep(250);
+// readiness proven: committed fixture inserts through the same client.
+// Retry like the raw gate: if a later insert delivers, activation lag extends
+// past SUBSCRIBED; if none deliver, delivery is broken post-readiness.
+let inserts = 0;
+const MAX = 6;
+while (!gotEvent && inserts < MAX) {
+    inserts++;
+    const { error: insErr } = await supabase.from('patients').insert({ full_name: 'official control patient ' + inserts });
+    if (insErr) { out('insert-failed'); process.exit(4); }
+    const evDeadline = Date.now() + 4000;
+    while (!gotEvent && Date.now() < evDeadline) await sleep(250);
+}
 
 await supabase.removeAllChannels();
-out(gotEvent ? 'subscribed event-received' : 'subscribed no-event');
+out(gotEvent ? 'subscribed event-received-after-' + inserts + '-inserts' : 'subscribed no-event-after-' + inserts + '-inserts');
 process.exit(gotEvent ? 0 : 1);

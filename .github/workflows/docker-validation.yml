@@ -104,9 +104,13 @@ jobs:
           $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c \
             "do \$\$ begin if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and tablename='patients') then alter publication supabase_realtime add table public.patients; end if; end \$\$;"
           # official-client control (supabase-js, the protocol reference): waits for
-          # SUBSCRIBED readiness, then inserts one fixture row and watches the
+          # SUBSCRIBED readiness, then retries fixture inserts and watches the
           # callback. Prints enumerated labels only; informs diagnosis, does not gate.
-          (cd ../../ci && npm install --no-save --silent @supabase/supabase-js@2 >/dev/null && node realtime-official-client.mjs; echo "official-client-exit=$?")
+          # (step shells run with -e: neutralize the control's nonzero exits)
+          set +e
+          (cd ../../ci && npm install --no-save --silent @supabase/supabase-js@2 >/dev/null && node realtime-official-client.mjs)
+          echo "official-client-exit=$?"
+          set -e
           node ../../ci/realtime-check.mjs
 
       - name: Backup + ISOLATED restore gate (restored storage service download + hash)
