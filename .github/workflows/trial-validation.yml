@@ -102,6 +102,10 @@ jobs:
           body=$(curl -s -X POST -H "Origin: http://localhost:8080" -H 'Content-Type: application/json' -d '{}' http://localhost:8080/provision)
           if echo "$body" | grep -q origin_denied; then echo 'origin-trial-passed=0'; exit 1; fi
           echo 'origin-trial-passed=1'
+          # the https form of the internal listener origin must also pass
+          body=$(curl -s -X POST -H "Origin: https://localhost:8080" -H 'Content-Type: application/json' -d '{}' http://localhost:8080/provision)
+          if echo "$body" | grep -q origin_denied; then echo 'origin-https-local-passed=0'; exit 1; fi
+          echo 'origin-https-local-passed=1'
           # the configured public form of the trial origin must also pass
           body=$(curl -s -X POST -H "Origin: https://trial-public.example" -H 'Content-Type: application/json' -d '{}' http://localhost:8080/provision)
           if echo "$body" | grep -q origin_denied; then echo 'origin-public-passed=0'; exit 1; fi
