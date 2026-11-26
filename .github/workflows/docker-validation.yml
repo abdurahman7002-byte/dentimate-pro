@@ -273,3 +273,24 @@ jobs:
             *"rror"*|*"xception"*) RCLASS="unclassified-error-present";;
           esac
           echo "realtime-log-class=$RCLASS"
+          # restore-drill leftovers exist only when the backup gate failed mid-run
+          # (its cleanup runs on the success path): classify their logs, then clean up
+          if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^dentix-restore'; then
+            for C in dentix-restore-storage dentix-restore-rest dentix-restore-db; do
+              docker ps -a --format '{{.Names}}' | grep -q "^$C$" || continue
+              CLOG="$(docker logs "$C" 2>&1 | sed 's/\x1b\[[0-9;]*[A-Za-z]//g' || true)"
+              CCLASS="no-error-lines"
+              case "$CLOG" in
+                *"password authentication failed"*) CCLASS="db-auth-failed";;
+                *"onnection refused"*) CCLASS="db-connection-refused";;
+                *"does not exist"*) CCLASS="db-object-missing";;
+                *"permission denied"*|*"insufficient_privilege"*) CCLASS="db-permission-denied";;
+                *"igration"*) CCLASS="migration-issue";;
+                *"imed out"*|*"timeout"*) CCLASS="timeout";;
+                *"rror"*|*"xception"*) CCLASS="unclassified-error-present";;
+              esac
+              echo "$C-log-class=$CCLASS"
+            done
+            docker rm -f dentix-restore-storage dentix-restore-rest dentix-restore-db >/dev/null 2>&1 || true
+            docker network rm dentix-restore-net >/dev/null 2>&1 || true
+          fi
