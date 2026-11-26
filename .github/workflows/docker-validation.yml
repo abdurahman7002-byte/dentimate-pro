@@ -248,6 +248,21 @@ jobs:
           # never leave the runner
           rm -rf /tmp/backup-gate
 
+      - name: Resource measurement (counts only, non-gating)
+        if: always()
+        working-directory: local-edition/packaging/official
+        run: |
+          # real footprint of the running stack, counts only - feeds the
+          # host/trial feasibility question with measurements, not estimates
+          IMAGES_MB=$(docker images --format '{{.Size}}' | awk '{ if (match($1, /([0-9.]+)([kKMGT]i?B)/, a)) { m=a[1]; u=a[2]; if (u=="GB"||u=="GiB") m*=1024; else if (u=="kB"||u=="KiB") m/=1024; else if (u=="TB") m*=1048576; s+=m } } END {printf "%d", s }')
+          echo "docker-images-total-mb=$IMAGES_MB"
+          MEM_MB=$(docker stats --no-stream --format '{{.MemUsage}}' | awk '{ if (match($1, /([0-9.]+)([kKMGT]i?B)/, a)) { m=a[1]; u=a[2]; if (u=="GiB"||u=="GB") m*=1024; else if (u=="KiB"||u=="kB") m/=1024; s+=m } } END {printf "%d", s }')
+          echo "containers-mem-total-mb=$MEM_MB"
+          DISK_USED_MB=$(docker system df --format '{{.Type}} {{.Size}}' | awk '{ if (match($NF, /([0-9.]+)([kKMGT]i?B)/, a)) { m=a[1]; u=a[2]; if (u=="GB"||u=="GiB") m*=1024; else if (u=="kB"||u=="KiB") m/=1024; s+=m } } END {printf "%d", s }')
+          echo "docker-disk-total-mb=$DISK_USED_MB"
+          ROOT_FREE_MB=$(df -m / | awk 'NR==2 {print $4}')
+          echo "rootfs-free-mb=$ROOT_FREE_MB"
+
       - name: Allowlisted diagnostics on failure (no artifact uploads)
         if: failure()
         working-directory: local-edition/packaging/official

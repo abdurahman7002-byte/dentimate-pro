@@ -48,13 +48,12 @@ Open alternatives (none chosen here; the host decision is the owner's):
    - A live session CAN access the internal disks if someone mounts or opens
      them - during the trial, do not mount internal drives; keep all work
      inside the live session.
-   - Resource headroom is measured, not assumed: the stack's images total
-     about 2.2 GB compressed download (Docker Hub, November 2026) and roughly
-     6-8 GB uncompressed, plus the live OS session, the database volume and
-     the backup/restore drill's duplicate copies - an estimated ~10 GB RAM
-     footprint overall (estimate from registry sizes, not a trial measurement).
-     On a 16 GB machine this is expected to fit with headroom; on 8 GB it is
-     unproven and likely tight. The trial itself is what proves it.
+   - Resource facts: the stack's images total about 2.2 GB compressed
+     download (measured from the Docker Hub registry API, November 2026).
+     The uncompressed on-disk size, live-session RAM footprint and free
+     headroom on any specific machine are NOT yet measured; CI will record
+     the actual disk and memory usage of the running stack. Until those
+     numbers exist, no fit claim is made for any machine.
    - Nothing created inside the session survives reboot - that is what makes
      the trial safe, and also why it cannot be the production install.
 2. Reversible software route on the existing Windows 10: enable WSL2, install
