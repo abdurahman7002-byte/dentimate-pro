@@ -25,6 +25,12 @@ Prerequisite: Docker Engine + Compose v2.27+ (for !override tags), ~4 GB free RA
       -f docker-compose.kong.yml -f ../docker-compose.dentix-override.yml \
       --env-file .env.dentix exec -T db \
       psql -U postgres -d postgres -v ON_ERROR_STOP=1 < ../post-boot-storage.sql
+  # realtime publication membership for the app's notification tables
+  # (js/notification.js); without it those channels never receive events:
+  docker compose -f docker-compose.yml -f docker-compose.pg17.yml \
+      -f docker-compose.kong.yml -f ../docker-compose.dentix-override.yml \
+      --env-file .env.dentix exec -T db \
+      psql -U postgres -d postgres -v ON_ERROR_STOP=1 < ../post-boot-realtime.sql
   # then run the smoke checklist in install-runbook.md
 
 Init-order note: zz10-zz40 must not reference the storage schema; post-boot-storage.sql

@@ -78,7 +78,10 @@ jobs:
 
       - name: Post-boot storage objects
         working-directory: local-edition/packaging/official
-        run: $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < ../post-boot-storage.sql
+        run: |
+          $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < ../post-boot-storage.sql
+          # shipped publication step: the tables js/notification.js subscribes to
+          $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < ../post-boot-realtime.sql
 
       - name: Bootstrap first owner (loopback endpoint via container exec)
         working-directory: local-edition/packaging/official
@@ -103,6 +106,11 @@ jobs:
           # enable the publication for the smoke table (self-host publications start empty)
           $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c \
             "do \$\$ begin if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and tablename='patients') then alter publication supabase_realtime add table public.patients; end if; end \$\$;"
+          # hard gate: the shipped post-boot-realtime.sql must have published all
+          # four app subscription tables (proves the documented install step works)
+          RTCOUNT=$($COMPOSE exec -T db psql -U postgres -tA -c "select count(*) from pg_publication_tables where pubname='supabase_realtime' and tablename in ('notifications','patient_visits','lab_works','inventory_items')")
+          echo "app realtime tables published: $RTCOUNT/4"
+          test "$RTCOUNT" = "4"
           # official-client control (supabase-js, the protocol reference): waits for
           # SUBSCRIBED readiness, then retries fixture inserts and watches the
           # callback. Prints enumerated labels only; informs diagnosis, does not gate.
