@@ -1,0 +1,24 @@
+// Dentix browser trial environment (GitHub Codespaces).
+// Cloud-only synthetic demo environment - this is NOT the offline/LAN
+// deployment and proves nothing about clinic hardware. See
+// local-edition/packaging/trial/README.md before creating a codespace.
+{
+  "name": "dentix-browser-trial",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "Dentix trial - keep this port PRIVATE",
+      "protocol": "http",
+      "onAutoForward": "notify"
+    }
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb",
+    "storage": "32gb"
+  }
+}

@@ -1,0 +1,15 @@
+# Trial profile override (GitHub Codespaces): replaces the TLS-only web
+# listener with the trial plain-HTTP listener on 8080 inside the VM. The
+# Codespaces edge terminates TLS; keep the forwarded port PRIVATE (anyone
+# with a PUBLIC port URL can open the app without authenticating to GitHub).
+# Use LAST in the -f chain:
+#   docker compose -f docker-compose.yml -f docker-compose.pg17.yml \
+#     -f docker-compose.kong.yml -f ../docker-compose.dentix-override.yml \
+#     -f ../trial/docker-compose.trial.yml --env-file .env.dentix up -d --wait
+services:
+  web:
+    volumes: !override
+      - ../web:/usr/share/nginx/html:ro
+      - ../trial/nginx-trial.conf:/etc/nginx/conf.d/default.conf:ro
+    ports: !override
+      - "8080:8080/tcp"

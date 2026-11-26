@@ -1,0 +1,103 @@
+name: trial-profile-validation
+
+# Validates the GitHub Codespaces browser-trial profile (packaging/trial):
+# the merged compose config boots, the plain-HTTP trial listener serves the
+# app + API on one origin, and auth/REST/RLS/realtime work through it.
+# What this does NOT exercise: the app.github.dev forwarding edge itself -
+# see packaging/trial/README.md "What is verified about this route".
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci-validation]
+    paths:
+      - '.devcontainer/**'
+      - 'local-edition/packaging/trial/**'
+      - '.github/workflows/trial-validation.yml'
+
+env:
+  COMPOSE: docker compose -f docker-compose.yml -f docker-compose.pg17.yml -f docker-compose.kong.yml -f ../docker-compose.dentix-override.yml -f ../trial/docker-compose.trial.yml --env-file .env.dentix
+
+jobs:
+  trial-profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate disposable secrets and env
+        working-directory: local-edition/packaging/official
+        run: |
+          cp .env.example .env.dentix
+          JWT_SECRET=$(openssl rand -hex 32)
+          ANON_KEY=$(node ../../ci/mint-jwt.mjs "$JWT_SECRET" anon)
+          SERVICE_ROLE_KEY=$(node ../../ci/mint-jwt.mjs "$JWT_SECRET" service_role)
+          OWNER_PASSWORD=$(openssl rand -hex 12)
+          for V in "$JWT_SECRET" "$ANON_KEY" "$SERVICE_ROLE_KEY" "$OWNER_PASSWORD"; do echo "::add-mask::$V"; done
+          sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$JWT_SECRET|" .env.dentix
+          sed -i "s|^ANON_KEY=.*|ANON_KEY=$ANON_KEY|" .env.dentix
+          sed -i "s|^SERVICE_ROLE_KEY=.*|SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY|" .env.dentix
+          sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 16)|" .env.dentix
+          sed -i "s|^DASHBOARD_PASSWORD=.*|DASHBOARD_PASSWORD=$(openssl rand -hex 16)|" .env.dentix
+          sed -i "s|^SECRET_KEY_BASE=.*|SECRET_KEY_BASE=$(openssl rand -hex 32)|" .env.dentix
+          sed -i "s|^PG_META_CRYPTO_KEY=.*|PG_META_CRYPTO_KEY=$(openssl rand -hex 16)|" .env.dentix
+          sed -i "s|^LOGFLARE_API_KEY=.*|LOGFLARE_API_KEY=$(openssl rand -hex 16)|" .env.dentix
+          sed -i "s|^S3_PROTOCOL_ACCESS_KEY_ID=.*|S3_PROTOCOL_ACCESS_KEY_ID=$(openssl rand -hex 16)|" .env.dentix
+          sed -i "s|^S3_PROTOCOL_ACCESS_KEY_SECRET=.*|S3_PROTOCOL_ACCESS_KEY_SECRET=$(openssl rand -hex 32)|" .env.dentix
+          sed -i "s|^DISABLE_SIGNUP=.*|DISABLE_SIGNUP=true|" .env.dentix
+          { echo "ANON_KEY=$ANON_KEY"; echo "SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"; \
+            echo "JWT_SECRET=$JWT_SECRET"; echo "OWNER_PASSWORD=$OWNER_PASSWORD"; } >> "$GITHUB_ENV"
+
+      - name: Validate merged compose config (with trial override)
+        working-directory: local-edition/packaging/official
+        run: $COMPOSE config --quiet
+
+      - name: Build web root (single plain-HTTP origin, like behind the edge)
+        working-directory: local-edition
+        run: |
+          printf 'window.DENTIX_CONFIG = { SUPABASE_URL: "http://localhost:8080", SUPABASE_ANON_KEY: "%s" };\n' "$ANON_KEY" > js/config.local.js
+          sh packaging/build-web.sh
+
+      - name: Boot stack (trial profile)
+        working-directory: local-edition/packaging/official
+        run: $COMPOSE up -d --wait
+
+      - name: Trial listener serves app + API on one origin
+        run: |
+          curl -sf -o /dev/null -w 'app-index-http=%{http_code}\n' http://localhost:8080/
+          curl -sf -o /dev/null -w 'rest-via-trial-http=%{http_code}\n' -H "apikey: $ANON_KEY" http://localhost:8080/rest/v1/
+          # TLS-only listener must be gone in the trial profile
+          code=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 3 https://localhost:443/ || true)
+          echo "tls-listener-absent=$([ -z "$code" ] || [ "$code" = "000" ] && echo 1 || echo 0)"
+
+      - name: Post-boot storage objects + realtime publication
+        working-directory: local-edition/packaging/official
+        run: |
+          $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < ../post-boot-storage.sql
+          $COMPOSE exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < ../post-boot-realtime.sql
+
+      - name: Bootstrap first owner
+        working-directory: local-edition/packaging/official
+        run: |
+          printf 'trial-owner@clinic.local\n%s\n%s\n' "$OWNER_PASSWORD" "$OWNER_PASSWORD" | \
+            $COMPOSE exec -T provision node bootstrap-owner.mjs
+
+      - name: Authenticated smoke through the trial listener
+        working-directory: local-edition
+        env:
+          BASE: http://localhost:8080
+          OWNER_EMAIL: trial-owner@clinic.local
+        run: node ci/smoke.mjs
+
+      - name: Realtime subscribe through the trial listener
+        working-directory: local-edition/packaging/official
+        env:
+          BASE: http://localhost:8080
+          OWNER_EMAIL: trial-owner@clinic.local
+        run: |
+          RTCOUNT=$($COMPOSE exec -T db psql -U postgres -tA -c "select count(*) from pg_publication_tables where pubname='supabase_realtime' and tablename in ('notifications','patient_visits','lab_works','inventory_items')")
+          echo "app realtime tables published: $RTCOUNT/4"
+          test "$RTCOUNT" = "4"
+          (cd ../../ci && npm install --no-save --silent @supabase/supabase-js@2 >/dev/null && node realtime-subscribe-probe.mjs)
