@@ -101,6 +101,7 @@ if ($first) {
     Say 'First run: creating file folders and rules...'
     Invoke-Psql -file (Join-Path $Sql 'zz40-storage.sql')
     Invoke-Psql -file (Join-Path $Sql 'post-boot-storage.sql')
+    Invoke-Psql -file (Join-Path $Sql 'win-storage-grants.sql')
     Set-Content -Path $Flag -Value (Get-Date -Format s)
 }
 

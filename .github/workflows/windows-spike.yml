@@ -231,6 +231,7 @@ jobs:
           # 6b: bucket policies + upload/download as the owner (all synthetic)
           $PGB -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -f "$GITHUB_WORKSPACE/local-edition/packaging/init/zz40-storage.sql" >/c/spike/zz40.log 2>&1 && say "stage6-zz40=1" || say "stage6-zz40=0 err=$(grep -i -m2 error /c/spike/zz40.log | cut -c1-160 | tr '\n' ' ')"
           $PGB -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -f "$GITHUB_WORKSPACE/local-edition/packaging/post-boot-storage.sql" >/c/spike/pbs.log 2>&1 && say "stage6-postboot=1" || say "stage6-postboot=0 err=$(grep -i -m2 error /c/spike/pbs.log | cut -c1-160 | tr '\n' ' ')"
+          $PGB -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -f "$GITHUB_WORKSPACE/local-edition/packaging/windows/pkg/sql/win-storage-grants.sql" >/c/spike/wsg.log 2>&1 && say "stage6-win-storage-grants=1" || say "stage6-win-storage-grants=0 err=$(grep -i -m2 error /c/spike/wsg.log | cut -c1-160 | tr '\n' ' ')"
           OWNER_EM=$(sed -n 1p /c/spike/owner.txt); OWNER_PW=$(sed -n 2p /c/spike/owner.txt)
           tok=$(curl -s -X POST 'http://127.0.0.1:9999/token?grant_type=password' -H 'Content-Type: application/json' -d "{\"email\":\"$OWNER_EM\",\"password\":\"$OWNER_PW\"}" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
           UID_=$(curl -s http://127.0.0.1:9999/user -H "apikey: $ANON" -H "Authorization: Bearer $tok" | sed -n 's/.*"id":"\([0-9a-f-]*\)".*/\1/p' | head -1)
