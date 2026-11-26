@@ -213,7 +213,7 @@ jobs:
           # fs-xattr is POSIX-only (EBADPLATFORM). Install ignoring platform + scripts, then swap in the NTFS-stream shim.
           npm ci --force --ignore-scripts --no-audit --no-fund >/c/spike/npmci.log 2>&1 && say "stage6-npm-ci=1" || { echo "::error title=stage6::npm ci failed: $(tail -c 400 /c/spike/npmci.log | tr '\n' ' ' | tr -d '"')"; exit 1; }
           rm -rf node_modules/fs-xattr && mkdir -p node_modules/fs-xattr && cp "$GITHUB_WORKSPACE/local-edition/packaging/windows/xattr-shim/"* node_modules/fs-xattr/ && say "stage6-xattr-shim=1"
-          npm run build >/c/spike/npmbuild.log 2>&1 && say "stage6-build=1" || { echo "::error title=stage6::build failed: $(tail -c 500 /c/spike/npmbuild.log | tr '\n' ' ' | tr -d '"')"; exit 1; }
+          node ./build.js >/c/spike/npmbuild.log 2>&1 && say "stage6-build=1" || { echo "::error title=stage6::build failed: $(tail -c 500 /c/spike/npmbuild.log | tr '\n' ' ' | tr -d '"')"; exit 1; }
           ls dist/start >/c/spike/dist.txt 2>&1; say "stage6-dist-start=$(tr '\n' ',' </c/spike/dist.txt)"
           $PGB -h 127.0.0.1 -p 54329 -U postgres -c "grant create on database postgres to supabase_storage_admin; grant usage on schema public to supabase_storage_admin;" >/dev/null
           mkdir -p /c/spike/storage-data
