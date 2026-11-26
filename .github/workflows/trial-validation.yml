@@ -90,6 +90,18 @@ jobs:
           code=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 3 https://localhost:443/ || true)
           echo "tls-listener-absent=$([ -z "$code" ] || [ "$code" = "000" ] && echo 1 || echo 0)"
 
+      - name: Origin guard accepts the trial origin and denies foreign ones
+        run: |
+          # pre-auth probe: a response OTHER than origin_denied means the
+          # trial origin passed the guard (the request then fails on
+          # auth/body, which is expected at this stage); a foreign origin
+          # MUST get origin_denied.
+          body=$(curl -s -X POST -H "Origin: http://localhost:8080" -H 'Content-Type: application/json' -d '{}' http://localhost:8080/provision)
+          if echo "$body" | grep -q origin_denied; then echo 'origin-trial-passed=0'; exit 1; fi
+          echo 'origin-trial-passed=1'
+          body=$(curl -s -X POST -H "Origin: https://foreign.example" -H 'Content-Type: application/json' -d '{}' http://localhost:8080/provision)
+          if echo "$body" | grep -q origin_denied; then echo 'origin-foreign-denied=1'; else echo 'origin-foreign-denied=0'; exit 1; fi
+
       - name: Post-boot storage objects + realtime publication
         working-directory: local-edition/packaging/official
         run: |

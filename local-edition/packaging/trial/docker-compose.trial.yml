@@ -7,6 +7,14 @@
 #     -f docker-compose.kong.yml -f ../docker-compose.dentix-override.yml \
 #     -f ../trial/docker-compose.trial.yml --env-file .env.dentix up -d --wait
 services:
+  provision:
+    environment:
+      # Same-origin guard value for the trial: the origin the Codespaces
+      # edge serves, exported as TRIAL_ORIGIN by start-trial.sh. Strict
+      # single origin - NOT a wildcard. The default only fits local CI,
+      # where the trial listener is reached at http://localhost:8080.
+      ALLOWED_ORIGIN: ${TRIAL_ORIGIN:-http://localhost:8080}
+
   web:
     volumes: !override
       - ../web:/usr/share/nginx/html:ro

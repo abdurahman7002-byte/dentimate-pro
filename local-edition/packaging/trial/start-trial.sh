@@ -45,6 +45,8 @@ else
 fi
 
 ORIGIN="https://${CODESPACE_NAME}-8080.app.github.dev"
+# the provision server's same-origin guard must accept exactly this origin
+export TRIAL_ORIGIN="$ORIGIN"
 printf 'window.DENTIX_CONFIG = { SUPABASE_URL: "%s", SUPABASE_ANON_KEY: "%s" };\n' "$ORIGIN" "$ANON_KEY" > ../../js/config.local.js
 (cd ../.. && sh packaging/build-web.sh)
 
