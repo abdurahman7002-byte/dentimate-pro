@@ -127,9 +127,44 @@ jobs:
           REALTIME_CONTAINER="$($COMPOSE ps --format '{{.Names}}' | grep -m1 realtime)"
           export REALTIME_CONTAINER
           (cd ../../ci && node realtime-acceptance.mjs)
-          # UI acceptance: the ACTUAL shipped app (js/notification.js) in a
-          # real browser - app-form login, app subscription, app catch-up
-          # resync under a realtime restart. Screenshots are fixture-only.
+
+      # UI smoke runs even when the realtime gate above failed: a single fault
+      # must not keep independent validation unobserved. It first RECREATES
+      # the realtime container (fresh container = fresh replication state),
+      # which also answers whether force-recreate heals the restart fault.
+      - name: UI acceptance smoke (fixture-only, always runs)
+        if: always()
+        working-directory: local-edition/packaging/official
+        env:
+          BASE: https://localhost
+          BASE_WSS: wss://localhost
+          OWNER_EMAIL: ci-owner@clinic.local
+          SKIP_RESTART_PHASE: "1"
+        run: |
+          REALTIME_CONTAINER="$($COMPOSE ps --format '{{.Names}}' | grep -m1 realtime)"
+          export REALTIME_CONTAINER
+          $COMPOSE up -d --force-recreate realtime >/dev/null 2>&1 || docker restart "$REALTIME_CONTAINER"
+          # wait until a fresh client can actually subscribe again (replication
+          # back), bounded; the smoke test itself proves the UI end of it
+          for i in $(seq 1 30); do
+            H=$($COMPOSE exec -T realtime curl -s -o /dev/null -w '%{http_code}' --max-time 5 -H "Authorization: Bearer $ANON_KEY" http://localhost:4000/api/tenants/realtime-dev/health 2>/dev/null || echo 000)
+            [ "$H" = "200" ] && break
+            sleep 5
+          done
+          echo "ui-smoke-realtime-health=$H"
+          (cd ../../ci && npm install --no-save --silent playwright >/dev/null && npx playwright install --with-deps chromium >/dev/null && node ui-acceptance.mjs)
+
+      # full UI acceptance incl. realtime-restart phases: only meaningful when
+      # the realtime gate passed (default condition = previous steps green)
+      - name: UI acceptance full (realtime restart phases)
+        working-directory: local-edition/packaging/official
+        env:
+          BASE: https://localhost
+          BASE_WSS: wss://localhost
+          OWNER_EMAIL: ci-owner@clinic.local
+        run: |
+          REALTIME_CONTAINER="$($COMPOSE ps --format '{{.Names}}' | grep -m1 realtime)"
+          export REALTIME_CONTAINER
           (cd ../../ci && npm install --no-save --silent playwright >/dev/null && npx playwright install --with-deps chromium >/dev/null && node ui-acceptance.mjs)
 
       - name: UI acceptance screenshots (fixture-only)
@@ -142,6 +177,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Backup + ISOLATED restore gate (restored storage service download + hash)
+        if: always()
         working-directory: local-edition/packaging/official
         env:
           BASE: https://localhost

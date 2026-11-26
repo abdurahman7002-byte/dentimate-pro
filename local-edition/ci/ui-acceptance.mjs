@@ -86,6 +86,15 @@ const single = await insertNotification('single');
 const ms1 = await waitDom(single, 20000, 'steady-state');
 console.log(`ui-steady-state-ms=${ms1}`);
 
+// smoke mode (SKIP_RESTART_PHASE=1): prove login + shipped code + live
+// steady-state delivery in a real browser without the restart phases, so a
+// realtime-restart fault elsewhere cannot keep all UI evidence unobserved.
+if (process.env.SKIP_RESTART_PHASE === '1') {
+    console.log(`PASS ui-acceptance-smoke (login ok, shipped code loaded, steady-state live delivery ${ms1}ms)`);
+    await browser.close();
+    process.exit(0);
+}
+
 // 3. outage: restart realtime under the live page; one change DURING outage
 execSync(`docker restart ${REALTIME_CONTAINER}`, { stdio: 'ignore' });
 await page.waitForTimeout(3000);
