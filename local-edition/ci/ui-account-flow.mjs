@@ -15,7 +15,14 @@ const browser = await chromium.launch();
 const ctx = await browser.newContext({ ignoreHTTPSErrors: true });
 const page = await ctx.newPage();
 let pageErrorCount = 0;
-page.on('pageerror', (e) => { pageErrorCount++; console.log(`ui-account-page-error name=${(e && e.name) || 'Error'}`); });
+const pageErrorLabels = [];
+page.on('pageerror', (e) => {
+    pageErrorCount++;
+    let p = '?'; try { p = new URL(page.url()).pathname; } catch (_) {}
+    const label = `${(e && e.name) || 'Error'} on ${p}: ${String((e && e.message) || '').slice(0, 90).replace(/[\r\n]+/g, ' ')}`;
+    pageErrorLabels.push(label);
+    console.log(`ui-account-page-error ${label}`);
+});
 
 // 1. login through the app's own form
 await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
@@ -84,5 +91,5 @@ if (!back.ok) fail('revert', 'login with original password after revert');
 ok('reverted=ok');
 
 await browser.close();
-if (pageErrorCount) fail('pageerrors', `count=${pageErrorCount}`);
+if (pageErrorCount) fail('pageerrors', `count=${pageErrorCount} ${pageErrorLabels.join(' | ')}`);
 console.log('PASS ui-account-flow (card present, password changed via UI, signed out, relogged in with new password, reverted)');
