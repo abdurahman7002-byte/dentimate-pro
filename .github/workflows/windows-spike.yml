@@ -108,3 +108,19 @@ jobs:
           say "stage2b-authenticated-query-http=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $tok" http://127.0.0.1:3000/patients?select=id)"
           say "stage2b-anon-query-http=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/patients?select=id)"
           say "stage2b-rpc-is_admin-http=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $tok" http://127.0.0.1:3000/rpc/is_admin)"
+      - name: Stage 4 - Node provision server on Windows (non-owner must be refused)
+        run: |
+          say(){ echo "$1"; echo "::notice title=spike::$1"; }
+          cd /c/spike
+          JWT="$(cat jwt.txt)"
+          SVC=$(JWT="$JWT" node -e "const c=require('crypto');const b=o=>Buffer.from(JSON.stringify(o)).toString('base64url');const h=b({alg:'HS256',typ:'JWT'})+'.'+b({role:'service_role',iss:'spike',exp:Math.floor(Date.now()/1000)+3600});console.log(h+'.'+c.createHmac('sha256',process.env.JWT).update(h).digest('base64url'))")
+          say "stage4-node-version=$(node -v)"
+          (SERVICE_ROLE_JWT="$SVC" ALLOWED_ORIGINS="https://clinic.lan" node "$GITHUB_WORKSPACE/local-edition/server/provision-server.mjs" >/c/spike/prov.log 2>&1 &) ; sleep 4
+          say "stage4-not-found-http=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:9090/nope)"
+          EM="spike-$(openssl rand -hex 4)@example.test"; PW="Spk-$(openssl rand -hex 10)"
+          tok=$(curl -s -X POST http://127.0.0.1:9999/signup -H 'Content-Type: application/json' -d "{\"email\":\"$EM\",\"password\":\"$PW\"}" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+          code=$(curl -s -o /c/spike/prov-body.txt -w '%{http_code}' -X POST http://127.0.0.1:9090/provision -H 'Content-Type: application/json' -H "Authorization: Bearer $tok" -d '{"employee_id":"00000000-0000-0000-0000-000000000000"}')
+          say "stage4-nonowner-provision-http=$code reason=$(sed -n 's/.*"reason":"\([a-z_]*\)".*/\1/p' /c/spike/prov-body.txt)"
+          code2=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:9090/provision -H 'Content-Type: application/json' -H 'Origin: https://evil.example' -d '{"employee_id":"x"}')
+          say "stage4-bad-origin-http=$code2"
+          [ "$code" = "403" ] && [ "$code2" = "403" ] || { echo "::error title=stage4::unexpected codes $code $code2: $(tail -c 300 /c/spike/prov.log | tr '\n' ' ')"; exit 1; }
