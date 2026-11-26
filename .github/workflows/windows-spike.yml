@@ -124,3 +124,62 @@ jobs:
           code2=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:9090/provision -H 'Content-Type: application/json' -H 'Origin: https://evil.example' -d '{"employee_id":"x"}')
           say "stage4-bad-origin-http=$code2"
           [ "$code" = "403" ] && [ "$code2" = "403" ] || { echo "::error title=stage4::unexpected codes $code $code2: $(tail -c 300 /c/spike/prov.log | tr '\n' ' ')"; exit 1; }
+      - name: Stage 5 - owner bootstrap + Caddy TLS web serving on Windows
+        run: |
+          say(){ echo "$1"; echo "::notice title=spike::$1"; }
+          cd /c/spike
+          JWT="$(cat jwt.txt)"
+          mint(){ ROLE="$1" JWT="$JWT" node -e "const c=require('crypto');const b=o=>Buffer.from(JSON.stringify(o)).toString('base64url');const h=b({alg:'HS256',typ:'JWT'})+'.'+b({role:process.env.ROLE,iss:'spike',exp:Math.floor(Date.now()/1000)+3600});console.log(h+'.'+c.createHmac('sha256',process.env.JWT).update(h).digest('base64url'))"; }
+          ANON=$(mint anon)
+          # 5a owner bootstrap through the repo's own script (piped stdin; password synthetic)
+          OWNER_EM="owner-$(openssl rand -hex 4)@example.test"; OWNER_PW="Own-$(openssl rand -hex 10)"
+          printf '%s\n%s\n%s\n' "$OWNER_EM" "$OWNER_PW" "$OWNER_PW" | node "$GITHUB_WORKSPACE/local-edition/server/bootstrap-owner.mjs" >/c/spike/boot.log 2>&1 && say "stage5-owner-bootstrap=1" || { echo "::error title=stage5::owner bootstrap failed: $(tail -c 300 /c/spike/boot.log | tr '\n' ' ')"; exit 1; }
+          printf '%s\n%s\n%s\n' "x-$OWNER_EM" "$OWNER_PW" "$OWNER_PW" | node "$GITHUB_WORKSPACE/local-edition/server/bootstrap-owner.mjs" >/c/spike/boot2.log 2>&1 && say "stage5-second-bootstrap-refused=0" || say "stage5-second-bootstrap-refused=1"
+          # 5b web root by the repo's allowlist script, with a synthetic config
+          cd "$GITHUB_WORKSPACE/local-edition"
+          printf "window.DENTIX_CONFIG={SUPABASE_URL:'https://localhost:8443',SUPABASE_ANON_KEY:'%s'};\n" "$ANON" > js/config.local.js
+          sh packaging/build-web.sh >/c/spike/web.log 2>&1 && say "stage5-web-built=1" || { echo "::error title=stage5::build-web failed: $(tail -c 300 /c/spike/web.log | tr '\n' ' ')"; exit 1; }
+          WEB="$(cygpath -m "$GITHUB_WORKSPACE/local-edition/packaging/web")"
+          say "stage5-web-files=$(find packaging/web -type f | wc -l)"
+          # 5c Caddy for Windows
+          cd /c/spike
+          curl -fsSL -o caddy.zip https://github.com/caddyserver/caddy/releases/download/v2.11.9/caddy_2.11.9_windows_amd64.zip && unzip -q -o caddy.zip -d caddy && say "stage5-caddy-downloaded=1" || { echo "::error title=stage5::caddy download"; exit 1; }
+          cat > Caddyfile <<CF
+          {
+            admin off
+            skip_install_trust
+          }
+          https://localhost:8443 {
+            tls internal
+            encode gzip
+            handle_path /rest/v1/* {
+              reverse_proxy 127.0.0.1:3000
+            }
+            handle_path /auth/v1/* {
+              reverse_proxy 127.0.0.1:9999
+            }
+            @prov path /provision /reset-password /account
+            handle @prov {
+              reverse_proxy 127.0.0.1:9090
+            }
+            handle {
+              root * $WEB
+              file_server
+            }
+          }
+          CF
+          sed -i 's/^ \{10\}//' Caddyfile
+          ./caddy/caddy.exe validate --config Caddyfile --adapter caddyfile >caddy-validate.log 2>&1 && say "stage5-caddyfile-valid=1" || { echo "::error title=stage5::caddy validate: $(tail -c 300 caddy-validate.log | tr '\n' ' ')"; exit 1; }
+          (./caddy/caddy.exe run --config Caddyfile --adapter caddyfile >caddy.log 2>&1 &) ; sleep 8
+          say "stage5-https-index-http=$(curl -sk -o /dev/null -w '%{http_code}' https://localhost:8443/index.html)"
+          say "stage5-https-config-served=$(curl -sk https://localhost:8443/js/config.local.js | grep -c DENTIX_CONFIG)"
+          say "stage5-blocked-server-dir-http=$(curl -sk -o /dev/null -w '%{http_code}' https://localhost:8443/server/provision-server.mjs)"
+          say "stage5-blocked-packaging-http=$(curl -sk -o /dev/null -w '%{http_code}' https://localhost:8443/packaging/build-web.sh)"
+          # 5d owner sign-in over HTTPS through the proxy, then authed REST and the owner-only endpoint
+          tok=$(curl -sk -X POST 'https://localhost:8443/auth/v1/token?grant_type=password' -H "apikey: $ANON" -H 'Content-Type: application/json' -d "{\"email\":\"$OWNER_EM\",\"password\":\"$OWNER_PW\"}" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+          say "stage5-owner-login-token=$([ -n "$tok" ] && echo 1 || echo 0)"
+          say "stage5-owner-rest-patients-http=$(curl -sk -o /dev/null -w '%{http_code}' -H "apikey: $ANON" -H "Authorization: Bearer $tok" 'https://localhost:8443/rest/v1/patients?select=id')"
+          say "stage5-anon-rest-patients-http=$(curl -sk -o /dev/null -w '%{http_code}' -H "apikey: $ANON" -H "Authorization: Bearer $ANON" 'https://localhost:8443/rest/v1/patients?select=id')"
+          say "stage5-owner-is_admin=$(curl -sk -X POST -H "apikey: $ANON" -H "Authorization: Bearer $tok" https://localhost:8443/rest/v1/rpc/is_admin | head -c 20)"
+          say "stage5-owner-provision-http=$(curl -sk -o /c/spike/p5.txt -w '%{http_code}' -X POST https://localhost:8443/provision -H 'Content-Type: application/json' -H 'Origin: https://clinic.lan' -H "Authorization: Bearer $tok" -d '{"employee_id":"00000000-0000-0000-0000-000000000000"}') reason=$(sed -n 's/.*"error":"\([^"]*\)".*/\1/p' /c/spike/p5.txt | head -c 60)"
+          [ -n "$tok" ] || { echo "::error title=stage5::owner login failed: $(tail -c 300 /c/spike/auth.log | tr '\n' ' ')"; exit 1; }
