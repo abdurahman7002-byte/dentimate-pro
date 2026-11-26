@@ -64,5 +64,20 @@ for (const [pg, nd] of [['Bill.html', 'Perm Beneficiary A'], ['doctors.html', 'P
   const r = await ui('pat@example.test', pg, nd);
   out['ui_pat_' + pg.replace('.html', '')] = `stayed=${r.stayed},sees_data=${r.sees}`;
 }
+// Pricing Helper in the More menu: owner sees the link and the page opens; employee without 'control' is bounced
+{
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true }); const page = await ctx.newPage();
+  await page.goto(base + '/index.html', { waitUntil: 'load' });
+  await page.fill('#email', process.env.OWNER_EM); await page.fill('#password', process.env.OWNER_PW);
+  await page.click('button:has-text("Login")');
+  await page.waitForURL((u) => !u.pathname.endsWith('/index.html') && u.pathname !== '/', { timeout: 30000 }).catch(() => {});
+  await page.goto(base + '/patients.html', { waitUntil: 'load' }); await page.waitForTimeout(3000);
+  out.more_menu_pricing_link = await page.locator('.moore-menu a[href="pricing.html"]').count();
+  await page.goto(base + '/pricing.html', { waitUntil: 'load' }); await page.waitForTimeout(3000);
+  out.owner_pricing_opens = new URL(page.url()).pathname.endsWith('/pricing.html');
+  await ctx.close();
+  const r = await ui('three@example.test', 'pricing.html', 'zzzz');
+  out.employee_without_control_pricing_stayed = r.stayed;
+}
 await browser.close();
 console.log(Object.entries(out).map(([k, v]) => `${k}=${v}`).join(' '));

@@ -418,6 +418,9 @@ en: {
     "control_panel":
         "Control Panel",
 
+    "pricing_helper_desc":
+        "Cost and profit calculator for a service",
+
     "pricing_helper":
         "Your Pricing Helper",
 
@@ -2201,6 +2204,9 @@ ar: {
 
     "control_panel":
         "لوحة التحكم",
+
+    "pricing_helper_desc":
+        "حساب التكلفة ونسبة الربح للخدمة",
 
     "pricing_helper":
         "مساعدك في التسعير",
