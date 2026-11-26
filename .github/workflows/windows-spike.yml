@@ -45,6 +45,11 @@ jobs:
           git clone -q --depth 1 --branch v2.198.0 https://github.com/supabase/auth.git auth-src || { echo "::error title=stage3::clone failed"; exit 1; }
           cd auth-src
           go version
+          # Finding from the first run: cmd/serve_cmd.go uses unix.SO_REUSEPORT, which does not
+          # exist on Windows. Spike-only patch: skip the socket option and drop the unix import.
+          echo "stage3-unix-import-files=$(grep -rl 'golang.org/x/sys/unix' --include=*.go . | tr '\n' ' ')"
+          sed -i 's|serr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1).*|_ = fd|' cmd/serve_cmd.go
+          sed -i '/"golang.org\/x\/sys\/unix"/d' cmd/serve_cmd.go
           go build -o ../auth.exe . 2>/c/spike/gobuild.log && echo "stage3-auth-build=1" || { echo "::error title=stage3::go build failed: $(tail -c 300 /c/spike/gobuild.log | tr '\n' ' ')"; exit 1; }
           ls migrations | wc -l | sed 's/^/stage3-migration-files=/'
       - name: Stage 3b - run Auth migrations + serve on Windows
