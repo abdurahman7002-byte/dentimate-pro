@@ -115,9 +115,12 @@ async function setAuthUserPassword(id, password) {
 async function revokeUserSessions(id) {
     // After a password change every existing session (including the one that
     // made the change) must lose its authority; the owner logs in again with
-    // the new password. GoTrue admin logout revokes all refresh tokens; the
-    // short-lived access token is rejected on the next refresh.
-    const r = await fetch(`${GOTRUE}/admin/users/${id}/logout`, { method: 'POST', headers: svcHeaders });
+    // the new password. Send an empty JSON body: Content-Type: application/json
+    // with NO body makes gotrue fail the request (empty-body parse error).
+    let r = await fetch(`${GOTRUE}/admin/users/${id}/logout`, { method: 'POST', headers: svcHeaders, body: '{}' });
+    if (r.ok || r.status === 204) return true;
+    // fallback: the sessions collection endpoint (version-dependent)
+    r = await fetch(`${GOTRUE}/admin/users/${id}/sessions`, { method: 'DELETE', headers: svcHeaders });
     return r.ok || r.status === 204;
 }
 async function setAuthUserEmail(id, email) {
@@ -246,7 +249,7 @@ const server = http.createServer(async (req, res) => {
                     return json(res, 502, { error: newEmail ? 'تم تحديث البريد وتعذرت كلمة المرور' : 'تعذر تحديث كلمة المرور', reason: 'password_update_failed' });
                 }
                 if (!await revokeUserSessions(user.id)) {
-                    return json(res, 502, { error: 'تم تحديث كلمة المرور وتعذر إنهاء الجلسات - سجّل الدخول بكلمة المرور الجديدة' });
+                    return json(res, 502, { error: 'تم تحديث كلمة المرور وتعذر إنهاء الجلسات - سجّل الدخول بكلمة المرور الجديدة', reason: 'session_revoke_failed' });
                 }
             }
             return json(res, 200, { ok: true, email_changed: !!(newEmail && newEmail !== user.email), password_changed: !!newPassword });
@@ -313,7 +316,7 @@ const bootServer = http.createServer(async (req, res) => {
             if (!user) return json(res, 404, { error: 'لا يوجد حساب بهذا البريد', reason: 'no_such_account' });
             if (!await isClinicAdmin(user.id)) return json(res, 403, { error: 'هذا الحساب ليس حساب مالك', reason: 'owner_only' });
             if (!await setAuthUserPassword(user.id, password)) return json(res, 502, { error: 'تعذر تحديث كلمة المرور', reason: 'password_update_failed' });
-            await revokeUserSessions(user.id);
+            if (!await revokeUserSessions(user.id)) return json(res, 502, { error: 'تم تحديث كلمة المرور وتعذر إنهاء الجلسات', reason: 'session_revoke_failed' });
             return json(res, 200, { ok: true, email }); // password never echoed
         }
         let body = {};
