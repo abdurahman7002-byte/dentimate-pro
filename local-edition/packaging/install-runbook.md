@@ -55,6 +55,11 @@ Open alternatives (none chosen here; the host decision is the owner's):
      that machine; the trial is how that gets established.
    - Nothing created inside the session survives reboot - that is what makes
      the trial safe, and also why it cannot be the production install.
+   - MEMORY CEILING, stated plainly: a live session's writable space (where
+     Docker puts the ~7.5 GB of pulled images) is RAM-backed, typically
+     capped near half the machine's RAM. On an 8 GB machine the pull will
+     not fit; 16 GB is the practical floor for this route, and even then
+     headroom is tight. Check the machine's RAM before choosing this route.
 2. Reversible software route on the existing Windows 10: enable WSL2, install
    Ubuntu + Docker Engine inside WSL (open source - the Docker Desktop
    license condition does not apply), run the trial, and remove it afterwards
