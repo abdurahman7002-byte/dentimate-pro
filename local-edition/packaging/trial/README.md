@@ -29,8 +29,10 @@ What this is NOT:
   of pulled app images DO count as loaded data while the codespace exists.
 - Safeguard, exactly as documented: "If your account does not have a valid
   payment method on file, usage is blocked once you use up your quota."
-  This protection is CONDITIONAL on your account having no payment method
-  on file - check yours at github.com/settings/billing before the trial.
+  The even stronger account-level safeguard is a $0 budget for the
+  Codespaces product (github.com/settings/billing/budgets): with a $0
+  budget, paid usage beyond the included quota is blocked outright.
+  Check yours at github.com/settings/billing before the trial.
   (docs.github.com/en/billing/concepts/product-billing/github-codespaces)
 - Forwarded ports are PRIVATE by default: only you, signed into your GitHub
   account, can open the app URL. NEVER switch the port to Public - anyone
