@@ -432,3 +432,50 @@ select public._apply_page_policies('assets',           'control');
 select public._apply_page_policies('expenses',         'control');
 select public._apply_page_policies('services',         'control');
 select public._apply_page_policies('pricing_settings', 'control');
+
+-- =========================================================
+-- Round 3 permission fixes (found by the full page/table matrix test)
+-- =========================================================
+-- 1) tables that had NO row security at all (any signed-in employee could read/write them)
+select public._apply_page_policies('inventory_purchases',   'storage');
+select public._apply_page_policies('inventory_transactions','storage');
+
+-- 2) pages that legitimately write another page's table (the page scripts do this):
+--    extra PERMISSIVE policies, gated by the writing page's own add/edit/delete flag.
+create or replace function public._dentix_extra_writer(p_table text, p_page text, p_ops text[])
+returns void language plpgsql security definer set search_path = public as $$
+declare op text; act text;
+begin
+    foreach op in array p_ops loop
+        act := case op when 'insert' then 'add' when 'update' then 'edit' else 'delete' end;
+        execute format('drop policy if exists %I on public.%I', 'dentix_w_' || replace(p_page,'-','_') || '_' || op, p_table);
+        if op = 'insert' then
+            execute format('create policy %I on public.%I for insert to authenticated with check (user_id = public.clinic_owner_id() and public.has_perm(%L, %L))',
+                'dentix_w_' || replace(p_page,'-','_') || '_' || op, p_table, p_page, act);
+        elsif op = 'update' then
+            execute format('create policy %I on public.%I for update to authenticated using (user_id = public.clinic_owner_id() and public.has_perm(%L, %L)) with check (user_id = public.clinic_owner_id() and public.has_perm(%L, %L))',
+                'dentix_w_' || replace(p_page,'-','_') || '_' || op, p_table, p_page, act, p_page, act);
+        else
+            execute format('create policy %I on public.%I for delete to authenticated using (user_id = public.clinic_owner_id() and public.has_perm(%L, %L))',
+                'dentix_w_' || replace(p_page,'-','_') || '_' || op, p_table, p_page, act);
+        end if;
+    end loop;
+end $$;
+revoke execute on function public._dentix_extra_writer(text, text, text[]) from public, anon, authenticated;
+
+select public._dentix_extra_writer('patient_visits',     'dashboard',    array['insert','update','delete']);  -- booking from the dashboard
+select public._dentix_extra_writer('patient_visits',     'patient-file', array['insert','update','delete']);  -- visits inside the patient file
+select public._dentix_extra_writer('patients',           'patient-file', array['delete']);
+select public._dentix_extra_writer('lab_works',          'dashboard',    array['update']);
+select public._dentix_extra_writer('patientt_services',  'doctors',      array['update']);
+
+-- 3) per-user tables: employee sessions now use the clinic id in the page scripts,
+--    so these rows belong to the clinic id (or the person's own id).
+drop policy if exists dentix_self on public.user_preferences;
+create policy dentix_self on public.user_preferences for all to authenticated
+    using (user_id = auth.uid() or user_id = public.clinic_owner_id())
+    with check (user_id = auth.uid() or user_id = public.clinic_owner_id());
+drop policy if exists dentix_self on public.notifications;
+create policy dentix_self on public.notifications for all to authenticated
+    using (user_id = auth.uid() or user_id = public.clinic_owner_id())
+    with check (user_id = auth.uid() or user_id = public.clinic_owner_id());

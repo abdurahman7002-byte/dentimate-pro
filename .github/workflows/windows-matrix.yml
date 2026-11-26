@@ -1,0 +1,60 @@
+name: windows-matrix
+# Full page x table x action permission matrix on the built offline package (synthetic data only).
+# before = package as built earlier, after = same package with the current zz30-rls.sql re-applied.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci-validation]
+    paths:
+      - '.github/workflows/windows-matrix.yml'
+      - 'local-edition/packaging/windows/pkg/uitest/perm-*'
+      - 'local-edition/packaging/init/**'
+jobs:
+  matrix:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dentimate-offline-win-ci
+          run-id: 45845364518
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: C:\dl
+      - name: Start package, run matrix before and after the SQL fixes
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $notes = New-Object System.Collections.Generic.List[string]
+          function Note($k, $v) { $script:notes.Add("$k=$v"); Write-Host "$k=$v" }
+          try {
+            & 7z x C:\dl\dentimate-offline-win.zip -oC:\clinic -y | Out-Null
+            $R = 'C:\clinic\dentimate-offline'
+            $o = "$env:TEMP\start.log"
+            $p = Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"$R\scripts\start.ps1",'-NoBrowser') -RedirectStandardOutput $o -RedirectStandardError "$o.err" -PassThru -WindowStyle Hidden
+            $null = $p.Handle
+            if (-not $p.WaitForExit(600000)) { try { $p.Kill() } catch {} }
+            Note 'start-rc' $p.ExitCode
+            $em = "owner@example.test"; $pw = "Demo-$([guid]::NewGuid().ToString('N'))"
+            $env:BOOTSTRAP_PORT = '39995'; ("$em`n$pw`n$pw`n") | & "$R\runtime\node\node.exe" "$R\app\server\bootstrap-owner.mjs" | Out-Null
+            $sec = Get-Content "$R\data\secrets.json" -Raw | ConvertFrom-Json
+            $env:PGPASSWORD = $sec.pg_superuser
+            $psql = "$R\runtime\pgsql\bin\psql.exe"
+            $owner = (& $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -tAc "select id from auth.users limit 1").Trim()
+            $ud = "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg\uitest"
+            function RunMatrix($label) {
+              Push-Location $ud
+              $out = & $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -v "owner=$owner" -q -A -t -f perm-matrix.sql 2>&1 | Out-String
+              Pop-Location
+              $flat = ($out -replace '[\r\n]+',' | ' -replace '"','')
+              $i = $flat.IndexOf('MATRIX_TOTAL')
+              if ($i -lt 0) { $i = 0 }
+              Note $label $flat.Substring($i, [Math]::Min(1800, $flat.Length - $i))
+            }
+            RunMatrix 'before'
+            $rl = & $psql -h 127.0.0.1 -p 54329 -U postgres -d postgres -q -f "$env:GITHUB_WORKSPACE\local-edition\packaging\init\zz30-rls.sql" 2>&1 | Out-String
+            Note 'rls-reapply-errors' ([regex]::Matches($rl,'ERROR').Count)
+            RunMatrix 'after'
+            & "$R\scripts\stop.ps1" 2>&1 | Out-Null
+          } catch { Note 'EXCEPTION' (("$_" -replace '[\r\n"]',' ')) }
+          finally { Write-Host "::notice title=matrix-summary::$($notes -join ' ')" }
