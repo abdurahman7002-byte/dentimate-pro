@@ -69,6 +69,7 @@ jobs:
           cp packaging/windows/bootstrap-roles.sql $ST/app/sql/bootstrap-roles.sql
           cp -r packaging/windows/pkg/scripts $ST/scripts
           cp packaging/windows/pkg/*.bat $ST/
+          cp packaging/windows/pkg/README-AR.txt $ST/README-AR.txt
           say "assembled-files=$(find $ST -type f | wc -l) size-mb=$(du -sm $ST | cut -f1)"
           # --- zip
           cd /c/stage && 7z a -tzip -mx=5 /c/dentimate-offline-win.zip dentimate-offline >/c/dl/zip.log 2>&1 && say "zip-mb=$(du -m /c/dentimate-offline-win.zip | cut -f1)" || { echo "::error title=build::zip failed"; exit 1; }
@@ -122,6 +123,19 @@ jobs:
             $dl = & curl.exe -s -k --ssl-no-revoke "https://localhost:8443/storage/v1/object/authenticated/patient-files/$uid/patient-files/t1.txt" -H "apikey: $anon" -H "Authorization: Bearer $tok"
             Note 'download-same' ([int](("$dl").Trim() -eq (Get-Content "$env:TEMP\up.txt" -Raw).Trim()))
             Note 'anon-download-http' (Http "https://localhost:8443/storage/v1/object/authenticated/patient-files/$uid/patient-files/t1.txt" @('-H',"apikey: $anon",'-H',"Authorization: Bearer $anon"))
+            # browser UI smoke (Chrome on the runner, synthetic owner)
+            try {
+              New-Item -ItemType Directory -Force C:\uitest | Out-Null
+              Copy-Item "$R\..\..\uitest-src\ui-smoke.mjs" C:\uitest\ -ErrorAction SilentlyContinue
+              Copy-Item "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg\uitest\ui-smoke.mjs" C:\uitest\ui-smoke.mjs -Force
+              Push-Location C:\uitest
+              Set-Content -Path package.json -Value '{"type":"module"}' -Encoding ASCII
+              & npm.cmd i playwright-core --no-audit --no-fund 2>&1 | Out-Null
+              $env:OWNER_EM = $em; $env:OWNER_PW = $pw
+              $ui = & node ui-smoke.mjs 2>&1 | Out-String
+              Pop-Location
+              Note 'ui' (($ui -replace '[\r\n"]',' ').Trim())
+            } catch { Note 'ui-exception' (("$_" -replace '[\r\n"]',' ')) }
             # LAN exposure: only 8443 may answer on the LAN address
             $lan = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } | Select-Object -First 1).IPAddress
             Note 'lan-ip-found' ([int][bool]$lan)
@@ -148,6 +162,18 @@ jobs:
             $dl2 = & curl.exe -s -k --ssl-no-revoke "https://localhost:8443/storage/v1/object/authenticated/patient-files/$uid/patient-files/t1.txt" -H "apikey: $anon" -H "Authorization: Bearer $tok2"
             Note 'file-after-restart' ([int](("$dl2").Trim() -eq (Get-Content "$env:TEMP\up.txt" -Raw).Trim()))
             Note 'root-ca-present' ([int]((Get-ChildItem "$R\data\caddy" -Recurse -Filter root.crt -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0))
+            # restore the backup into a clean data folder, start again, check data
+            RunPs "$R\scripts\stop.ps1" @() 120
+            RunPs "$R\scripts\restore.ps1" @('-From', $b.FullName) 600
+            Note 'restore-rc' $lastRc
+            Note 'restore-tail' ($lastOut -replace '[\r\n"]',' ')
+            RunPs "$R\scripts\start.ps1" @('-NoBrowser') 300
+            Note 'start-after-restore-rc' $lastRc
+            $login3 = & curl.exe -s -k --ssl-no-revoke -X POST 'https://localhost:8443/auth/v1/token?grant_type=password' -H "apikey: $anon" -H 'Content-Type: application/json' --data-binary "@$tf"
+            $tok3 = ($login3 | ConvertFrom-Json).access_token
+            Note 'login-after-restore' ([int][bool]$tok3)
+            $dl3 = & curl.exe -s -k --ssl-no-revoke "https://localhost:8443/storage/v1/object/authenticated/patient-files/$uid/patient-files/t1.txt" -H "apikey: $anon" -H "Authorization: Bearer $tok3"
+            Note 'file-after-restore' ([int](("$dl3").Trim() -eq (Get-Content "$env:TEMP\up.txt" -Raw).Trim()))
           } catch {
             Note 'EXCEPTION' (("$_" -replace '[\r\n"]',' ').Substring(0, [Math]::Min(300, "$_".Length)))
           } finally {
@@ -162,5 +188,5 @@ jobs:
         with:
           name: dentimate-offline-win-ci
           path: C:\dentimate-offline-win.zip
-          retention-days: 3
+          retention-days: 30
           compression-level: 0

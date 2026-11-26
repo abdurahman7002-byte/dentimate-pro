@@ -142,8 +142,9 @@ $caddyFile = Join-Path $Data 'Caddyfile'
 $sites {
     tls internal
     encode gzip
-    @blockedAdmin path /auth/v1/admin /auth/v1/admin/*
-    respond @blockedAdmin 404
+    handle /auth/v1/admin* {
+        respond 404
+    }
     handle_path /rest/v1/* {
         reverse_proxy 127.0.0.1:3000
     }
