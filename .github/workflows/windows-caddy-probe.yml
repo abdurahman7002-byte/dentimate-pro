@@ -23,7 +23,10 @@ jobs:
           printf '{\n  admin off\n  skip_install_trust\n}\nhttps://localhost:8443 {\n  tls internal\n  root * C:/probe/web\n  file_server\n}\n' > Caddyfile
           timeout 10 ./caddy/caddy.exe run --config Caddyfile --adapter caddyfile >dbg.log 2>&1 || true; echo "::notice title=dbg::exit=$? log=$(head -c 1200 dbg.log | tr '\n' ' ' | tr -d '\r"')"
           (./caddy/caddy.exe run --config Caddyfile --adapter caddyfile >run.log 2>&1 &)
-          for i in $(seq 1 20); do curl -sk -o /dev/null https://localhost:8443/ && break; sleep 1; done
-          say "wait-iterations=$i"
-          say "https-http=$(curl -sk -o /dev/null -w '%{http_code}' https://localhost:8443/index.html)"
-          echo "::notice title=runlog::$(head -c 600 run.log | tr '\n' ' ' | tr -d '\r"')"
+          sleep 6
+          curl -svk --ssl-no-revoke -o /dev/null https://localhost:8443/index.html >curl.log 2>&1; say "curl-exit=$?"
+          echo "::notice title=curl::$(grep -iE 'error|fail|refused|SSL|HTTP/' curl.log | head -c 700 | tr '\n' ' ' | tr -d '\r"')"
+          curl -sk --ssl-no-revoke -o /dev/null -w 'ipv4=%{http_code} ' --resolve localhost:8443:127.0.0.1 https://localhost:8443/index.html > ip.txt 2>&1; say "$(cat ip.txt)"
+          say "caddy-alive=$(tasklist | grep -ci caddy)"
+          say "listening=$(netstat -an | grep -c ':8443')"
+          echo "::notice title=runlog::$(tail -c 700 run.log | tr '\n' ' ' | tr -d '\r"')"
