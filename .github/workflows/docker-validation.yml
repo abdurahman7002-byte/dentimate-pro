@@ -248,6 +248,25 @@ jobs:
           # never leave the runner
           rm -rf /tmp/backup-gate
 
+      - name: Realtime recovery probe (post-failure, counts only, non-gating)
+        if: failure()
+        working-directory: local-edition/packaging/official
+        env:
+          COMPOSE: docker compose -f docker-compose.yml -f docker-compose.pg17.yml -f docker-compose.kong.yml -f ../docker-compose.dentix-override.yml --env-file .env.dentix
+        run: |
+          # the acceptance gate already restarted realtime once; poll until the
+          # stack heals (or 12 min cap) to measure true server-side recovery
+          # time, and compare the Kong-routed path vs container-local health
+          for i in $(seq 1 36); do
+            SLOTS=$($COMPOSE exec -T db psql -U postgres -tA -c "select count(*) from pg_replication_slots" 2>/dev/null || echo -1)
+            SENDERS=$($COMPOSE exec -T db psql -U postgres -tA -c "select count(*) from pg_stat_replication" 2>/dev/null || echo -1)
+            KONG_RT=$(curl -s --cacert "$NODE_EXTRA_CA_CERTS" -o /dev/null -w '%{http_code}' --max-time 5 "https://localhost/realtime/v1/" -H "apikey: $ANON_KEY" || echo 000)
+            DIRECT_RT=$($COMPOSE exec -T realtime curl -s -o /dev/null -w '%{http_code}' --max-time 5 -H "Authorization: Bearer $ANON_KEY" http://localhost:4000/api/tenants/realtime-dev/health 2>/dev/null || echo 000)
+            echo "probe t=$((i*20))s slots=$SLOTS senders=$SENDERS kong-rt=$KONG_RT direct-rt=$DIRECT_RT"
+            if [ "$SLOTS" != "0" ] && [ "$SLOTS" != "-1" ]; then echo "recovery-observed-at-s=$((i*20))"; break; fi
+            sleep 20
+          done
+
       - name: Resource measurement (counts only, non-gating)
         if: always()
         working-directory: local-edition/packaging/official
@@ -256,6 +275,11 @@ jobs:
           # host/trial feasibility question with measurements, not estimates
           IMAGES_MB=$(docker images --format '{{.Size}}' | awk '{ if (match($1, /([0-9.]+)([kKMGT]i?B)/, a)) { m=a[1]; u=a[2]; if (u=="GB"||u=="GiB") m*=1024; else if (u=="kB"||u=="KiB") m/=1024; else if (u=="TB") m*=1048576; s+=m } } END {printf "%d", s }')
           echo "docker-images-total-mb=$IMAGES_MB"
+          # stack-only: the runner ships precached images; count just the repos
+          # this compose project pulls/builds (supabase/*, postgrest, kong,
+          # imgproxy, vector + the locally built provision/web images)
+          STACK_MB=$(docker images --format '{{.Repository}} {{.Size}}' | grep -E '^(supabase/|postgrest/|kong|darthsim/|timberio/|official[-_])' | awk '{ if (match($2, /([0-9.]+)([kKMGT]i?B)/, a)) { m=a[1]; u=a[2]; if (u=="GB"||u=="GiB") m*=1024; else if (u=="kB"||u=="KiB") m/=1024; else if (u=="TB") m*=1048576; s+=m } } END {printf "%d", s }')
+          echo "stack-images-total-mb=$STACK_MB"
           MEM_MB=$(docker stats --no-stream --format '{{.MemUsage}}' | awk '{ if (match($1, /([0-9.]+)([kKMGT]i?B)/, a)) { m=a[1]; u=a[2]; if (u=="GiB"||u=="GB") m*=1024; else if (u=="KiB"||u=="kB") m/=1024; s+=m } } END {printf "%d", s }')
           echo "containers-mem-total-mb=$MEM_MB"
           DISK_USED_MB=$(docker system df --format '{{.Type}} {{.Size}}' | awk '{ if (match($NF, /([0-9.]+)([kKMGT]i?B)/, a)) { m=a[1]; u=a[2]; if (u=="GB"||u=="GiB") m*=1024; else if (u=="kB"||u=="KiB") m/=1024; s+=m } } END {printf "%d", s }')
@@ -295,22 +319,19 @@ jobs:
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-wal-level='||setting from pg_settings where name='wal_level'" || true
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'rt-tenants='||count(*) from _realtime.tenants" 2>/dev/null || echo 'rt-tenants=probe-failed'
           $COMPOSE exec -T db psql -U postgres -tA -c "select 'wal-sender-timeout='||setting from pg_settings where name='wal_sender_timeout'" || true
-          # realtime container log: derived class label only; raw lines stay private in-runner
+          # realtime container log: independent match booleans + count only;
+          # raw lines stay private in-runner (truncation is not redaction)
           RLOG="$($COMPOSE logs realtime 2>&1 | sed 's/\x1b\[[0-9;]*[A-Za-z]//g' || true)"
-          RCLASS="no-error-lines"
-          case "$RLOG" in
-            *"Waiting for old walsender"*) RCLASS="waiting-old-walsender";;
-            *"password authentication failed"*) RCLASS="db-auth-failed";;
-            *"onnection refused"*) RCLASS="db-connection-refused";;
-            *"insufficient_privilege"*|*"permission denied"*) RCLASS="db-permission-denied";;
-            *"publication"*"does not exist"*) RCLASS="publication-missing";;
-            *"enant"*"not found"*) RCLASS="tenant-not-found";;
-            *"wal_level"*) RCLASS="wal-level-error";;
-            *"eplication"*"lot"*) RCLASS="replication-slot-issue";;
-            *"igration"*) RCLASS="migration-issue";;
-            *"rror"*|*"xception"*) RCLASS="unclassified-error-present";;
-          esac
-          echo "realtime-log-class=$RCLASS"
+          b() { case "$RLOG" in *"$1"*) echo 1;; *) echo 0;; esac; }
+          echo "rtlog-old-walsender=$(b 'Waiting for old walsender')"
+          echo "rtlog-slot-exists=$(b 'already exists')"
+          echo "rtlog-max-senders=$(b 'MaxWalSenders')"
+          echo "rtlog-snapshot=$(b 'snapshot')"
+          echo "rtlog-timeout=$(b 'timeout')"
+          echo "rtlog-slot-word=$(b 'slot')"
+          echo "rtlog-subscriptions=$(b 'ubscription')"
+          echo "rtlog-migration=$(b 'igration')"
+          echo "rtlog-error-lines=$(printf '%s\n' "$RLOG" | grep -ciE 'error|exception' || true)"
           # restore-drill leftovers exist only when the backup gate failed mid-run
           # (its cleanup runs on the success path): classify their logs, then clean up
           if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^dentix-restore'; then
