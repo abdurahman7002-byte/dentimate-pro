@@ -170,7 +170,11 @@ jobs:
           CF
           sed -i 's/^ \{10\}//' Caddyfile
           ./caddy/caddy.exe validate --config Caddyfile --adapter caddyfile >caddy-validate.log 2>&1 && say "stage5-caddyfile-valid=1" || { echo "::error title=stage5::caddy validate: $(tail -c 300 caddy-validate.log | tr '\n' ' ')"; exit 1; }
-          (./caddy/caddy.exe run --config Caddyfile --adapter caddyfile >caddy.log 2>&1 &) ; sleep 8
+          (./caddy/caddy.exe run --config Caddyfile --adapter caddyfile >caddy.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sk -o /dev/null https://localhost:8443/ && break; sleep 1; done
+          say "stage5-caddy-wait-iterations=$i"
+          echo "::notice title=caddylog::$(tail -c 500 caddy.log | tr '\n' ' ' | tr -d '\r')"
+          tasklist //FI "IMAGENAME eq caddy.exe" 2>/dev/null | grep -ci caddy | sed 's/^/stage5-caddy-process-count=/' | while read l; do say "$l"; done
           say "stage5-https-index-http=$(curl -sk -o /dev/null -w '%{http_code}' https://localhost:8443/index.html)"
           say "stage5-https-config-served=$(curl -sk https://localhost:8443/js/config.local.js | grep -c DENTIX_CONFIG)"
           say "stage5-blocked-server-dir-http=$(curl -sk -o /dev/null -w '%{http_code}' https://localhost:8443/server/provision-server.mjs)"
