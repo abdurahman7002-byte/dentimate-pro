@@ -190,6 +190,11 @@ jobs:
           say "stage5-owner-is_admin=$(curl -sk -X POST -H "apikey: $ANON" -H "Authorization: Bearer $tok" https://localhost:8443/rest/v1/rpc/is_admin | head -c 20)"
           say "stage5-owner-provision-http=$(curl -sk -o /c/spike/p5.txt -w '%{http_code}' -X POST https://localhost:8443/provision -H 'Content-Type: application/json' -H 'Origin: https://clinic.lan' -H "Authorization: Bearer $tok" -d '{"employee_id":"00000000-0000-0000-0000-000000000000"}') reason=$(sed -n 's/.*"error":"\([^"]*\)".*/\1/p' /c/spike/p5.txt | head -c 60)"
           [ -n "$tok" ] || { echo "::error title=stage5::owner login failed: $(tail -c 300 /c/spike/auth.log | tr '\n' ' ')"; exit 1; }
+      - name: Stage 6 prep - Node 26 (storage-api engine requirement)
+        if: always()
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
       - name: Stage 6 - Supabase storage-api (Node, file backend) on Windows
         if: always()
         run: |
@@ -202,6 +207,8 @@ jobs:
           ANON=$(mint anon); SVC=$(mint service_role)
           git clone -q --depth 1 --branch v1.98.6 https://github.com/supabase/storage.git storage-src && say "stage6-clone=1" || { echo "::error title=stage6::storage clone failed"; exit 1; }
           cd storage-src
+          say "stage6-node=$(node -v) npm=$(npm -v)"
+          export npm_config_engine_strict=false
           npm ci --no-audit --no-fund >/c/spike/npmci.log 2>&1 && say "stage6-npm-ci=1" || { echo "::error title=stage6::npm ci failed: $(tail -c 400 /c/spike/npmci.log | tr '\n' ' ' | tr -d '"')"; exit 1; }
           npm run build >/c/spike/npmbuild.log 2>&1 && say "stage6-build=1" || { echo "::error title=stage6::build failed: $(tail -c 500 /c/spike/npmbuild.log | tr '\n' ' ' | tr -d '"')"; exit 1; }
           ls dist/start >/c/spike/dist.txt 2>&1; say "stage6-dist-start=$(tr '\n' ',' </c/spike/dist.txt)"
