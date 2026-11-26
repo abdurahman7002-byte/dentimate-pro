@@ -20,6 +20,7 @@ jobs:
       - name: Stage 1 - stock PostgreSQL 17 zip binaries on Windows
         run: |
           set -u
+          REPO="$(pwd)"
           mkdir -p /c/spike && cd /c/spike
           got=""
           for v in 17.12-1 17.11-1 17.10-1 17.9-1 17.8-1 17.7-1 17.6-1 17.5-1; do
@@ -37,7 +38,7 @@ jobs:
           "$PGBIN/psql.exe" -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -c "create extension if not exists \"uuid-ossp\"; create extension if not exists pgcrypto;" >/dev/null && echo "stage1-extensions-uuid-pgcrypto=1" || { echo "::error title=stage1::extensions failed"; exit 1; }
           PGP="spk-$(openssl rand -hex 12)"
           echo "$PGP" > /c/spike/pgpass.txt
-          "$PGBIN/psql.exe" -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -v pgpass="$PGP" -f local-edition/packaging/windows/bootstrap-roles.sql >/dev/null && echo "stage1-roles=1" || { echo "::error title=stage1::roles sql failed"; exit 1; }
+          "$PGBIN/psql.exe" -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -v pgpass="$PGP" -f "$REPO/local-edition/packaging/windows/bootstrap-roles.sql" >/c/spike/roles.log 2>&1 && echo "stage1-roles=1" || { echo "::error title=stage1::roles sql failed: $(grep -i -m3 error /c/spike/roles.log | cut -c1-200 | tr '\n' ' ')"; exit 1; }
       - name: Stage 3a - build Supabase Auth (GoTrue) for Windows
         run: |
           cd /c/spike
