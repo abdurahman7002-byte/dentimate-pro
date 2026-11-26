@@ -71,7 +71,9 @@ function subscribe() {
             if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
                 state.retries++;
                 const delay = state.retries <= 5 ? Math.min(5000 * state.retries, 25000) : 30000;
-                console.log(`resubscribe-retry=${state.retries} delay-ms=${delay}`);
+                let sock = 'unknown';
+                try { sock = sb.realtime.connectionState(); } catch (_) {}
+                console.log(`resubscribe-retry=${state.retries} delay-ms=${delay} socket=${sock}`);
                 setTimeout(async () => { try { await sb.removeChannel(channel); } catch (_) {} subscribe(); }, delay);
             }
         });
@@ -122,6 +124,7 @@ console.log(`restart-returned-ms=${Date.now() - tRestart}`);
 // marker so later steps can segment realtime's log AFTER the restart
 // (docker compose logs --since accepts RFC3339)
 try { (await import('node:fs')).writeFileSync('/tmp/rt-restart-since', new Date(tRestart).toISOString()); } catch (_) {}
+
 await new Promise(r => setTimeout(r, 3000));
 const duringOutage = await insertNotification('outage');
 // server-side recovery bound: the dead walsender lingers until

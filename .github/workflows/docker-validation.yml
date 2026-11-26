@@ -126,6 +126,8 @@ jobs:
           # outage-interval change through the app's catch-up resync.
           REALTIME_CONTAINER="$($COMPOSE ps --format '{{.Names}}' | grep -m1 realtime)"
           export REALTIME_CONTAINER
+          # baseline for the post-restart subscription-row delta in later probes
+          $COMPOSE exec -T db psql -U postgres -tA -c "select 'subscription-rows-pre-restart='||count(*) from realtime.subscription" || true
           (cd ../../ci && node realtime-acceptance.mjs)
 
       - name: Capture restarted realtime container FS diff (on gate failure)
