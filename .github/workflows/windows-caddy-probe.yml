@@ -21,7 +21,7 @@ jobs:
           echo hello > web/index.html
           curl -fsSL -o caddy.zip https://github.com/caddyserver/caddy/releases/download/v2.11.9/caddy_2.11.9_windows_amd64.zip && unzip -q -o caddy.zip -d caddy
           say "caddy-version=$(./caddy/caddy.exe version | head -c 40)"
-          printf '{\n  admin off\n  skip_install_trust\n}\nhttps://localhost:8443 {\n  tls internal\n  root * C:/probe/web\n  file_server\n}\n' > Caddyfile
+          printf '{\n  admin off\n  skip_install_trust\n  auto_https disable_redirects\n}\nhttps://localhost:8443 {\n  tls internal\n  root * C:/probe/web\n  file_server\n}\n' > Caddyfile
           timeout 10 ./caddy/caddy.exe run --config Caddyfile --adapter caddyfile >dbg.log 2>&1 || true; echo "::notice title=dbg::exit=$? log=$(head -c 1200 dbg.log | tr '\n' ' ' | tr -d '\r"')"
           (./caddy/caddy.exe run --config Caddyfile --adapter caddyfile >run.log 2>&1 &)
           sleep 6
