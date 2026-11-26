@@ -134,6 +134,7 @@ jobs:
           ANON=$(mint anon)
           # 5a owner bootstrap through the repo's own script (piped stdin; password synthetic)
           OWNER_EM="owner-$(openssl rand -hex 4)@example.test"; OWNER_PW="Own-$(openssl rand -hex 10)"
+          printf '%s\n%s\n' "$OWNER_EM" "$OWNER_PW" > /c/spike/owner.txt
           printf '%s\n%s\n%s\n' "$OWNER_EM" "$OWNER_PW" "$OWNER_PW" | node "$GITHUB_WORKSPACE/local-edition/server/bootstrap-owner.mjs" >/c/spike/boot.log 2>&1 && say "stage5-owner-bootstrap=1" || { echo "::error title=stage5::owner bootstrap failed: $(tail -c 300 /c/spike/boot.log | tr '\n' ' ')"; exit 1; }
           printf '%s\n%s\n%s\n' "x-$OWNER_EM" "$OWNER_PW" "$OWNER_PW" | node "$GITHUB_WORKSPACE/local-edition/server/bootstrap-owner.mjs" >/c/spike/boot2.log 2>&1 && say "stage5-second-bootstrap-refused=0" || say "stage5-second-bootstrap-refused=1"
           # 5b web root by the repo's allowlist script, with a synthetic config
@@ -227,3 +228,20 @@ jobs:
           say "stage6-storage-status-http=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:5000/status)"
           echo "::notice title=storagelog::$(tail -c 700 /c/spike/storage.log | tr '\n' ' ' | tr -d '\r"' | sed "s/$PGP/***/g")"
           say "stage6-storage-schema-tables=$($PGB -h 127.0.0.1 -p 54329 -U postgres -tAc "select count(*) from information_schema.tables where table_schema='storage'")"
+          # 6b: bucket policies + upload/download as the owner (all synthetic)
+          $PGB -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -f "$GITHUB_WORKSPACE/local-edition/packaging/init/zz40-storage.sql" >/c/spike/zz40.log 2>&1 && say "stage6-zz40=1" || say "stage6-zz40=0 err=$(grep -i -m2 error /c/spike/zz40.log | cut -c1-160 | tr '\n' ' ')"
+          $PGB -h 127.0.0.1 -p 54329 -U postgres -v ON_ERROR_STOP=1 -f "$GITHUB_WORKSPACE/local-edition/packaging/post-boot-storage.sql" >/c/spike/pbs.log 2>&1 && say "stage6-postboot=1" || say "stage6-postboot=0 err=$(grep -i -m2 error /c/spike/pbs.log | cut -c1-160 | tr '\n' ' ')"
+          OWNER_EM=$(sed -n 1p /c/spike/owner.txt); OWNER_PW=$(sed -n 2p /c/spike/owner.txt)
+          tok=$(curl -s -X POST 'http://127.0.0.1:9999/token?grant_type=password' -H 'Content-Type: application/json' -d "{\"email\":\"$OWNER_EM\",\"password\":\"$OWNER_PW\"}" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+          UID_=$(curl -s http://127.0.0.1:9999/user -H "apikey: $ANON" -H "Authorization: Bearer $tok" | sed -n 's/.*"id":"\([0-9a-f-]*\)".*/\1/p' | head -1)
+          say "stage6-owner-token=$([ -n "$tok" ] && echo 1 || echo 0) uid=$([ -n "$UID_" ] && echo 1 || echo 0)"
+          echo "synthetic patient file $(date +%s)" > /c/spike/up.txt
+          code=$(curl -s -o /c/spike/up.out -w '%{http_code}' -X POST "http://127.0.0.1:5000/object/patient-files/$UID_/patient-files/t1.txt" -H "apikey: $ANON" -H "Authorization: Bearer $tok" -H 'Content-Type: text/plain' --data-binary @/c/spike/up.txt)
+          say "stage6-owner-upload-http=$code body=$(head -c 120 /c/spike/up.out | tr '\n' ' ')"
+          code=$(curl -s -o /c/spike/down.txt -D /c/spike/down.hdr -w '%{http_code}' "http://127.0.0.1:5000/object/authenticated/patient-files/$UID_/patient-files/t1.txt" -H "apikey: $ANON" -H "Authorization: Bearer $tok")
+          say "stage6-owner-download-http=$code same=$(cmp -s /c/spike/up.txt /c/spike/down.txt && echo 1 || echo 0) ctype=$(grep -i '^content-type' /c/spike/down.hdr | head -c 60 | tr -d '\r')"
+          say "stage6-anon-download-http=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:5000/object/authenticated/patient-files/$UID_/patient-files/t1.txt" -H "apikey: $ANON" -H "Authorization: Bearer $ANON")"
+          say "stage6-anon-public-private-bucket-http=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:5000/object/public/patient-files/$UID_/patient-files/t1.txt")"
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:5000/object/clinic-assets/$UID_/logo/a.txt" -H "apikey: $ANON" -H "Authorization: Bearer $tok" -H 'Content-Type: text/plain' --data-binary @/c/spike/up.txt)
+          say "stage6-asset-upload-http=$code public-read-http=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:5000/object/public/clinic-assets/$UID_/logo/a.txt")"
+          say "stage6-ads-streams-on-disk=$(cmd //c "dir /r C:\\spike\\storage-data /s" 2>/dev/null | grep -c ':\$DATA')"
