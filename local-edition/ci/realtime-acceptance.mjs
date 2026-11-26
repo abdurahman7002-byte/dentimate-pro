@@ -53,7 +53,7 @@ let channel = null;
 // mirrors the shipped app's recovery (notification.js): supabase-js does not
 // retry a refused rejoin while the socket stays up, so on CHANNEL_ERROR /
 // TIMED_OUT the client removes the channel and resubscribes, bounded.
-const MAX_RETRIES = 8;
+const MAX_RETRIES = 6; // matches the shipped app retry budget - a more persistent client cannot prove the app recovered
 function subscribe() {
     channel = sb
         .channel('notifications-' + uid + '-acceptance-' + state.retries)

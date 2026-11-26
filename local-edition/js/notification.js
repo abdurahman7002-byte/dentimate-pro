@@ -1249,6 +1249,44 @@ async function startNotificationRealtime() {
    REALTIME — Source tables (auto-remove when cause gone)
    ========================================================= */
 
+// Bounded resubscribe retry for the source-table channels, same reasoning as
+// the notifications channel: supabase-js does not retry a refused rejoin while
+// the socket stays up, so a realtime server restart would otherwise leave
+// these subscriptions dead until the next page load.
+const sourceRealtimeRetries = { patient_visits: 0, lab_works: 0, inventory_items: 0 };
+const SOURCE_REALTIME_MAX_RETRIES = 6;
+
+function subscribeSourceChannel(table, userId, assign) {
+    const ch = supabaseClient
+        .channel(table + "_changes_" + Date.now())
+        .on("postgres_changes", {
+            event: "*",
+            schema: "public",
+            table: table,
+            filter: `user_id=eq.${userId}`
+        }, async () => {
+            console.log("🔄 " + table + " changed → running cleanup");
+            await cleanupExpiredNotifications();
+        })
+        .subscribe(status => {
+            if (status === "SUBSCRIBED") sourceRealtimeRetries[table] = 0;
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+                if (sourceRealtimeRetries[table] < SOURCE_REALTIME_MAX_RETRIES) {
+                    sourceRealtimeRetries[table]++;
+                    const delay = Math.min(5000 * sourceRealtimeRetries[table], 25000);
+                    console.warn(`🔁 ${table} realtime ${status} - resubscribe attempt ${sourceRealtimeRetries[table]} in ${delay}ms`);
+                    setTimeout(async () => {
+                        try { await supabaseClient.removeChannel(ch); } catch (e) {}
+                        assign(subscribeSourceChannel(table, userId, assign));
+                    }, delay);
+                } else {
+                    console.error(`❌ ${table} realtime resubscribe attempts exhausted`);
+                }
+            }
+        });
+    return ch;
+}
+
 async function startSourceRealtime() {
     const userId = await getUserId();
     if (!userId) return;
@@ -1258,54 +1296,21 @@ async function startSourceRealtime() {
         try { await supabaseClient.removeChannel(visitsRealtimeChannel); } catch(e){}
         visitsRealtimeChannel = null;
     }
-    visitsRealtimeChannel = supabaseClient
-        .channel("patient_visits_changes_" + Date.now())
-        .on("postgres_changes", {
-            event: "*",
-            schema: "public",
-            table: "patient_visits",
-            filter: `user_id=eq.${userId}`
-        }, async () => {
-            console.log("🔄 patient_visits changed → running cleanup");
-            await cleanupExpiredNotifications();
-        })
-        .subscribe();
+    visitsRealtimeChannel = subscribeSourceChannel("patient_visits", userId, (c) => { visitsRealtimeChannel = c; });
 
     // ── 2. lab_works ──
     if (labWorksRealtimeChannel) {
         try { await supabaseClient.removeChannel(labWorksRealtimeChannel); } catch(e){}
         labWorksRealtimeChannel = null;
     }
-    labWorksRealtimeChannel = supabaseClient
-        .channel("lab_works_changes_" + Date.now())
-        .on("postgres_changes", {
-            event: "*",
-            schema: "public",
-            table: "lab_works",
-            filter: `user_id=eq.${userId}`
-        }, async () => {
-            console.log("🔄 lab_works changed → running cleanup");
-            await cleanupExpiredNotifications();
-        })
-        .subscribe();
+    labWorksRealtimeChannel = subscribeSourceChannel("lab_works", userId, (c) => { labWorksRealtimeChannel = c; });
 
     // ── 3. inventory_items ──
     if (inventoryRealtimeChannel) {
         try { await supabaseClient.removeChannel(inventoryRealtimeChannel); } catch(e){}
         inventoryRealtimeChannel = null;
     }
-    inventoryRealtimeChannel = supabaseClient
-        .channel("inventory_items_changes_" + Date.now())
-        .on("postgres_changes", {
-            event: "*",
-            schema: "public",
-            table: "inventory_items",
-            filter: `user_id=eq.${userId}`
-        }, async () => {
-            console.log("🔄 inventory_items changed → running cleanup");
-            await cleanupExpiredNotifications();
-        })
-        .subscribe();
+    inventoryRealtimeChannel = subscribeSourceChannel("inventory_items", userId, (c) => { inventoryRealtimeChannel = c; });
 }
 
 async function stopSourceRealtime() {

@@ -9,9 +9,41 @@ Validated environment: Linux x86_64, Docker Engine + Compose v2.27+, ~4 GB
 free RAM. All commands below run from `local-edition/packaging/official`
 unless noted otherwise.
 
-NOT yet validated: Windows / Docker Desktop as the server host. The clinic
-trial on a Windows PC is still open; if attempted, use the WSL2 backend and
-treat the first boot as a validation run, not a production move.
+Server host: the validated environment is Linux. Windows hosts are NOT
+validated - see the host-selection section below before choosing where the
+server runs (Windows 10 is out of Microsoft servicing and is not a supported
+Docker host as of November 2026).
+
+### Choosing the server host (verified November 2026)
+
+The validated environment is Linux. Check any candidate host against these
+verified facts:
+
+- Windows 10 reached end of support on 2025-10-14 (Microsoft release-health).
+  Docker's own install docs state Docker Desktop is supported only on Windows
+  versions still within Microsoft's servicing timeline, so a Windows 10 PC is
+  NOT a supported host for this stack, even though its build number appears
+  in the requirements table. (Paid ESU does not change Docker's policy.)
+- Windows 11 requires a supported CPU; 6th-generation Intel Core (e.g.
+  i7-6700HQ) is not on Microsoft's Windows 11 supported processor list, so a
+  supported in-place Windows 11 upgrade is not available on such PCs.
+- A Windows 11 PC (8th-gen Intel or newer) with Docker Desktop's WSL2 backend
+  remains a possible but UNVALIDATED host: Docker Desktop is free only for
+  small businesses (fewer than 250 employees AND under $10M annual revenue,
+  per the Docker Subscription Service Agreement) - confirm that condition
+  yourself before relying on it, and treat the first boot as a trial run.
+- The zero-cost validated route on existing hardware: install a mainstream
+  Linux distribution on the intended server PC (an i7-6700HQ with 16 GB RAM
+  exceeds this stack's needs comfortably) and follow section 1 verbatim.
+  Docker Engine on Linux is open source - no Docker Desktop license
+  condition applies. Back up anything on that PC first; installing Linux
+  replaces the existing system unless you deliberately dual-boot.
+- A small dedicated Linux machine as the LAN server is the other clean
+  option (validated environment, the workstation stays untouched).
+
+On any Linux host (repurposed PC or dedicated machine), also disable sleep /
+lid suspend while it acts as the server, and run the backup + isolated
+restore drill (sections 2-3) once before real data is entered.
 
 ---
 
