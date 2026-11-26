@@ -143,12 +143,13 @@ jobs:
             -c "select 'patients='||count(*) from public.patients" > /tmp/backup-gate/expected.txt
           $COMPOSE exec -T -e PGPASSWORD="$PGP" db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -tA \
             -c "select 'objects='||count(*) from storage.objects" >> /tmp/backup-gate/expected.txt
-          # roles are cluster-level and NOT in pg_dump output; capture them so the
-          # restore side can pre-create the ones the fresh image does not provide
-          # (e.g. service-created owners like supabase_realtime_admin)
-          $COMPOSE exec -T -e PGPASSWORD="$PGP" db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -tA \
-            -c "select rolname from pg_roles where rolname not like 'pg\\_%' and rolname <> 'postgres'" > /tmp/backup-gate/roles.txt
-          echo "roles captured: $(wc -l < /tmp/backup-gate/roles.txt)"
+          # roles are cluster-level and NOT in pg_dump output; capture a roles-only
+          # dump (attributes + memberships + hashed passwords). SECRET: contains
+          # password hashes - mode 600, never echoed, never uploaded, deleted at
+          # the end of the drill.
+          $COMPOSE exec -T -e PGPASSWORD="$PGP" db pg_dumpall -h localhost -U supabase_admin --roles-only > /tmp/backup-gate/roles.sql
+          chmod 600 /tmp/backup-gate/roles.sql
+          echo "roles dump bytes: $(wc -c < /tmp/backup-gate/roles.sql)"
           # object content file: file backend stores objects as <objpath>/<uuid>
           OBJ_FILE=$(find /tmp/backup-gate/storage-copy -type f -path '*ci-smoke.bin*' | head -1)
           test -n "$OBJ_FILE"
@@ -161,21 +162,22 @@ jobs:
           docker run -d --name dentix-restore-db --network dentix-restore-net \
             -e POSTGRES_PASSWORD=tmp-only supabase/postgres:17.6.1.136
           for i in $(seq 1 40); do docker exec dentix-restore-db pg_isready -U postgres && break || sleep 2; done
-          # supabase_admin is the image's real superuser; its password follows
-          # POSTGRES_PASSWORD at initdb. Give the two roles the restore-stack services
-          # use a known password for this drill only.
-          docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c \
-            "alter role authenticator with password 'tmp-only'; alter role supabase_storage_admin with password 'tmp-only';"
           # restore into a FRESH empty database (avoids conflicts with the
           # schemas the image pre-initializes in the postgres db)
           docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c "create database restore_verify;"
-          # pre-create captured roles the fresh image lacks (NOLOGIN placeholders;
-          # membership/privilege fidelity is out of scope for this drill)
-          while IFS= read -r R; do
-            [ -n "$R" ] || continue
-            docker exec -e PGPASSWORD=tmp-only dentix-restore-db psql -h localhost -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c \
-              "do \$\$ begin if not exists (select 1 from pg_roles where rolname = '$R') then create role \"$R\" nologin; end if; end \$\$;"
-          done < /tmp/backup-gate/roles.txt
+          # apply the roles dump (the SAME path the user runbook documents).
+          # Roles the fresh image already provides (postgres, supabase_admin, the
+          # standard supabase roles) raise expected "already exists" errors, so
+          # this applies without ON_ERROR_STOP; hard post-conditions below gate it.
+          # Error output stays private in-runner; only the count is echoed.
+          docker exec -e PGPASSWORD=tmp-only -i dentix-restore-db psql -h localhost -U supabase_admin -d postgres -o /dev/null \
+            2>/tmp/backup-gate/roles-errors.log < /tmp/backup-gate/roles.sql || true
+          echo "roles apply error-lines: $(grep -c ERROR /tmp/backup-gate/roles-errors.log || true)"
+          # the dump rewrites supabase_admin's password hash to the source
+          # cluster's (unknown here); restore the drill password over the local
+          # socket, and set the two service-role passwords the drill stack uses
+          docker exec dentix-restore-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c \
+            "alter role supabase_admin with password 'tmp-only'; alter role authenticator with password 'tmp-only'; alter role supabase_storage_admin with password 'tmp-only';"
           docker exec -e PGPASSWORD=tmp-only -i dentix-restore-db pg_restore -h localhost -U supabase_admin -d restore_verify --exit-on-error < /tmp/backup-gate/dump.fc
 
           docker run -d --name dentix-restore-rest --network dentix-restore-net \
@@ -221,6 +223,9 @@ jobs:
 
           docker rm -f dentix-restore-storage dentix-restore-rest dentix-restore-db
           docker network rm dentix-restore-net
+          # secret hygiene: roles dump (password hashes), dump and scratch files
+          # never leave the runner
+          rm -rf /tmp/backup-gate
 
       - name: Allowlisted diagnostics on failure (no artifact uploads)
         if: failure()
