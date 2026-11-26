@@ -1212,6 +1212,8 @@ async function resetStuckRealtimeSocket() {
 }
 
 async function startNotificationRealtime() {
+    // Windows offline edition ships no realtime service: the 5s polling below carries notifications.
+    if (window.DENTIX_CONFIG && window.DENTIX_CONFIG.REALTIME === false) return;
     const userId = await getUserId();
     if (!userId) {
         console.log("❌ Notification realtime: user not found");
@@ -1376,6 +1378,8 @@ function subscribeSourceChannel(table, userId, assign) {
 }
 
 async function startSourceRealtime() {
+    // Windows offline edition ships no realtime service: the 5s polling below carries notifications.
+    if (window.DENTIX_CONFIG && window.DENTIX_CONFIG.REALTIME === false) return;
     const userId = await getUserId();
     if (!userId) return;
 

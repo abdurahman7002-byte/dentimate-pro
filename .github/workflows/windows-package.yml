@@ -1,0 +1,158 @@
+name: windows-package
+# Builds the offline Windows zip (synthetic CI only) and smoke-tests the unpacked zip with the
+# real launcher scripts under Windows PowerShell 5.1. Output: booleans/labels only.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci-validation]
+    paths:
+      - '.github/workflows/windows-package.yml'
+      - 'local-edition/packaging/windows/pkg/**'
+      - 'local-edition/packaging/windows/xattr-shim/**'
+jobs:
+  package:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - name: Build components and assemble the zip
+        shell: bash
+        run: |
+          set +e
+          say(){ echo "$1"; echo "$1" >> /c/build-summary.txt; }
+          trap 'echo "::notice title=build-summary::$(tr "\n" " " </c/build-summary.txt)"' EXIT
+          mkdir -p /c/stage/dentimate-offline/runtime /c/dl && cd /c/dl
+          ST=/c/stage/dentimate-offline
+          NODEV=$(node -v)
+          # --- downloads
+          curl -fsSL -o pg.zip https://get.enterprisedb.com/postgresql/postgresql-17.12-1-windows-x64-binaries.zip || { echo "::error title=build::pg download"; exit 1; }
+          curl -fsSL -o node.zip "https://nodejs.org/dist/$NODEV/node-$NODEV-win-x64.zip" || { echo "::error title=build::node download"; exit 1; }
+          curl -fsSL -o pgrst.zip https://github.com/PostgREST/postgrest/releases/download/v14.18/postgrest-v14.18-windows-x86-64.zip || { echo "::error title=build::postgrest download"; exit 1; }
+          curl -fsSL -o caddy.zip https://github.com/caddyserver/caddy/releases/download/v2.11.9/caddy_2.11.9_windows_amd64.zip || { echo "::error title=build::caddy download"; exit 1; }
+          say "downloads=1 node=$NODEV"
+          unzip -q pg.zip -d pgx && mv pgx/pgsql $ST/runtime/pgsql
+          rm -rf $ST/runtime/pgsql/pgAdmin* $ST/runtime/pgsql/StackBuilder $ST/runtime/pgsql/symbols $ST/runtime/pgsql/doc $ST/runtime/pgsql/include
+          unzip -q node.zip -d nodex && mv nodex/node-$NODEV-win-x64 $ST/runtime/node
+          mkdir -p $ST/runtime/postgrest $ST/runtime/caddy $ST/runtime/auth
+          unzip -q pgrst.zip -d $ST/runtime/postgrest
+          unzip -q caddy.zip -d $ST/runtime/caddy
+          say "unpacked=1"
+          # --- Auth (Go) with the Windows patch
+          git clone -q --depth 1 --branch v2.198.0 https://github.com/supabase/auth.git auth-src && cd auth-src
+          sed -i 's|serr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1).*|_ = fd|' cmd/serve_cmd.go
+          sed -i '/"golang.org\/x\/sys\/unix"/d' cmd/serve_cmd.go
+          go build -o $ST/runtime/auth/auth.exe . 2>/c/dl/gobuild.log && say "auth-build=1" || { echo "::error title=build::auth build: $(tail -c 300 /c/dl/gobuild.log | tr '\n' ' ')"; exit 1; }
+          cp -r migrations $ST/runtime/auth/migrations
+          cd /c/dl
+          # --- storage-api (Node 26) with the NTFS stream shim
+          git clone -q --depth 1 --branch v1.98.6 https://github.com/supabase/storage.git storage-src && cd storage-src
+          export npm_config_engine_strict=false
+          npm ci --force --ignore-scripts --no-audit --no-fund >/c/dl/npmci.log 2>&1 || { echo "::error title=build::storage npm ci: $(tail -c 300 /c/dl/npmci.log | tr '\n' ' ' | tr -d '"')"; exit 1; }
+          rm -rf node_modules/fs-xattr && mkdir -p node_modules/fs-xattr && cp "$GITHUB_WORKSPACE/local-edition/packaging/windows/xattr-shim/"* node_modules/fs-xattr/
+          node ./build.js >/c/dl/sbuild.log 2>&1 || { echo "::error title=build::storage build: $(tail -c 300 /c/dl/sbuild.log | tr '\n' ' ' | tr -d '"')"; exit 1; }
+          npm prune --omit=dev --force --ignore-scripts >/c/dl/prune.log 2>&1
+          rm -rf node_modules/fs-xattr && mkdir -p node_modules/fs-xattr && cp "$GITHUB_WORKSPACE/local-edition/packaging/windows/xattr-shim/"* node_modules/fs-xattr/
+          mkdir -p $ST/runtime/storage && cp -r dist node_modules package.json $ST/runtime/storage/
+          [ -d migrations ] && cp -r migrations $ST/runtime/storage/
+          say "storage-build=1 storage-size-mb=$(du -sm $ST/runtime/storage | cut -f1)"
+          cd "$GITHUB_WORKSPACE/local-edition"
+          # --- app
+          sh packaging/build-web.sh >/c/dl/web.log 2>&1
+          mkdir -p $ST/app/server $ST/app/sql
+          cp -r packaging/web $ST/app/web && rm -f $ST/app/web/js/config.local.js
+          cp server/provision-server.mjs server/bootstrap-owner.mjs server/reset-owner.mjs $ST/app/server/
+          cp packaging/init/zz10-schema.sql packaging/init/zz20-employees.sql packaging/init/zz30-rls.sql packaging/init/zz40-storage.sql packaging/post-boot-storage.sql $ST/app/sql/
+          cp packaging/windows/pkg/sql/* $ST/app/sql/
+          cp packaging/windows/bootstrap-roles.sql $ST/app/sql/bootstrap-roles.sql
+          cp -r packaging/windows/pkg/scripts $ST/scripts
+          cp packaging/windows/pkg/*.bat $ST/
+          say "assembled-files=$(find $ST -type f | wc -l) size-mb=$(du -sm $ST | cut -f1)"
+          # --- zip
+          cd /c/stage && 7z a -tzip -mx=5 /c/dentimate-offline-win.zip dentimate-offline >/c/dl/zip.log 2>&1 && say "zip-mb=$(du -m /c/dentimate-offline-win.zip | cut -f1)" || { echo "::error title=build::zip failed"; exit 1; }
+      - name: Smoke test the unpacked zip (Windows PowerShell 5.1, fresh folder)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $notes = New-Object System.Collections.Generic.List[string]
+          function Note($k, $v) { $script:notes.Add("$k=$v"); Write-Host "$k=$v" }
+          function Http($u, $args2) { & curl.exe -s -k --ssl-no-revoke -o NUL -w '%{http_code}' @args2 $u }
+          try {
+            Remove-Item C:\clinic-test -Recurse -Force -ErrorAction SilentlyContinue
+            & 7z x C:\dentimate-offline-win.zip -oC:\clinic-test -y | Out-Null
+            $R = 'C:\clinic-test\dentimate-offline'
+            Note 'unzipped' ([int](Test-Path "$R\START-CLINIC.bat"))
+            $t0 = Get-Date
+            & powershell -NoProfile -ExecutionPolicy Bypass -File "$R\scripts\start.ps1" -NoBrowser 2>&1 | Tee-Object -Variable startOut | Out-Null
+            Note 'first-start-rc' $LASTEXITCODE
+            Note 'first-start-seconds' ([int]((Get-Date) - $t0).TotalSeconds)
+            Note 'start-tail' (($startOut | Select-Object -Last 4 | ForEach-Object { "$_" }) -join ' | ' -replace '[\r\n"]',' ')
+            Note 'index-http' (Http 'https://localhost:8443/index.html' @())
+            Note 'config-origin-based' ([int]((& curl.exe -s -k --ssl-no-revoke https://localhost:8443/js/config.local.js) -match 'window.location.origin'))
+            Note 'server-dir-http' (Http 'https://localhost:8443/server/provision-server.mjs' @())
+            # owner bootstrap through the repo script (piped, synthetic)
+            $em = "owner-$([guid]::NewGuid().ToString('N').Substring(0,6))@example.test"; $pw = "Own-$([guid]::NewGuid().ToString('N'))"
+            $out = ("$em`n$pw`n$pw`n") | & "$R\runtime\node\node.exe" "$R\app\server\bootstrap-owner.mjs" 2>&1
+            Note 'owner-created' ([int](($out -join ' ') -match 'First owner created'))
+            $anon = (Get-Content "$R\data\secrets.json" -Raw | ConvertFrom-Json).anon_key
+            $body = @{ email = $em; password = $pw } | ConvertTo-Json -Compress
+            $tf = "$env:TEMP\login.json"; Set-Content -Path $tf -Value $body -Encoding ASCII
+            $login = & curl.exe -s -k --ssl-no-revoke -X POST 'https://localhost:8443/auth/v1/token?grant_type=password' -H "apikey: $anon" -H 'Content-Type: application/json' --data-binary "@$tf"
+            $tok = ($login | ConvertFrom-Json).access_token
+            Note 'login-token' ([int][bool]$tok)
+            Note 'rest-owner-http' (Http 'https://localhost:8443/rest/v1/patients?select=id' @('-H', "apikey: $anon", '-H', "Authorization: Bearer $tok"))
+            Note 'rest-anon-http' (Http 'https://localhost:8443/rest/v1/patients?select=id' @('-H', "apikey: $anon", '-H', "Authorization: Bearer $anon"))
+            Note 'is-admin' (& curl.exe -s -k --ssl-no-revoke -X POST 'https://localhost:8443/rest/v1/rpc/is_admin' -H "apikey: $anon" -H "Authorization: Bearer $tok")
+            Note 'signup-http-should-be-4xx' (Http 'https://localhost:8443/auth/v1/signup' @('-X','POST','-H',"apikey: $anon",'-H','Content-Type: application/json','-d','{"email":"x@example.test","password":"Abcdefgh1234"}'))
+            Note 'auth-admin-route-http' (Http 'https://localhost:8443/auth/v1/admin/users' @('-H', "apikey: $anon"))
+            # storage through the proxy
+            $uid = (& curl.exe -s -k --ssl-no-revoke https://localhost:8443/auth/v1/user -H "apikey: $anon" -H "Authorization: Bearer $tok" | ConvertFrom-Json).id
+            Set-Content -Path "$env:TEMP\up.txt" -Value "synthetic file $(Get-Random)" -Encoding ASCII
+            Note 'upload-http' (Http "https://localhost:8443/storage/v1/object/patient-files/$uid/patient-files/t1.txt" @('-X','POST','-H',"apikey: $anon",'-H',"Authorization: Bearer $tok",'-H','Content-Type: text/plain','--data-binary',"@$env:TEMP\up.txt"))
+            $dl = & curl.exe -s -k --ssl-no-revoke "https://localhost:8443/storage/v1/object/authenticated/patient-files/$uid/patient-files/t1.txt" -H "apikey: $anon" -H "Authorization: Bearer $tok"
+            Note 'download-same' ([int](("$dl").Trim() -eq (Get-Content "$env:TEMP\up.txt" -Raw).Trim()))
+            Note 'anon-download-http' (Http "https://localhost:8443/storage/v1/object/authenticated/patient-files/$uid/patient-files/t1.txt" @('-H',"apikey: $anon",'-H',"Authorization: Bearer $anon"))
+            # LAN exposure: only 8443 may answer on the LAN address
+            $lan = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } | Select-Object -First 1).IPAddress
+            Note 'lan-ip-found' ([int][bool]$lan)
+            if ($lan) {
+                Note 'lan-8443-http' (Http "https://${lan}:8443/index.html" @())
+                foreach ($p in 9090,9091,3000,5000,9999,54329) { Note "lan-$p-open" ([int](Test-NetConnection -ComputerName $lan -Port $p -WarningAction SilentlyContinue -InformationLevel Quiet)) }
+            }
+            # backup
+            & powershell -NoProfile -ExecutionPolicy Bypass -File "$R\scripts\backup.ps1" 2>&1 | Out-Null
+            $b = Get-ChildItem "$R\backups" -Directory | Select-Object -First 1
+            Note 'backup-dump-bytes' ((Get-Item "$($b.FullName)\database.dump").Length)
+            Note 'backup-files-copied' ((Get-ChildItem "$($b.FullName)\storage-files" -Recurse -File -ErrorAction SilentlyContinue | Measure-Object).Count)
+            # stop, then restart (second-start path) and check the data survived
+            & powershell -NoProfile -ExecutionPolicy Bypass -File "$R\scripts\stop.ps1" 2>&1 | Out-Null
+            Start-Sleep 3
+            Note 'procs-after-stop' ((Get-Process -Name postgres,caddy,auth,postgrest -ErrorAction SilentlyContinue | Measure-Object).Count)
+            $t1 = Get-Date
+            & powershell -NoProfile -ExecutionPolicy Bypass -File "$R\scripts\start.ps1" -NoBrowser 2>&1 | Out-Null
+            Note 'restart-rc' $LASTEXITCODE
+            Note 'restart-seconds' ([int]((Get-Date) - $t1).TotalSeconds)
+            $login2 = & curl.exe -s -k --ssl-no-revoke -X POST 'https://localhost:8443/auth/v1/token?grant_type=password' -H "apikey: $anon" -H 'Content-Type: application/json' --data-binary "@$tf"
+            $tok2 = ($login2 | ConvertFrom-Json).access_token
+            Note 'login-after-restart' ([int][bool]$tok2)
+            $dl2 = & curl.exe -s -k --ssl-no-revoke "https://localhost:8443/storage/v1/object/authenticated/patient-files/$uid/patient-files/t1.txt" -H "apikey: $anon" -H "Authorization: Bearer $tok2"
+            Note 'file-after-restart' ([int](("$dl2").Trim() -eq (Get-Content "$env:TEMP\up.txt" -Raw).Trim()))
+            Note 'root-ca-present' ([int]((Get-ChildItem "$R\data\caddy" -Recurse -Filter root.crt -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0))
+          } catch {
+            Note 'EXCEPTION' (("$_" -replace '[\r\n"]',' ').Substring(0, [Math]::Min(300, "$_".Length)))
+          } finally {
+            Write-Host "::notice title=smoke-summary::$($notes -join ' ')"
+            Get-ChildItem C:\clinic-test\dentimate-offline\data\logs -Filter *.err.log -ErrorAction SilentlyContinue | ForEach-Object {
+              $tail = (Get-Content $_.FullName -Tail 3 -ErrorAction SilentlyContinue) -join ' ' -replace '[\r\n"]',' '
+              if ($tail) { Write-Host "::notice title=log-$($_.BaseName)::$($tail.Substring(0,[Math]::Min(300,$tail.Length)))" }
+            }
+          }
+      - name: Upload zip artifact (synthetic CI build, no secrets inside)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dentimate-offline-win-ci
+          path: C:\dentimate-offline-win.zip
+          retention-days: 3
+          compression-level: 0

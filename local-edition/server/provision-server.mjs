@@ -288,7 +288,7 @@ const server = http.createServer(async (req, res) => {
     }
 });
 // MAIN listener: reachable by nginx over the docker network (container-safe).
-server.listen(PORT, '0.0.0.0', () => console.log(`provision-server on ${PORT} (provision/reset-password/account)`));
+server.listen(PORT, process.env.PROVISION_BIND || '0.0.0.0', () => console.log(`provision-server on ${PORT} (provision/reset-password/account)`));
 
 // BOOTSTRAP listener: loopback ONLY - unreachable from other containers,
 // the LAN and nginx; callable only from inside this container/host.
