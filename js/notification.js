@@ -43,14 +43,42 @@ function createNotificationToastContainer() {
    NOTIFICATION SOUND
    ========================================================= */
 
+/* Same two-tone chime as the original version (880 Hz then 660 Hz, 0.5 s,
+   sine, gain 0.25). The only change: one shared AudioContext that is
+   unlocked by the first click/key on the page, so browser autoplay rules
+   do not silence later notifications (a fresh context created with no user
+   gesture starts suspended and the old code then dropped the sound). */
+let notificationAudioContext = null;
+
+function getNotificationAudioContext() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    if (!notificationAudioContext || notificationAudioContext.state === "closed") {
+        notificationAudioContext = new Ctx();
+    }
+    return notificationAudioContext;
+}
+
+["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
+    window.addEventListener(ev, function unlock() {
+        try {
+            const c = getNotificationAudioContext();
+            if (c && c.state === "suspended") c.resume();
+        } catch (e) { /* ignore */ }
+    }, { passive: true });
+});
+
 function playNotificationSound() {
     try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-
-        const audioContext = new AudioContext();
+        const audioContext = getNotificationAudioContext();
+        if (!audioContext) return;
         if (audioContext.state === "suspended") {
-            audioContext.close();
+            // may still be allowed (autoplay flag / engagement); never throws
+            audioContext.resume().catch(function () {});
+        }
+        if (audioContext.state === "suspended") {
+            // blocked by autoplay rules until the first click/key on this page
+            window.__notificationSoundBlocked = (window.__notificationSoundBlocked || 0) + 1;
             return;
         }
 
@@ -69,6 +97,7 @@ function playNotificationSound() {
         gainNode.connect(audioContext.destination);
         oscillator.start();
         oscillator.stop(audioContext.currentTime + 0.5);
+        window.__notificationSoundPlayed = (window.__notificationSoundPlayed || 0) + 1;
     }
     catch (error) {
         console.warn("Notification sound unavailable:", error);
@@ -101,7 +130,6 @@ function showNotificationToast(notification) {
     }
 
     if (shownNotificationIds.has(notification.id)) {
-        console.log("ℹ️ Toast already shown:", notification.id);
         return;
     }
 
@@ -149,7 +177,6 @@ toast.innerHTML = `
     `;
 
     notificationToastContainer.prepend(toast);
-    console.log("🔔 TOAST SHOWN:", notification);
     playNotificationSound();
 
     let removed = false;
@@ -235,7 +262,6 @@ async function loadNotifications() {
         }
 
         const notifications = data || [];
-        console.log("🔔 Notifications loaded:", notifications.length);
 
         const unreadCount = notifications.filter(n => !n.is_read).length;
         const countElement = document.getElementById("notificationCount");
@@ -318,7 +344,6 @@ async function loadNotifications() {
             container.appendChild(item);
         });
 
-        console.log("✅ Notification list rendered:", notifications.length);
     }
     catch (error) {
         console.error("loadNotifications error:", error);
@@ -392,7 +417,6 @@ function addNotificationToList(n) {
     item.appendChild(deleteButton);
     container.prepend(item);
 
-    console.log("⚡ Notification added instantly:", n.id);
 }
 
 function updateNotificationInList(n) {
@@ -450,7 +474,6 @@ async function updateNotificationCountRealtime() {
    ========================================================= */
 
 async function openNotification(notificationId, type, referenceId) {
-    console.log("🖱️ openNotification clicked:", { notificationId, type, referenceId });
 
     const userId = await getUserId();
     if (!userId) return;
@@ -494,7 +517,6 @@ function revealPath(element) {
 function highlightAndScroll(element) {
     if (!element) return false;
 
-    console.log("✨ Highlighting element:", element);
 
     revealPath(element);
 
@@ -531,7 +553,6 @@ function highlightAndScroll(element) {
    ========================================================= */
 
 function findInventoryItem(itemId) {
-    console.log("🔍 findInventoryItem called with:", itemId, "type:", typeof itemId);
 
     if (!itemId) {
         console.warn("❌ itemId is empty");
@@ -541,20 +562,16 @@ function findInventoryItem(itemId) {
     const strId = String(itemId).trim();
     const container = document.getElementById('inventoryContainer');
 
-    console.log("📦 inventoryContainer exists:", !!container);
 
     // 1) Exact id match: lowThreshold-16
     let el = document.getElementById(`lowThreshold-${strId}`);
-    console.log("🔎 By id 'lowThreshold-" + strId + "':", !!el);
     if (el) {
         const row = el.closest('.inventory-row');
-        console.log("📍 Found row by closest('.inventory-row'):", !!row);
         if (row) return row;
     }
 
     // 2) Any input ending with -{id}
     el = document.querySelector(`input[id$="-${strId}"]`);
-    console.log("🔎 By input[id$='-" + strId + "']:", !!el);
     if (el) {
         const row = el.closest('.inventory-row');
         if (row) return row;
@@ -563,17 +580,14 @@ function findInventoryItem(itemId) {
     // 3) Search inside inventoryContainer rows
     if (container) {
         const rows = container.querySelectorAll('.inventory-row');
-        console.log("🔎 Total .inventory-row count:", rows.length);
 
         for (const row of rows) {
             // Check if row contains any element with id containing the itemId
             if (row.querySelector(`[id*="${strId}"]`)) {
-                console.log("📍 Found row by inner id containing:", strId);
                 return row;
             }
             // Check if row innerHTML contains the id
             if (row.innerHTML.includes(strId)) {
-                console.log("📍 Found row by innerHTML containing:", strId);
                 return row;
             }
         }
@@ -589,7 +603,6 @@ function findInventoryItem(itemId) {
    ========================================================= */
 
 function navigateToInventory(itemId) {
-    console.log("🧭 navigateToInventory:", itemId);
     window.location.href = 'storage.html';
 }
 
@@ -599,7 +612,6 @@ function navigateToInventory(itemId) {
    ========================================================= */
 
 function navigateToVisit(visitId) {
-    console.log("🧭 navigateToVisit:", visitId);
     window.location.href = 'dashboard.html#appointmentssContainer';
 }
 
@@ -609,7 +621,6 @@ function navigateToVisit(visitId) {
    ========================================================= */
 
 function navigateToLabWork(workId) {
-    console.log("🧭 navigateToLabWork:", workId);
 
     const deliverySection = document.getElementById('deliveryReminders');
 
@@ -631,7 +642,6 @@ function navigateToLabWork(workId) {
    ========================================================= */
 
 function navigateToNotificationSource(type, referenceId) {
-    console.log("🧭 navigateToNotificationSource:", { type, referenceId });
 
     switch (type) {
         case 'low_stock':
@@ -654,7 +664,6 @@ function navigateToNotificationSource(type, referenceId) {
         }
 
         default:
-            console.log('No navigator for type:', type);
     }
 }
 
@@ -770,7 +779,6 @@ document.addEventListener("click", event => {
    ========================================================= */
 
 async function checkMissedWaitingVisits() {
-    console.log("🔎 CHECKING WAITING VISITS...");
 
     try {
         const userId = await getUserId();
@@ -815,7 +823,6 @@ async function checkMissedWaitingVisits() {
             return !isNaN(startTime.getTime()) && startTime <= now;
         });
 
-        console.log("🟡 WAITING VISITS THAT HAVE STARTED:", startedVisits);
 
         for (const visit of startedVisits) {
             const endTime = visit.appointment_end ? new Date(visit.appointment_end) : null;
@@ -862,7 +869,6 @@ async function checkMissedWaitingVisits() {
                 continue;
             }
 
-            console.log("✅ NOTIFICATION CREATED:", notification);
             showNotificationToast(notification);
             await loadNotifications();
         }
@@ -878,7 +884,6 @@ async function checkMissedWaitingVisits() {
    ========================================================= */
 
 async function checkLabDeliveriesToday() {
-    console.log("🔎 CHECKING LAB DELIVERIES DUE TODAY...");
 
     try {
         const userId = await getUserId();
@@ -891,7 +896,6 @@ async function checkLabDeliveriesToday() {
         const t = translations?.[lang] || {};
 
         const today = new Date().toLocaleDateString("en-CA");
-        console.log("📅 TODAY:", today);
 
         const { data: works, error } = await supabaseClient
             .from("lab_works")
@@ -906,11 +910,9 @@ async function checkLabDeliveriesToday() {
         }
 
         if (!works || !works.length) {
-            console.log("📦 No lab deliveries due today");
             return;
         }
 
-        console.log("📦 LAB DELIVERIES DUE TODAY:", works);
 
         for (const work of works) {
             const { data: existing } = await supabaseClient
@@ -921,7 +923,6 @@ async function checkLabDeliveriesToday() {
                 .eq("reference_id", work.id);
 
             if (existing && existing.length > 0) {
-                console.log("ℹ️ Lab notification already exists:", work.id);
                 continue;
             }
 
@@ -951,7 +952,6 @@ async function checkLabDeliveriesToday() {
                 continue;
             }
 
-            console.log("✅ LAB NOTIFICATION CREATED:", notification);
             await loadNotifications();
         }
     }
@@ -1101,7 +1101,6 @@ async function cleanupExpiredNotifications() {
 
                 removeNotificationFromList(n.id);
                 knownNotificationIds.delete(String(n.id));
-                console.log("🗑️ Auto-deleted expired notification:", n.id, n.type);
             }
         }
 
@@ -1120,7 +1119,6 @@ async function cleanupExpiredNotifications() {
 async function startNotificationRealtime() {
     const userId = await getUserId();
     if (!userId) {
-        console.log("❌ Notification realtime: user not found");
         return;
     }
 
@@ -1144,7 +1142,6 @@ async function startNotificationRealtime() {
             table: "notifications",
             filter: `user_id=eq.${userId}`
         }, async payload => {
-            console.log("🔔 REALTIME INSERT:", payload.new);
             showNotificationToast(payload.new);
             addNotificationToList(payload.new);
             updateNotificationCountRealtime();
@@ -1155,7 +1152,6 @@ async function startNotificationRealtime() {
             table: "notifications",
             filter: `user_id=eq.${userId}`
         }, async payload => {
-            console.log("🔄 REALTIME UPDATE:", payload.new);
             updateNotificationInList(payload.new);
             updateNotificationCountRealtime();
         })
@@ -1164,12 +1160,10 @@ async function startNotificationRealtime() {
             schema: "public",
             table: "notifications"
         }, async payload => {
-            console.log("🗑️ REALTIME DELETE:", payload.old);
             removeNotificationFromList(payload.old.id);
             updateNotificationCountRealtime();
         })
         .subscribe(status => {
-            console.log("🔔 Notification Realtime status:", status);
             if (status === "SUBSCRIBED") console.log("✅ Notification Realtime CONNECTED");
             if (status === "CHANNEL_ERROR") console.error("❌ Notification Realtime CHANNEL ERROR");
             if (status === "TIMED_OUT") console.error("⏱️ Notification Realtime TIMED OUT");
@@ -1199,7 +1193,6 @@ async function startSourceRealtime() {
             table: "patient_visits",
             filter: `user_id=eq.${userId}`
         }, async () => {
-            console.log("🔄 patient_visits changed → running cleanup");
             await cleanupExpiredNotifications();
         })
         .subscribe();
@@ -1217,7 +1210,6 @@ async function startSourceRealtime() {
             table: "lab_works",
             filter: `user_id=eq.${userId}`
         }, async () => {
-            console.log("🔄 lab_works changed → running cleanup");
             await cleanupExpiredNotifications();
         })
         .subscribe();
@@ -1235,7 +1227,6 @@ async function startSourceRealtime() {
             table: "inventory_items",
             filter: `user_id=eq.${userId}`
         }, async () => {
-            console.log("🔄 inventory_items changed → running cleanup");
             await cleanupExpiredNotifications();
         })
         .subscribe();
@@ -1270,7 +1261,6 @@ async function initNotifications() {
         await loadNotifications();
         await startNotificationRealtime();
         await startSourceRealtime();   // ← NEW
-        console.log("🔔 Notification system initialized");
     }
     catch (error) {
         console.error("Notification initialization error:", error);

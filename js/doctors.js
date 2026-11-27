@@ -21,7 +21,7 @@ async function checkAuth(){
 
     if(!user){
         // 🚨 غير اسم صفحة تسجيل الدخول لو مختلف عندك
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
 }
@@ -41,7 +41,7 @@ async function getUserId(){
         await supabaseClient.auth.getUser();
 
     if(!user){
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return null;
     }
 
@@ -319,7 +319,6 @@ async function loadDoctors() {
         .order("id", { ascending: false });
 
     if (error) {
-        console.log(error);
         return;
     }
 
@@ -448,7 +447,6 @@ async function loadDoctorsDashboard() {
         .eq("user_id", userId);   // 🔥 هنا السر
 
     if (error) {
-        console.log(error);
         return;
     }
 

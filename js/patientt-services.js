@@ -621,7 +621,6 @@ async function saveServiceDentals(serviceId, dentalsArray) {
             .filter(Boolean)
     )];
 
-    console.log('🦷 Saving service teeth:', { serviceId, teeth });
 
     /* ---------------------------------------------------------
        DELETE OLD TEETH
@@ -640,7 +639,6 @@ async function saveServiceDentals(serviceId, dentalsArray) {
        NO TEETH SELECTED
        --------------------------------------------------------- */
     if (teeth.length === 0) {
-        console.log('ℹ️ No teeth selected for service:', serviceId);
         return true;
     }
 
@@ -652,7 +650,6 @@ async function saveServiceDentals(serviceId, dentalsArray) {
         tooth_number: toothNumber
     }));
 
-    console.log('🦷 Inserting service teeth:', records);
 
     /* ---------------------------------------------------------
        INSERT
@@ -668,7 +665,6 @@ async function saveServiceDentals(serviceId, dentalsArray) {
         throw insertError;
     }
 
-    console.log('✅ Service teeth saved successfully:', data);
     return true;
 }
 
@@ -1311,7 +1307,6 @@ async function editPatienttService(id) {
 
     if (serviceSelect) serviceSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    console.log('✏️ Editing service:', { id, serviceName: service.service_name, doctorId: service.doctor_id, dentals: serviceDentals });
 }
 
 function cancelServiceEdit() {
@@ -1616,11 +1611,9 @@ async function loadClinicServicesDropdown() {
         .from('clinic_services').select('*').eq('user_id', userId).order('service_name');
 
     if (error) { console.log(error); return; }
-    console.log('clinic services:', data);
 
     select.innerHTML = '<option value="">اختر الخدمة</option>';
     data.forEach(service => {
-        console.log(service.service_name, service.service_price);
         select.innerHTML += `<option value="${service.id}" data-price="${service.service_price ?? 0}">${service.service_name}</option>`;
     });
 }

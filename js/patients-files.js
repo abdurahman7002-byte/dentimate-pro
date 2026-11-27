@@ -21,7 +21,7 @@ async function getUserId() {
 
 async function logout() {
     await supabaseClient.auth.signOut();
-    window.location.replace("login.html");
+    window.location.replace("index.html");
 }
 
 

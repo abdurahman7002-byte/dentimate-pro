@@ -10,7 +10,7 @@ async function checkAuth(){
     if(!user){
 
         window.location.href =
-            "login.html";
+            "index.html";
 
         return;
 
@@ -42,7 +42,7 @@ async function getUserId(){
     if(!user){
 
         window.location.href =
-            "login.html";
+            "index.html";
 
         return null;
 

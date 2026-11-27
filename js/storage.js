@@ -76,7 +76,7 @@ async function logout(){
     .signOut();
 
     window.location.replace(
-        "login.html"
+        "index.html"
     );
 
 }
@@ -12021,7 +12021,7 @@ async function initStorage(){
     if(!data.session){
 
         window.location.replace(
-            "login.html"
+            "index.html"
         );
 
         return;

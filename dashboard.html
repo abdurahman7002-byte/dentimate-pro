@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+<script src="js/prefs-early.js"></script>
     <title data-i18n="225">Clinic Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -964,6 +965,49 @@
 
             </a>
 
+            <!-- مساعد التسعير -->
+            <a href="pricing.html" class="moore-menu-item">
+                <div class="moore-item-icon pricing">
+                    <i class="fa-solid fa-calculator"></i>
+                </div>
+                <div>
+                    <strong data-i18n="pricing_helper">مساعدك في التسعير</strong>
+                    <span data-i18n="pricing_helper_desc">حساب التكلفة ونسبة الربح للخدمة</span>
+                </div>
+            </a>
+
+
+
+            <!-- الموظفون: owner-only entry, hidden by default and revealed
+                 by dashboard.js only when is_admin() confirms the owner.
+                 page-guard on employees.html stays the real control. -->
+            <a
+                href="employees.html"
+                class="moore-menu-item"
+                id="employeesMenuItem"
+                style="display:none"
+            >
+
+                <div class="moore-item-icon employees">
+
+                    <i class="fa-solid fa-users-gear"></i>
+
+                </div>
+
+                <div>
+
+                    <strong>
+                        الموظفون
+                    </strong>
+
+                    <span>
+                        إدارة الموظفين والصلاحيات
+                    </span>
+
+                </div>
+
+            </a>
+
 
         </div>
 
@@ -976,9 +1020,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="js/supabase.js"></script>
+<script src="js/employees-nav.js"></script>
 
 <script src="js/whatsapp-reminder.js"></script>
 <script src="js/auth.js"></script>
+<script>window.PAGE_KEY = "dashboard";</script>
+<script src="js/page-guard.js"></script>
 <script src="js/preferences.js"></script>
 <script src="js/notification.js"></script>
 <script src="js/visit-number.js"></script>

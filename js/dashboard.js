@@ -32,7 +32,7 @@ async function getUserId() {
 
 async function logout() {
     await supabaseClient.auth.signOut();
-    window.location.replace("login.html");
+    window.location.replace("index.html");
 }
 
 /* =========================
@@ -4072,7 +4072,6 @@ function goToPatientFile(patientId, visitId) {
    OPEN VISIT DETAILS (Placeholder)
    ========================================================= */
 function openVisitDetails(visitId) {
-    console.log('Opening visit:', visitId);
     // يمكنك ربطه بفتح ملف المريض أو تفاصيل الزيارة
     // مثال: window.location.href = `patient-file.html?visit=${visitId}`;
 }
@@ -6078,7 +6077,7 @@ async function initDashboard(){
 
     if(!data.session){
 
-        window.location.replace("login.html");
+        window.location.replace("index.html");
 
         return;
 

@@ -11,6 +11,47 @@ let userPreferences = {
 };
 
 
+
+/* ============================================================
+   LOCAL PERSISTENCE (v2)
+   The user's choice is written to this browser the moment it is
+   made (never waits for the network) and wins over the server copy
+   on the next page, so it survives page changes, reloads and a
+   failed/slow save. Keys:
+     dentix_preferences          last choice on this browser (read
+                                 before first paint by prefs-early.js,
+                                 also used by the login page)
+     dentix_preferences:<uid>    last choice of that person
+     dentix_login_choice         choice made on the login screen,
+                                 consumed once after sign-in
+============================================================ */
+
+var __dentixPrefUid = null;
+
+function persistPreferencesLocal() {
+    try {
+        const v = JSON.stringify({
+            language: userPreferences.language,
+            theme: userPreferences.theme
+        });
+        localStorage.setItem("dentix_preferences", v);
+        if (__dentixPrefUid) {
+            localStorage.setItem("dentix_preferences:" + __dentixPrefUid, v);
+        }
+    } catch (e) { /* storage blocked: keep working without it */ }
+}
+
+function readPrefs(key) {
+    try {
+        const o = JSON.parse(localStorage.getItem(key) || "null");
+        if (!o) return null;
+        const out = {};
+        if (o.language === "ar" || o.language === "en") out.language = o.language;
+        if (o.theme === "light" || o.theme === "dark") out.theme = o.theme;
+        return (out.language || out.theme) ? out : null;
+    } catch (e) { return null; }
+}
+
 /* ============================================================
    APPLY THEME
 ============================================================ */
@@ -48,6 +89,12 @@ function applyLanguage(language) {
     }
 
     userPreferences.language = language;
+
+    /* pages without translations (waiting room screen) keep their fixed language */
+    if (document.documentElement.getAttribute("data-prefs") === "theme") {
+        updateLanguageButton();
+        return;
+    }
 
     document.documentElement.lang = language;
 
@@ -136,6 +183,8 @@ async function toggleTheme() {
 
     applyTheme(newTheme);
 
+    persistPreferencesLocal();
+
     saveUserPreferences();
 }
 
@@ -152,6 +201,8 @@ async function toggleLanguage() {
             : "en";
 
     applyLanguage(newLanguage);
+
+    persistPreferencesLocal();
 
     saveUserPreferences();
 }
@@ -181,6 +232,10 @@ async function saveUserPreferences() {
             return;
         }
 
+        const prefUid = user.real_id || user.id;
+        __dentixPrefUid = prefUid;
+        persistPreferencesLocal();
+
 
         const {
             error
@@ -188,7 +243,7 @@ async function saveUserPreferences() {
             .from("user_preferences")
             .upsert(
                 {
-                    user_id: user.id,
+                    user_id: prefUid,
                     language:
                         userPreferences.language,
                     theme:
@@ -257,6 +312,9 @@ async function loadUserPreferences() {
         }
 
 
+        const prefUid = user.real_id || user.id;
+        __dentixPrefUid = prefUid;
+
         const {
             data,
             error
@@ -267,7 +325,7 @@ async function loadUserPreferences() {
             )
             .eq(
                 "user_id",
-                user.id
+                prefUid
             )
             .maybeSingle();
 
@@ -279,35 +337,31 @@ async function loadUserPreferences() {
                 error
             );
 
+            /* server unreachable: the local choice still stands */
+            persistPreferencesLocal();
+
             return;
         }
 
 
-        /*
-         * If user has no preferences yet,
-         * create default preferences.
-         */
+        /* choice made on the login screen (consumed once), else the
+           last choice this person made on this browser */
+        let loginChoice = null;
+        try {
+            loginChoice = readPrefs("dentix_login_choice");
+            localStorage.removeItem("dentix_login_choice");
+        } catch (e) { /* ignore */ }
+        const localChoice = loginChoice || readPrefs("dentix_preferences:" + prefUid);
 
-        if (!data) {
+        const serverPrefs = data
+            ? { language: data.language || "en", theme: data.theme || "dark" }
+            : { language: "en", theme: "dark" };
 
-            userPreferences = {
-                language: "en",
-                theme: "dark"
-            };
+        userPreferences = Object.assign({}, serverPrefs, localChoice || {});
 
+        if (!data || userPreferences.language !== serverPrefs.language ||
+            userPreferences.theme !== serverPrefs.theme) {
             await saveUserPreferences();
-
-        } else {
-
-            userPreferences = {
-
-                language:
-                    data.language || "en",
-
-                theme:
-                    data.theme || "dark"
-
-            };
         }
 
 
@@ -322,14 +376,7 @@ async function loadUserPreferences() {
         );
 
 
-        /* Save local copy */
-
-        localStorage.setItem(
-            "dentix_preferences",
-            JSON.stringify(
-                userPreferences
-            )
-        );
+        persistPreferencesLocal();
 
 
     } catch (error) {
@@ -417,6 +464,9 @@ en: {
 
     "control_panel":
         "Control Panel",
+
+    "pricing_helper_desc":
+        "Cost and profit calculator for a service",
 
     "pricing_helper":
         "Your Pricing Helper",
@@ -1163,7 +1213,7 @@ en: {
 
 
 // ========== من ملف clinic-settings.html ==========
-"214": "Clinic Page Settings | Dentix Pro",
+"214": "Clinic Page Settings | Dentimate Pro",
 "215": "Example: Smile Specialized Clinic",
 "216": "Write a brief about the clinic and services...",
 "217": "01000000000",
@@ -1192,7 +1242,7 @@ en: {
 "241": "Patients Files",
 "242": "Search patients by name, phone, or address...",
 // ========== من ملف storage.html ==========
-"243": "Storage | Dentix Pro",
+"243": "Storage | Dentimate Pro",
 "244": "Storage",
 "245": "Manage clinic inventory and material consumption",
 "246": "Total Items",
@@ -1985,7 +2035,7 @@ en: {
 
 
 
-"prints_title": "Medical Prints | Dentix Pro",
+"prints_title": "Medical Prints | Dentimate Pro",
 "medical_prints": "Medical Prints",
 "medical_prints_desc": "Create and manage prescriptions, reports and invoices professionally",
 "create_new_print": "Create New Print",
@@ -2020,7 +2070,7 @@ en: {
 "print_now": "Print Now",
 "close": "Close",
 
-"dose_calculator_title": "Dose Calculator | Dentix Pro",
+"dose_calculator_title": "Dose Calculator | Dentimate Pro",
 "dose_calculator": "Dose Calculator",
 "dose_calculator_subtitle": "Smart pediatric & adult dosing",
 "manage_drugs": "Manage Drugs",
@@ -2035,7 +2085,7 @@ en: {
 "calculate_dose": "Calculate Dose",
 "dosing_recommendation": "Dosing Recommendation",
 
-"drugs_manager_title": "Drugs Manager | Dentix Pro",
+"drugs_manager_title": "Drugs Manager | Dentimate Pro",
 "drugs_manager": "Drugs Manager",
 "drugs_manager_subtitle": "Manage your clinic drug database",
 "add_new_drug": "Add New Drug",
@@ -2201,6 +2251,9 @@ ar: {
 
     "control_panel":
         "لوحة التحكم",
+
+    "pricing_helper_desc":
+        "حساب التكلفة ونسبة الربح للخدمة",
 
     "pricing_helper":
         "مساعدك في التسعير",
@@ -2889,7 +2942,7 @@ ar: {
 "211": "البحث بالمستفيد أو التاريخ...",
 "212": "تفاصيل الفاتورة",
 "213": "إغلاق",
-"214": "إعدادات صفحة العيادة | Dentix Pro",
+"214": "إعدادات صفحة العيادة | Dentimate Pro",
 "215": "مثال: عيادة الابتسامة المتخصصة",
 "216": "اكتب نبذة مختصرة عن العيادة والخدمات المقدمة...",
 "217": "01000000000",
@@ -2971,7 +3024,7 @@ ar: {
 "238": "زيارة فائتة",
 "241": "ملفات المرضى",
 "242": "ابحث عن المرضى بالاسم أو الهاتف أو العنوان...",
-"243": "المخزن | Dentix Pro",
+"243": "المخزن | Dentimate Pro",
 "244": "المخزن",
 "245": "إدارة مخزون العيادة واستهلاك المواد",
 "246": "إجمالي العناصر",
@@ -3969,7 +4022,7 @@ ar: {
 
 
 
-"prints_title": "المطبوعات الطبية | Dentix Pro",
+"prints_title": "المطبوعات الطبية | Dentimate Pro",
 "medical_prints": "المطبوعات الطبية",
 "medical_prints_desc": "إنشاء وإدارة الوصفات والتقارير والفواتير باحترافية",
 "create_new_print": "إنشاء مطبوعة جديدة",
@@ -4004,7 +4057,7 @@ ar: {
 "print_now": "طباعة الآن",
 "close": "إغلاق",
 
-"dose_calculator_title": "حاسبة الجرعات | Dentix Pro",
+"dose_calculator_title": "حاسبة الجرعات | Dentimate Pro",
 "dose_calculator": "حاسبة الجرعات",
 "dose_calculator_subtitle": "جرعات ذكية للأطفال والبالغين",
 "manage_drugs": "إدارة الأدوية",
@@ -4019,7 +4072,7 @@ ar: {
 "calculate_dose": "احسب الجرعة",
 "dosing_recommendation": "توصية الجرعة",
 
-"drugs_manager_title": "مدير الأدوية | Dentix Pro",
+"drugs_manager_title": "مدير الأدوية | Dentimate Pro",
 "drugs_manager": "مدير الأدوية",
 "drugs_manager_subtitle": "إدارة قاعدة بيانات أدوية العيادة",
 "add_new_drug": "إضافة دواء جديد",
@@ -4213,11 +4266,14 @@ async function initUserPreferences() {
    START
 ============================================================ */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+if (!window.__dentixPrefsInit) {
+    window.__dentixPrefsInit = true;
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
 
-        initUserPreferences();
+            initUserPreferences();
 
-    }
-);
+        }
+    );
+}

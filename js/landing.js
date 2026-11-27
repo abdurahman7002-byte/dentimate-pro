@@ -69,7 +69,6 @@ async function loadClinicPage(){
 
     if(error || !data){
 
-        console.log(error);
 
         document.body.innerHTML = `
             <h1
@@ -933,7 +932,6 @@ if(!appointmentTime){
 
     if(error){
 
-        console.log(error);
 
         alert(
             "حدث خطأ أثناء إرسال الطلب"

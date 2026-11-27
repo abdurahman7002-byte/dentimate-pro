@@ -1,10 +1,5 @@
-const SUPABASE_URL = "https://effgebbqhkzaifwgdpoi.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmZmdlYmJxaGt6YWlmd2dkcG9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MDk4NzYsImV4cCI6MjA5NDk4NTg3Nn0.YhG_Bzhj2wbMHjtvBymOo6DYb2O2ksfk7svvf-Av9-I";
+/* الاتصال يأتي من js/supabase.js (إعداد محلي فقط) */
 
-const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
 
 // ======================
 // الساعة
@@ -121,8 +116,6 @@ async function loadWaitingScreen() {
         return;
     }
 
-    const userId =
-        userData.user.id;
 
 
     /*
@@ -137,33 +130,11 @@ async function loadWaitingScreen() {
     } =
         await supabaseClient
 
-            .from("patient_visits")
-
-            .select(`
-                *,
-                patients(
-                    id,
-                    full_name,
-                    phone
-                )
-            `)
-
-            .eq("user_id", userId)
-
-            .eq("is_deleted", false)
-
-            .not("appointment_start", "is", null)
-
-            .not("appointment_end", "is", null)
-
-            .order("appointment_start", {
-                ascending: true
-            });
+            .rpc("get_waiting_queue");
 
 
     if (error) {
 
-        console.log(error);
 
         return;
 
@@ -650,7 +621,7 @@ function renderWaiting(
 
                                 const patientName =
 
-                                    v.patients?.full_name
+                                    v.patient_name
 
                                     ||
 
@@ -816,7 +787,7 @@ function renderWaiting(
 
         const patientName =
 
-            nearestFuture.patients?.full_name
+            nearestFuture.patient_name
 
             ||
 
@@ -1060,7 +1031,7 @@ function renderWaiting(
 
         const patientName =
 
-            v.patients?.full_name
+            v.patient_name
 
             ||
 
@@ -1073,10 +1044,6 @@ function renderWaiting(
 
 
         const patientPhone =
-
-            v.patients?.phone
-
-            ||
 
             v.patient_phone
 

@@ -1777,7 +1777,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.onload = async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
     currentUserId = user.id;

@@ -8,7 +8,7 @@ async function checkUser(){
         await supabaseClient.auth.getUser();
 
     if(!user){
-        window.location.replace("login.html");
+        window.location.replace("index.html");
         return null;
     }
 
@@ -48,29 +48,6 @@ async function getUserId(){
 
 
 // =========================
-// OPTIONAL: GET ROLE (IF YOU USE IT)
-// =========================
-async function getRole(){
-
-    const user = await checkUser();
-    if(!user) return null;
-
-    const { data, error } = await supabaseClient
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
-
-    if(error){
-        console.log("Role error:", error);
-        return null;
-    }
-
-    return data?.role || null;
-}
-
-
-// =========================
 // LOGOUT
 // =========================
 async function logout() {
@@ -80,7 +57,7 @@ async function logout() {
     localStorage.clear();
     sessionStorage.clear();
 
-    window.location.replace("login.html");
+    window.location.replace("index.html");
 }
 
 
@@ -106,6 +83,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 supabaseClient.auth.onAuthStateChange((event, session) => {
 
     if(!session){
-        window.location.replace("login.html");
+        window.location.replace("index.html");
     }
 });

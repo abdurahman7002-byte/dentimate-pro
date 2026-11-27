@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-prefs="theme">
 
 <head>
 
 <meta charset="UTF-8">
+<script src="js/prefs-early.js"></script>
 
 
 <title>Dentix Waiting Screen</title>
@@ -11,6 +12,7 @@
 
 
 <link rel="stylesheet" href="css/waiting.css">
+<link rel="stylesheet" href="css/light-extra.css">
 
 </head>
 
@@ -149,6 +151,11 @@ Back
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/preferences.js"></script>
+<script>window.PAGE_KEY = "waiting";</script>
+<script src="js/page-guard.js"></script>
 <script src="js/visit-number.js"></script>
 <script src="js/waiting.js"></script>
 

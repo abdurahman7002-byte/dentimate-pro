@@ -68,7 +68,6 @@ async function loadImages() {
     const filesContainer = document.getElementById("medicalFilesContainer");
 
     if (!container || !afterContainer || !filesContainer) {
-        console.log("Images containers not found");
         return;
     }
 
@@ -93,7 +92,6 @@ async function loadImages() {
         .order("id", { ascending: false });
 
     if (error) {
-        console.log(error);
         return;
     }
 

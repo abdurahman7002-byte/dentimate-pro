@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<script src="js/prefs-early.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title data-i18n="lab_file_title">Lab File</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -797,6 +798,18 @@
 
             </a>
 
+            <!-- مساعد التسعير -->
+            <a href="pricing.html" class="moore-menu-item">
+                <div class="moore-item-icon pricing">
+                    <i class="fa-solid fa-calculator"></i>
+                </div>
+                <div>
+                    <strong data-i18n="pricing_helper">مساعدك في التسعير</strong>
+                    <span data-i18n="pricing_helper_desc">حساب التكلفة ونسبة الربح للخدمة</span>
+                </div>
+            </a>
+
+
 
         </div>
 
@@ -807,7 +820,10 @@
 <!-- ======= SCRIPTS ======= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/employees-nav.js"></script>
 <script src="js/auth.js"></script>
+<script>window.PAGE_KEY = "labs";</script>
+<script src="js/page-guard.js"></script>
 <script src="js/preferences.js"></script>
 <script src="js/notification.js"></script>
 <script src="js/confirm-modal.js"></script>

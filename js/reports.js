@@ -260,7 +260,6 @@ async function loadFinancialDashboard() {
 
     if (!userId) {
 
-        console.log("No user");
 
         return;
 
@@ -1252,7 +1251,6 @@ async function loadDailyDashboard() {
         await getUserId();
 
     if (!currentUserId) {
-        console.log("No user");
         return;
     }
 
@@ -2144,7 +2142,6 @@ async function loadCurrentMonthDashboard() {
         await getUserId();
 
     if (!currentUserId) {
-        console.log("No user");
         return;
     }
 
@@ -6027,7 +6024,6 @@ async function loadCustomStats() {
 
     if (!userId) {
 
-        console.log("No user");
 
         return;
     }
@@ -7161,7 +7157,6 @@ async function loadServicesAnalytics(){
 
     if(!userId){
 
-        console.log("❌ No user");
 
         return;
 

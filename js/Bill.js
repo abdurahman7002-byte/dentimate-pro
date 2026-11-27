@@ -10,7 +10,7 @@ async function checkAuth(){
 
     if(!user){
         // 🚨 غير اسم صفحة تسجيل الدخول لو مختلف عندك
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
 }
@@ -30,7 +30,7 @@ async function getUserId(){
         await supabaseClient.auth.getUser();
 
     if(!user){
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return null;
     }
 
@@ -1545,7 +1545,6 @@ async function loadMonthlyBillsDashboard(){
     const userId = await getUserId();
 
     if(!userId){
-        console.log("No user");
         return;
     }
 
@@ -1580,7 +1579,6 @@ async function loadMonthlyBillsDashboard(){
         .lt("created_at", startOfNextMonth.toISOString());
 
     if(error){
-        console.log(error);
         return;
     }
 

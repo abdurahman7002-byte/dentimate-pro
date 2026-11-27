@@ -2,7 +2,6 @@
 // WHATSAPP APPOINTMENT REMINDER
 // =====================================================
 
-console.log("📱 WhatsApp Reminder JS Loaded");
 
 
 // =====================================================

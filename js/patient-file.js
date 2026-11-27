@@ -88,7 +88,6 @@ async function loadPatient(){
 
     if(error){
 
-        console.log(error);
 
         return;
 
@@ -310,7 +309,6 @@ async function saveEdit(){
             .select();
 
 
-    console.log("RESULT:", data, error);
 
 
     if(error){
@@ -467,7 +465,6 @@ async function deletePatient(){
         window.location.href = "dashboard.html";
 
     }catch(err){
-        console.log(err);
         alert("Error deleting patient");
     }
 }
@@ -1429,7 +1426,6 @@ async function loadDepartments(){
 
     if(error){
 
-        console.log(error);
 
         return;
     }
@@ -4185,7 +4181,6 @@ async function loadServices(){
 
     if(error){
 
-        console.log(error);
 
         return;
     }
@@ -4610,7 +4605,6 @@ async function loadToothChart(){
         .eq("patient_id", patientId);
 
     if(error){
-        console.log(error);
         return;
     }
 
@@ -4938,7 +4932,6 @@ async function setToothState(state){
 
     if(deleteError){
 
-        console.log(deleteError);
 
         return;
     }
@@ -4959,7 +4952,6 @@ async function setToothState(state){
 
     if(insertError){
 
-        console.log(insertError);
 
         return;
     }
@@ -5225,7 +5217,6 @@ async function loadPrimaryToothChart(){
 
     if(error){
 
-        console.log(error);
 
         return;
     }
@@ -5506,7 +5497,6 @@ async function loadVisitMedications(){
 
     if(error){
 
-        console.log(error);
 
         return;
 

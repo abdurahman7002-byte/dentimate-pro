@@ -185,7 +185,6 @@ async function loadServices(){
 
     if(error){
 
-        console.log(error);
 
         return;
     }
@@ -626,7 +625,6 @@ async function loadWorksCatalog(){
 
     if(error){
 
-        console.log(error);
 
         return;
     }
@@ -981,7 +979,6 @@ async function loadDepartments(){
 
     if(error){
 
-        console.log(error);
 
         return;
 

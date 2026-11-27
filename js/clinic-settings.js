@@ -13,7 +13,6 @@
 
 if (typeof showNotification !== "function") {
     window.showNotification = function(message, type) {
-        console.log(`[${type || 'info'}] ${message}`);
         alert(message);
     };
 }
@@ -49,7 +48,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const { data: userData, error: authError } = await supabaseClient.auth.getUser();
 
         if (authError || !userData?.user) {
-            window.location.href = "login.html";
+            window.location.href = "index.html";
             return;
         }
 

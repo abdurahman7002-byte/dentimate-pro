@@ -6,7 +6,7 @@ async function getUserId() {
 
     // 🔥 لو مفيش يوزر يرجع المستخدم لصفحة اللوجين
     if (!user) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return null;
     }
 
@@ -55,7 +55,6 @@ const phone =
         }])
         .select(); // 🔥 مهم جدًا
 
-    console.log("INSERT RESULT:", data, error);
 
     if (error) {
         alert(error.message);
@@ -75,7 +74,6 @@ async function loadLabs() {
 
     const userId = await getUserId();
 
-    console.log("LOAD USER:", userId);
 
     if (!userId) return;
 
@@ -85,17 +83,14 @@ async function loadLabs() {
         .eq("user_id", userId)
         .order("id", { ascending: false });
 
-    console.log("LABS DATA:", data, error);
 
     if (error) {
-        console.log(error);
         return;
     }
 
     const container = document.getElementById("labsContainer");
 
     if (!container) {
-        console.log("container not found");
         return;
     }
 

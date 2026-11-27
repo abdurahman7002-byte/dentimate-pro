@@ -52,7 +52,7 @@ async function getUser() {
     const user = data?.user;
 
     if (!user) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return null;
     }
 
@@ -530,7 +530,7 @@ document.addEventListener("keydown", (e) => {
 (async function init() {
     const { data } = await supabaseClient.auth.getUser();
     if (!data?.user) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
     loadPrints();

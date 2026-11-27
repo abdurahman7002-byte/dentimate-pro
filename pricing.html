@@ -12,6 +12,7 @@
   gtag('config', 'G-41GMR2XDN8');
 </script>
 <meta charset="UTF-8">
+<script src="js/prefs-early.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <meta name="author" content="Abdurahman Badawy" >
@@ -803,6 +804,18 @@ And so on
 
             </a>
 
+            <!-- مساعد التسعير -->
+            <a href="pricing.html" class="moore-menu-item">
+                <div class="moore-item-icon pricing">
+                    <i class="fa-solid fa-calculator"></i>
+                </div>
+                <div>
+                    <strong data-i18n="pricing_helper">مساعدك في التسعير</strong>
+                    <span data-i18n="pricing_helper_desc">حساب التكلفة ونسبة الربح للخدمة</span>
+                </div>
+            </a>
+
+
 
         </div>
 
@@ -846,7 +859,6 @@ async function countVisitor() {
       "Views: " + newDoc.data().count;
 
   } catch (e) {
-    console.log(e);
     document.getElementById("visitorCount").innerText =
       "خطأ في Firebase";
   }
@@ -1237,15 +1249,13 @@ function goToDashboard(){
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/employees-nav.js"></script>
+<script>window.PAGE_KEY = "control";</script>
+<script src="js/page-guard.js"></script>
 <script>
 
-const supabaseUrl = "https://effgebbqhkzaifwgdpoi.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmZmdlYmJxaGt6YWlmd2dkcG9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MDk4NzYsImV4cCI6MjA5NDk4NTg3Nn0.YhG_Bzhj2wbMHjtvBymOo6DYb2O2ksfk7svvf-Av9-I";
-
-const supabaseClient = supabase.createClient(
-    supabaseUrl,
-    supabaseKey
-);
+const supabaseClient = window.supabaseClient;
 
 </script>
 
@@ -1291,7 +1301,6 @@ async function saveAssets(){
          }]);
 
         if(error){
-            console.log(error);
         }
 
     }
@@ -1359,7 +1368,6 @@ async function saveExpenses(){
 }]);
 
         if(error){
-            console.log(error);
         }
 
     }
@@ -1433,7 +1441,6 @@ async function saveServices(){
 }]);
 
         if(error){
-            console.log(error);
         }
 
     }
@@ -1490,7 +1497,6 @@ async function saveSettings(){
     });
 
     if(error){
-        console.log("SETTINGS ERROR:", error);
     }
 }
 
@@ -1547,7 +1553,7 @@ window.onload = async () => {
     } = await supabaseClient.auth.getUser();
 
     if (!user) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
 
@@ -1587,6 +1593,8 @@ document.addEventListener("toggle", function(e){
 
 }, true);
 </script>
+<script>/* notification.js expects getUserId(); this page does not load auth.js */
+window.getUserId = async function(){ try { const r = await window.supabaseClient.auth.getSession(); return (r.data && r.data.session) ? r.data.session.user.id : null; } catch (_) { return null; } };</script>
 <script src="js/notification.js"></script>
 <script src="js/preferences.js"></script>
 </body>

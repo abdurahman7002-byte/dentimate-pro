@@ -1,0 +1,42 @@
+/* Login screen: Manager / Employee tabs, first-run account form, light theme */
+.login-card{position:relative;padding-top:64px;max-width:460px;width:calc(100% - 32px);margin-left:auto;margin-right:auto}
+.input-group{direction:ltr}
+.input-group input{text-align:start}
+html[dir="rtl"] .login-card input{text-align:right}
+.prefs-bar{position:absolute;top:14px;inset-inline-end:14px;display:flex;gap:8px}
+.prefs-bar button{width:auto;padding:7px 12px;border-radius:12px;font-size:13px;font-weight:600;
+  background:rgba(255,255,255,.08);box-shadow:none;border:1px solid rgba(255,255,255,.12)}
+.prefs-bar button:hover{transform:none}
+.role-tabs{display:flex;gap:6px;margin:0 0 22px;padding:5px;border-radius:18px;background:rgba(255,255,255,.06)}
+.role-tabs button{flex:1;padding:11px 8px;border-radius:14px;font-size:15px;background:transparent;
+  color:#cbd5e1;box-shadow:none}
+.role-tabs button:hover{transform:none}
+.role-tabs button.active{background:linear-gradient(135deg,#00b4d8,#48cae4);color:#fff;
+  box-shadow:0 6px 16px rgba(0,180,216,.35)}
+.role-hint{font-size:13px;color:#94a3b8;margin:-4px 0 16px;line-height:1.6}
+.form-error{display:none;margin:0 0 14px;padding:10px 12px;border-radius:12px;font-size:14px;
+  background:rgba(239,68,68,.15);color:#fecaca;border:1px solid rgba(239,68,68,.35)}
+.form-error.show{display:block}
+.link-btn{width:auto;background:none;box-shadow:none;padding:6px 4px;margin-top:14px;font-size:14px;
+  color:#48cae4;text-decoration:underline;font-weight:600}
+.link-btn:hover{transform:none}
+.link-btn::before{display:none}
+.hidden{display:none !important}
+html[data-theme="light"] body{background:radial-gradient(circle at top left,#bfdbfe 0%,transparent 28%),
+  radial-gradient(circle at bottom right,#99f6e4 0%,transparent 28%),#f1f5f9;color:#0f172a}
+html[data-theme="light"] .hero-header h1,html[data-theme="light"] .hero-header p,
+html[data-theme="light"] .login-card h2,html[data-theme="light"] .subtitle{color:#0f172a}
+html[data-theme="light"] .login-card,html[data-theme="light"] .footer-section{background:rgba(255,255,255,.85);
+  border-color:rgba(15,23,42,.12)}
+html[data-theme="light"] input{background:#e2e8f0;color:#0f172a}
+html[data-theme="light"] input::placeholder{color:#64748b}
+html[data-theme="light"] .input-group i{color:#0e7490}
+html[data-theme="light"] .role-tabs{background:rgba(15,23,42,.07)}
+html[data-theme="light"] .role-tabs button{color:#334155}
+html[data-theme="light"] .role-tabs button.active{color:#fff}
+html[data-theme="light"] .prefs-bar button{background:rgba(15,23,42,.07);color:#0f172a;border-color:rgba(15,23,42,.15)}
+html[data-theme="light"] .role-hint{color:#475569}
+html[data-theme="light"] .form-error{color:#991b1b}
+html[data-theme="light"] .footer-section h3,html[data-theme="light"] .footer-section p,
+html[data-theme="light"] .footer-section a,html[data-theme="light"] .footer-bottom{color:#0f172a}
+html[data-theme="light"] .link-btn{color:#0e7490}
