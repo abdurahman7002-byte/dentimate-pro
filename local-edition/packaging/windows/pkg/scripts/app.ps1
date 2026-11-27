@@ -1,4 +1,4 @@
-# Dentimate Pro desktop window: starts the local system in the background (no console),
+﻿# Dentimate Pro desktop window: starts the local system in the background (no console),
 # opens it in its own app window (Edge/Chrome app mode, own profile), and on close asks
 # whether to stop the system. Data rules are unchanged (data folder next to the programs).
 param([switch]$Test)
