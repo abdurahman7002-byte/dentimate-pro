@@ -6,15 +6,16 @@ insert into ptables values ('inventory_purchases'),('inventory_transactions');
 insert into pexp select t, p, p='storage', p='storage', p='storage', p='storage' from unnest(array['inventory_purchases','inventory_transactions']) t, unnest(array['dashboard','patients','patient-file','waiting','bill','reports','storage','doctors','labs','drugs','prints','control']) p;
 create temp table pvars as select :'owner'::uuid as owner;
 do $$ declare t text; begin
-  for t in select tbl from ptables loop execute format('truncate public.%I cascade', t); end loop;
+  for t in select tbl from ptables loop execute format('truncate public.%I restart identity cascade', t); end loop;
   delete from public.employees where full_name='pm'; delete from auth.users where email like 'pm-%';
 end $$;
 create temp table pres(profile text, tbl text, op text, got text, expected bool, ok bool);
-create temp table pseed(tbl text primary key, seeded bool, ins_cols text, ins_vals text, upd_col text);
+create temp table pseed(tbl text primary key, seeded bool, ins_cols text, ins_vals text, upd_col text, err text);
+create temp table pfk(tbl text, col text); insert into pfk values ('visit_medications','visit_id'),('patient_teeth','patient_id'),('patient_files','patient_id'),('patient_service_teeth','service_id'),('lab_work_teeth','lab_work_id');
 
 -- generic synthetic seed: only NOT NULL columns without a default
 do $$
-declare t record; c record; cols text; vals text; ownerid uuid := (select owner from pvars); ok boolean; ucol text;
+declare t record; c record; cols text; vals text; ownerid uuid := (select owner from pvars); ok boolean; ucol text; emsg text;
 begin
   for t in select tbl from ptables union select 'inventory_purchases' union select 'inventory_transactions' loop
     cols := ''; vals := ''; ucol := null;
@@ -22,7 +23,7 @@ begin
              from information_schema.columns where table_schema='public' and table_name=t.tbl order by ordinal_position loop
       if ucol is null and c.is_identity='NO' and c.is_generated='NEVER' then ucol := c.column_name; end if;
       if c.is_identity='YES' or c.is_generated<>'NEVER' then continue; end if;
-      if c.is_nullable='NO' and c.column_default is null or c.column_name='user_id' then
+      if c.is_nullable='NO' and c.column_default is null or c.column_name='user_id' or exists (select 1 from pfk f where f.tbl=t.tbl and f.col=c.column_name) then
         cols := cols || case when cols='' then '' else ',' end || quote_ident(c.column_name);
         vals := vals || case when vals='' then '' else ',' end ||
           case when c.column_name='user_id' and c.data_type='uuid' then quote_literal(ownerid)||'::uuid'
@@ -36,8 +37,8 @@ begin
     ok := true;
     begin
       execute format('insert into public.%I (%s) values (%s)', t.tbl, cols, vals);
-    exception when others then ok := false; end;
-    insert into pseed values (t.tbl, ok, cols, vals, ucol);
+    exception when others then ok := false; emsg := sqlerrm; end;
+    insert into pseed values (t.tbl, ok, cols, vals, ucol, case when ok then null else left(emsg,120) end);
   end loop;
 end $$;
 
@@ -105,6 +106,6 @@ select count(*) from pres where not ok;
 \echo MATRIX_MISMATCHES
 select profile||' '||tbl||' '||op||' got='||got||' expected_allowed='||expected from pres where not ok order by 1 limit 40;
 \echo UNSEEDED
-select string_agg(tbl, ',') from pseed where not seeded;
+select string_agg(tbl||':'||coalesce(err,''), ' ; ') from pseed where not seeded;
 \echo RLS_OFF_PUBLIC_TABLES
 select string_agg(c.relname, ',') from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and not c.relrowsecurity;
