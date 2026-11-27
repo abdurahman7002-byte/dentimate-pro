@@ -40,8 +40,10 @@ jobs:
             $a = Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-WindowStyle','Hidden','-File',"$R\scripts\app.ps1",'-Test') -RedirectStandardOutput $o -RedirectStandardError "$o.err" -PassThru -WindowStyle Hidden
             $null = $a.Handle
             $up = $false
-            for ($i = 0; $i -lt 120 -and -not $up; $i++) { Start-Sleep -Seconds 5; try { $up = ((& curl.exe -s -k --ssl-no-revoke -o NUL -w '%{http_code}' https://localhost:8443/index.html) -eq '200') } catch {} }
+            for ($i = 0; $i -lt 120 -and -not $up -and -not $a.HasExited; $i++) { Start-Sleep -Seconds 5; try { $up = ((& curl.exe -s -k --ssl-no-revoke -o NUL -w '%{http_code}' https://localhost:8443/index.html) -eq '200') } catch {} }
             Note 'services-started-by-app' ([int]$up)
+            Note 'app-stderr' ((((Get-Content "$o.err" -Tail 6 -ErrorAction SilentlyContinue) -join ' | ') -replace '"',' '))
+            Note 'app-stdout' ((((Get-Content $o -Tail 4 -ErrorAction SilentlyContinue) -join ' | ') -replace '"',' '))
             Start-Sleep -Seconds 15
             New-Item -ItemType Directory -Force C:\uitest | Out-Null
             Copy-Item "$P\uitest\app-shot.mjs" C:\uitest\ -Force
