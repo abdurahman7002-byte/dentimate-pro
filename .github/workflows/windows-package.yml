@@ -68,7 +68,7 @@ jobs:
           cp packaging/windows/pkg/sql/* $ST/app/sql/
           cp packaging/windows/bootstrap-roles.sql $ST/app/sql/bootstrap-roles.sql
           cp -r packaging/windows/pkg/scripts $ST/scripts
-          cp packaging/windows/pkg/*.bat $ST/
+          cp packaging/windows/pkg/*.bat packaging/windows/pkg/*.vbs $ST/
           cp packaging/windows/pkg/README-AR.txt $ST/README-AR.txt
           say "assembled-files=$(find $ST -type f | wc -l) size-mb=$(du -sm $ST | cut -f1)"
           # --- zip

@@ -1,0 +1,72 @@
+name: windows-app
+# Desktop-window launcher test on the built offline package (synthetic data only, nothing installed outside the runner).
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci-validation]
+    paths:
+      - '.github/workflows/windows-app.yml'
+      - 'local-edition/packaging/windows/pkg/scripts/app.ps1'
+      - 'local-edition/packaging/windows/pkg/scripts/make-shortcut.ps1'
+      - 'local-edition/packaging/windows/pkg/CLINIC-APP.vbs'
+      - 'local-edition/packaging/windows/pkg/uitest/app-shot.mjs'
+jobs:
+  app:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dentimate-offline-win-ci
+          run-id: 45876470182
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: C:\dl
+      - name: Overlay the launcher files on the package and test them
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $notes = New-Object System.Collections.Generic.List[string]
+          function Note($k, $v) { $script:notes.Add("$k=$v"); Write-Host "$k=$v" }
+          try {
+            & 7z x C:\dl\dentimate-offline-win.zip -oC:\clinic -y | Out-Null
+            $R = 'C:\clinic\dentimate-offline'
+            $P = "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg"
+            Copy-Item "$P\scripts\app.ps1","$P\scripts\make-shortcut.ps1" "$R\scripts\" -Force
+            Copy-Item "$P\CLINIC-APP.vbs","$P\CREATE-SHORTCUT.bat" "$R\" -Force
+            # app.ps1 starts the services itself (hidden, no console)
+            $o = "$env:TEMP\app.out"
+            $before = @(Get-Process -Name conhost,cmd -ErrorAction SilentlyContinue).Count
+            $a = Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-WindowStyle','Hidden','-File',"$R\scripts\app.ps1",'-Test') -RedirectStandardOutput $o -RedirectStandardError "$o.err" -PassThru -WindowStyle Hidden
+            $null = $a.Handle
+            $up = $false
+            for ($i = 0; $i -lt 120 -and -not $up; $i++) { Start-Sleep -Seconds 5; try { $up = ((& curl.exe -s -k --ssl-no-revoke -o NUL -w '%{http_code}' https://localhost:8443/index.html) -eq '200') } catch {} }
+            Note 'services-started-by-app' ([int]$up)
+            Start-Sleep -Seconds 15
+            New-Item -ItemType Directory -Force C:\uitest | Out-Null
+            Copy-Item "$P\uitest\app-shot.mjs" C:\uitest\ -Force
+            Push-Location C:\uitest
+            Set-Content -Path package.json -Value '{"type":"module"}' -Encoding ASCII
+            & npm.cmd i playwright-core --no-audit --no-fund 2>&1 | Out-Null
+            Note 'window' ((& node app-shot.mjs 2>&1 | Out-String) -replace '[\r\n"]',' ')
+            Pop-Location
+            $null = $a.WaitForExit(180000)
+            Start-Sleep -Seconds 5
+            Note 'app-exited' ([int]$a.HasExited)
+            Note 'port-8443-after-close' ((& curl.exe -s -k --ssl-no-revoke -o NUL -w '%{http_code}' --max-time 5 https://localhost:8443/index.html))
+            Note 'postgres-running-after-close' ([int](Test-Path "$R\data\pgdata\postmaster.pid"))
+            Note 'app-log' ((Get-Content "$R\data\logs\app.log" -ErrorAction SilentlyContinue | Select-Object -Last 8) -join ' | ')
+            # shortcut + icon
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$R\scripts\make-shortcut.ps1" 2>&1 | Out-Null
+            $lnk = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Dentimate Pro.lnk'
+            Note 'shortcut-created' ([int](Test-Path $lnk))
+            Note 'icon-created' ([int](Test-Path "$R\dentimate.ico"))
+            if (Test-Path $lnk) { $s = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk); Note 'shortcut-target' (Split-Path $s.TargetPath -Leaf); Note 'shortcut-args-has-vbs' ([int]($s.Arguments -match 'CLINIC-APP.vbs')) }
+          } catch { Note 'EXCEPTION' (("$_" -replace '[\r\n"]',' ')) }
+          finally { Write-Host "::notice title=app-summary::$($notes -join ' ')" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-app-screenshot
+          path: C:\shots
+          retention-days: 14
