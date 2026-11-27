@@ -34,6 +34,8 @@ jobs:
             $P = "$env:GITHUB_WORKSPACE\local-edition\packaging\windows\pkg"
             Copy-Item "$P\scripts\app.ps1","$P\scripts\make-shortcut.ps1" "$R\scripts\" -Force
             Copy-Item "$P\CLINIC-APP.vbs","$P\CREATE-SHORTCUT.bat" "$R\" -Force
+            # test only: keep the app window open longer so the screenshot step can attach
+            (Get-Content "$R\scripts\app.ps1" -Raw -Encoding UTF8) -replace 'Start-Sleep -Seconds 30','Start-Sleep -Seconds 150' | Set-Content "$R\scripts\app.ps1" -Encoding UTF8
             # app.ps1 starts the services itself (hidden, no console)
             $o = "$env:TEMP\app.out"
             $before = @(Get-Process -Name conhost,cmd -ErrorAction SilentlyContinue).Count
