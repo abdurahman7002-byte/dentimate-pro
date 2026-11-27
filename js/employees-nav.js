@@ -1,4 +1,4 @@
-/* Owner-only "الموظفون" entry in the More menu of every page.
+/* More menu of every page: owner-only "الموظفون" entry + a sign-out item for everyone signed in.
    Injected hidden; revealed only when the is_admin() RPC confirms the
    owner. Hidden on any error. page-guard on employees.html remains the
    real access control - this only controls visibility. */
@@ -12,13 +12,29 @@
       '<span>\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646 \u0648\u0627\u0644\u0635\u0644\u0627\u062d\u064a\u0627\u062a</span></div>';
     return a;
   }
+  function buildOut(){
+    var a=document.createElement('a');
+    a.href='#'; a.className='moore-menu-item'; a.id='signOutMenuItem'; a.style.display='none';
+    a.innerHTML='<div class="moore-item-icon"><i class="fa-solid fa-right-from-bracket"></i></div>'+
+      '<div><strong>\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062e\u0631\u0648\u062c</strong>'+
+      '<span>\u0627\u0644\u062e\u0631\u0648\u062c \u0645\u0646 \u0627\u0644\u062d\u0633\u0627\u0628</span></div>';
+    a.addEventListener('click',async function(e){
+      e.preventDefault();
+      try{ await window.supabaseClient.auth.signOut({scope:'local'}); }catch(_){}
+      window.location.replace('index.html');
+    });
+    return a;
+  }
   async function run(){
     try{
       var grid=document.querySelector('.moore-menu-grid');
       if(!grid) return;
       var el=document.getElementById('employeesMenuItem');
       if(!el){ el=build(); grid.appendChild(el); }
+      var so=document.getElementById('signOutMenuItem');
+      if(!so){ so=buildOut(); grid.appendChild(so); }
       if(!window.supabaseClient) return;
+      try{ var ss=await window.supabaseClient.auth.getSession(); if(ss.data&&ss.data.session) so.style.display=''; }catch(_){}
       var r=await window.supabaseClient.rpc('is_admin');
       if(!r.error && r.data===true) el.style.display='';
     }catch(_){ /* stay hidden */ }
