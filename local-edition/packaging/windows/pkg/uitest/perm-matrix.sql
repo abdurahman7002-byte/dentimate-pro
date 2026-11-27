@@ -28,10 +28,10 @@ begin
         vals := vals || case when vals='' then '' else ',' end ||
           case when c.column_name='user_id' and c.data_type='uuid' then quote_literal(ownerid)||'::uuid'
                when c.column_name='user_id' then quote_literal(ownerid::text)
-               else case c.data_type when 'uuid' then 'gen_random_uuid()' when 'text' then '''x''' when 'character varying' then '''x'''
+               else case when c.column_name='tooth_number' then '11' else case c.data_type when 'uuid' then 'gen_random_uuid()' when 'text' then '''x''' when 'character varying' then '''x'''
                  when 'boolean' then 'false' when 'jsonb' then '''{}''::jsonb' when 'json' then '''{}''::json' when 'ARRAY' then '''{}'''
                  when 'date' then 'now()::date' when 'USER-DEFINED' then 'null'
-                 else case when c.data_type like 'timestamp%' then 'now()' else '1' end end end;
+                 else case when c.data_type like 'timestamp%' then 'now()' else '1' end end end end;
       end if;
     end loop;
     ok := true;
